@@ -276,22 +276,30 @@ BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager &rm,
     auto_raise(rm, true, scrname+".autoRaise", altscrname+".AutoRaise"),
     click_raises(rm, true, scrname+".clickRaises", altscrname+".ClickRaises"),
     default_deco(rm, "NORMAL", scrname+".defaultDeco", altscrname+".DefaultDeco"),
-    tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement", altscrname+".Tab.Placement"),
-    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu"), scrname+".windowMenu", altscrname+".WindowMenu"),
     typing_delay(rm, 0, scrname+".noFocusWhileTypingDelay", altscrname+".NoFocusWhileTypingDelay"),
     workspaces(rm, 4, scrname+".workspaces", altscrname+".Workspaces"),
     edge_snap_threshold(rm, 10, scrname+".edgeSnapThreshold", altscrname+".EdgeSnapThreshold"),
     focused_alpha(rm, 255, scrname+".window.focus.alpha", altscrname+".Window.Focus.Alpha"),
     unfocused_alpha(rm, 255, scrname+".window.unfocus.alpha", altscrname+".Window.Unfocus.Alpha"),
+
+    tooltip_delay(rm, 500, scrname + ".tooltipDelay", altscrname+".TooltipDelay"),
+
     menu_alpha(rm, 255, scrname+".menu.alpha", altscrname+".Menu.Alpha"),
     menu_delay(rm, 200, scrname + ".menuDelay", altscrname+".MenuDelay"),
-    tab_width(rm, 64, scrname + ".tab.width", altscrname+".Tab.Width"),
-    tooltip_delay(rm, 500, scrname + ".tooltipDelay", altscrname+".TooltipDelay"),
-    allow_remote_actions(rm, false, scrname+".allowRemoteActions", altscrname+".AllowRemoteActions"),
     clientmenu_use_pixmap(rm, true, scrname+".clientMenu.usePixmap", altscrname+".ClientMenu.UsePixmap"),
+    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu"), scrname+".windowMenu", altscrname+".WindowMenu"),
+    windowmenu_singletrigger(rm, false, scrname+".menu.window.singleTrigger", altscrname+".Menu.Window.SingleTrigger"),
+    rootmenu_singletrigger(rm, false, scrname+".menu.root.singleTrigger", altscrname+".Menu.Root.SingleTrigger"),
+    workspacemenu_singletrigger(rm, false, scrname+".menu.workspace.singleTrigger", altscrname+".Menu.Workspace.SingleTrigger"),
+
+    tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement", altscrname+".Tab.Placement"),
+    tab_width(rm, 64, scrname + ".tab.width", altscrname+".Tab.Width"),
     tabs_use_pixmap(rm, true, scrname+".tabs.usePixmap", altscrname+".Tabs.UsePixmap"),
     max_over_tabs(rm, false, scrname+".tabs.maxOver", altscrname+".Tabs.MaxOver"),
-    default_internal_tabs(rm, true /* TODO: autoconf option? */ , scrname+".tabs.intitlebar", altscrname+".Tabs.InTitlebar") {
+    default_internal_tabs(rm, true /* TODO: autoconf option? */ , scrname+".tabs.intitlebar", altscrname+".Tabs.InTitlebar"),
+
+    allow_remote_actions(rm, false, scrname+".allowRemoteActions", altscrname+".AllowRemoteActions")
+{
 
 
 }
@@ -335,8 +343,7 @@ BScreen::BScreen(FbTk::ResourceManager &rm,
     // TODO fluxgen: check if this is the right place (it was not -lis)
     //
     // Create the first one, initXinerama will expand this if needed.
-    m_head_areas.resize(1);
-    m_head_areas[0] = new HeadArea();
+    m_head_areas.push_back(new HeadArea());
 
     initXinerama();
 
@@ -1413,8 +1420,11 @@ void BScreen::reassociateWindow(FluxboxWindow *w, unsigned int wkspc_id,
 
 void BScreen::initMenus() {
     m_workspacemenu.reset(MenuCreator::createMenuType("workspacemenu", screenNumber()));
+    m_workspacemenu->setSingleTrigger(*resource.workspacemenu_singletrigger);
     m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
+    m_rootmenu->setSingleTrigger(*resource.rootmenu_singletrigger);
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
+    m_windowmenu->setSingleTrigger(*resource.windowmenu_singletrigger);
 }
 
 

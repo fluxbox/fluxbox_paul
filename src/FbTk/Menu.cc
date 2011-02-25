@@ -109,7 +109,8 @@ Menu::Menu(FbTk::ThemeProxy<MenuTheme> &tm, ImageControl &imgctrl):
     m_alignment(ALIGNDONTCARE),
     m_active_index(-1),
     m_shape(0),
-    m_need_update(true) {
+    m_need_update(true),
+    m_single_trigger(false) {
     // setup timers
 
     RefCount<Command<void> > show_cmd(new SimpleCommand<Menu>(*this, &Menu::openSubmenu));
@@ -861,6 +862,10 @@ bool Menu::isItemSelectable(unsigned int index) const {
     return (!item || !item->isEnabled()) ? false : true;
 }
 
+bool Menu::isSingleTrigger() const {
+
+    return m_single_trigger || (parent() && parent()->isSingleTrigger());
+}
 
 void Menu::handleEvent(XEvent &event) {
     if (event.type == FocusOut) {
@@ -1123,19 +1128,7 @@ void Menu::keyPressEvent(XKeyEvent &event) {
         break;
     case XK_KP_Enter:
     case XK_Return:
-        resetTypeAhead();
-        if (validIndex(m_active_index) &&
-            isItemEnabled(m_active_index)) {
-            // send fake button click
-            int button = (event.state & ShiftMask) ? 3 : 1;
-            if (menuitems[m_active_index]->submenu() != 0 && button == 1)
-                enterSubmenu();
-            else {
-                find(m_active_index)->click(button, event.time, event.state);
-                m_need_update = true;
-                updateMenu();
-            }
-        }
+        goto click_on_item;
         break;
     case XK_Tab:
     case XK_ISO_Left_Tab:
@@ -1150,14 +1143,37 @@ void Menu::keyPressEvent(XKeyEvent &event) {
         drawTypeAheadItems();
         break;
     default:
-        m_type_ahead.putCharacter(keychar[0]);
-        // if current item doesn't match new search string, find the next one
-        drawTypeAheadItems();
-        if (!m_matches.empty() && (!validIndex(m_active_index) ||
-            std::find(m_matches.begin(), m_matches.end(),
-                      find(m_active_index)) == m_matches.end()))
-            cycleItems(false);
+        {
+            m_type_ahead.putCharacter(keychar[0]);
+            drawTypeAheadItems();
+            // if current item doesn't match new search string, find the next one
+            if (!m_matches.empty() && (!validIndex(m_active_index) ||
+                        std::find(m_matches.begin(), m_matches.end(),
+                            find(m_active_index)) == m_matches.end()))
+                cycleItems(false);
+
+            if (isSingleTrigger() && m_matches.size() == 1) {
+                goto click_on_item;
+            }
+        }
         break;
+    }
+    return;
+
+// TODO: 'goto' is just the temporary solution to this code sharing
+click_on_item:
+    resetTypeAhead();
+    if (validIndex(m_active_index) &&
+        isItemEnabled(m_active_index)) {
+        // send fake button click
+        int button = (event.state & ShiftMask) ? 3 : 1;
+        if (menuitems[m_active_index]->submenu() != 0 && button == 1)
+            enterSubmenu();
+        else {
+            find(m_active_index)->click(button, event.time, event.state);
+            m_need_update = true;
+            updateMenu();
+        }
     }
 }
 

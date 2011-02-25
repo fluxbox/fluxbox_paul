@@ -91,6 +91,9 @@ public:
 
     void setScreen(int x, int y, int w, int h);
 
+    void setSingleTrigger(bool flag) { m_single_trigger = flag; };
+    bool isSingleTrigger() const;
+
     /**
        @name event handlers
     */
@@ -201,6 +204,7 @@ private:
     Menuitems menuitems;
     TypeAhead<Menuitems, MenuItem *> m_type_ahead;
     Menuitems m_matches;
+    bool m_single_trigger;
 
     void resetTypeAhead();
     void drawTypeAheadItems();
