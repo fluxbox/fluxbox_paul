@@ -2,6 +2,11 @@
 
 Changes for 1.3.1
 
+*11/04/07:
+    * Importing the fbautostart codebase into the tree. This creates a new binary
+      called fbautostart(1). Documentation added to the global docs. (Paul)
+      util/fbautostart/*
+
 *11/02/25:
     * Bugfix: submenus didn't hide if session*menuDelay was > 0 (Mathias)
       FbTk/Menu.cc AttentionHandler.cc

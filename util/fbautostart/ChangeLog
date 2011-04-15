@@ -1,0 +1,42 @@
+2011-04-09  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Fixed the license issue in the version and lecture
+printouts. Still said GPL. Pfft!
+* Moved the main method from fbautostart.cc to main.cc.
+* Put fbautostart functions into the fbautostart namespace,
+just in case we must use some of the XDG bindings from outside
+of fbautostart it's self.
+
+2011-04-07  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Renamed the .cpp files to .cc, and .h files to .hh.
+all source files affected.
+* Licese change! Beware! License Change! We're now MIT
+licensed.
+
+2010-11-28  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Removed the #define for the window manager setting in
+include/fbautostart.h. It's now a const char, and dynamic
+with the new --window-manager flag.
+* Changed fbautostart to error out when you pass in a bum
+flag. This caused me great pain the other day. Fixed now.
+* Forgot to bump the version number. It's now version 2.71828.
+Both of these changes were in src/fbautostart.cpp
+
+2010-10-21  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Bugfixes for random crap for XDG env issues.
+This is a fix for issues that I missed when fixing
+Segaja's issues.
+
+2010-10-15  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Bugfixes for random crap. Rewrote stuff to make
+more sense.
+* Fixed a few XDG spec issues. Should be betters now.
+* Fixed a bug with env vars. Thanks, Segaja.
+
+2010-10-14  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Adding in the basic code stuff. Initial Release.

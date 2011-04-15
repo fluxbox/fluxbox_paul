@@ -639,9 +639,14 @@ else
   CONFIGOPTS="$CONFIGOPTS --disable-fribidi"
 fi
 
-
-
-
+AC_MSG_CHECKING([whether to build support for xdg autostarting])
+FBAUTOSTART=0
+AC_ARG_ENABLE(fbautostart,
+    [  --enable-fbautostart    build fbautostart (xdg autostart utility) ([default=no])],
+    AC_DEFINE(USE_FBAUTOSTART, 1, " build the fbautostart xdg autostart utility")
+    FBAUTOSTART=1
+)
+AM_CONDITIONAL(USE_FBAUTOSTART, test x$FBAUTOSTART = x1)
 
 AC_ARG_WITH(
   menu,
@@ -730,6 +735,7 @@ src/FbTk/Makefile
 src/tests/Makefile
 util/Makefile
 util/fbrun/Makefile
+util/fbautostart/Makefile
 data/Makefile
 data/styles/Makefile
 data/styles/BlueFlux/Makefile
@@ -803,6 +809,12 @@ AC_MSG_RESULT([Using '$LOCALE_PATH' for nls files.])
 AC_MSG_RESULT([Using '$CXX' for C++ compiler.])
 AC_MSG_RESULT([Building with '$CXXFLAGS' for C++ compiler flags.])
 AC_MSG_RESULT([Building with '$LIBS' for linker flags.])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([Beta Features being Built:])
+AC_MSG_RESULT([(Enable beta features with --enable-FEATURE_NAME)])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([fbautostart:        $FBAUTOSTART])
+AC_MSG_RESULT([])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Now build $PACKAGE with 'make'])
 AC_MSG_RESULT([])
