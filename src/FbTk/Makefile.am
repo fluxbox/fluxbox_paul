@@ -66,6 +66,7 @@ libFbTk_a_SOURCES = App.hh App.cc Color.cc Color.hh Command.hh \
 	Slot.hh Signal.hh MemFun.hh SelectArg.hh \
 	Util.hh \
 	RelCalcHelper.hh RelCalcHelper.cc \
+	Luamm.cc Luamm.hh \
 	${xpm_SOURCE} \
 	${xft_SOURCE} \
 	${xmb_SOURCE} \
