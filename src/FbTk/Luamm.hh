@@ -26,8 +26,9 @@
 #include <memory>
 #include <stdexcept>
 
-#include <lua.h>
 #include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 
 #include "Slot.hh"
 
@@ -81,78 +82,49 @@ namespace lua {
      * pushed into the same state it was generated in.
      */
     class exception: public std::runtime_error {
-        /*
-         * We only allow moving, to avoid complications with multiple references. It shouldn't be
-         * difficult to modify this to work with copying, if that proves unavoidable.
-         */
         state *L;
         int key;
 
         static std::string get_error_msg(state *L);
 
-        exception(const exception &) = delete;
-        const exception& operator=(const exception &) = delete;
+        exception& operator=(const exception &other); // not implemented
 
-        public:
-        exception(exception &&other)
-            : std::runtime_error(std::move(other)), L(other.L), key(other.key)
-        { other.L = NULL; }
-
+    public:
         explicit exception(state *l);
+        exception(const exception &other);
         virtual ~exception() throw();
 
         void push_lua_error(state *l);
     };
 
     class not_string_error: public std::runtime_error {
-        public:
-            not_string_error()
-                : std::runtime_error("Cannot convert value to a string")
-            {}
+    public:
+        not_string_error()
+            : std::runtime_error("Cannot convert value to a string")
+        {}
     };
 
     // the name says it all
     class syntax_error: public lua::exception {
-        syntax_error(const syntax_error &) = delete;
-        const syntax_error& operator=(const syntax_error &) = delete;
-
-        public:
+    public:
         syntax_error(state *L)
             : lua::exception(L)
-        {}
-
-        syntax_error(syntax_error &&other)
-            : lua::exception(std::move(other))
         {}
     };
 
     // loadfile() encountered an error while opening/reading the file
     class file_error: public lua::exception {
-        file_error(const file_error &) = delete;
-        const file_error& operator=(const file_error &) = delete;
-
-        public:
+    public:
         file_error(state *L)
             : lua::exception(L)
-        {}
-
-        file_error(file_error &&other)
-            : lua::exception(std::move(other))
         {}
     };
 
     // double fault, lua encountered an error while running the error handler function
     class errfunc_error: public lua::exception {
-        errfunc_error(const errfunc_error &) = delete;
-        const errfunc_error& operator=(const errfunc_error &) = delete;
-
-        public:
+    public:
         errfunc_error(state *L)
             : lua::exception(L)
-        {}
-
-        errfunc_error(errfunc_error &&other)
-            : lua::exception(std::move(other))
         {}
     };
 
@@ -313,13 +285,11 @@ namespace lua {
      * since we have exception.what() for that, putting the message on the stack is not
      * necessary.
      */
-    class stack_sentry {
+    class stack_sentry: private FbTk::NotCopyable {
         state *L;
         int n;
 
-        stack_sentry(const stack_sentry &) = delete;
-        const stack_sentry& operator=(const stack_sentry &) = delete;
-        public:
+    public:
         explicit stack_sentry(state &l, int n_ = 0) throw()
             : L(&l), n(l.gettop()+n_)
         { assert(n >= 0); }
