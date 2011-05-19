@@ -27,27 +27,11 @@
 namespace lua {
     namespace {
         // keys for storing values in lua registry
-        const char cpp_exception_metatable[] = "lua::cpp_exception_metatable";
         const char cpp_function_metatable [] = "lua::cpp_function_metatable";
         const char lua_exception_namespace[] = "lua::lua_exception_namespace";
         const char this_cpp_object	  [] = "lua::this_cpp_object";
 
-        // converts C++ exceptions to strings, so lua can do something with them
-        int exception_to_string(lua_State *l)
-        {
-            std::exception_ptr *ptr = static_cast<std::exception_ptr *>(lua_touserdata(l, -1));
-            assert(ptr);
-            try {
-                std::rethrow_exception(*ptr);
-            }
-            catch(std::exception &e) {
-                lua_pushstring(l, e.what());
-            }
-            catch(...) {
-                lua_pushstring(l, ptr->__cxa_exception_type()->name());
-            }
-            return 1;
-        }
+        typedef FbTk::Slot<int, state *> Slot;
 
         int absindex(lua_State *l, int index) throw()
         { return index<0 && -index<=lua_gettop(l) ? lua_gettop(l)+1+index : index; }
@@ -84,7 +68,7 @@ namespace lua {
             lua_pop(l, 1);
 
             try {
-                cpp_function *fn = static_cast<cpp_function *>( L->touserdata(lua_upvalueindex(1)) );
+                Slot *fn = static_cast<Slot *>( L->touserdata(lua_upvalueindex(1)) );
                 assert(fn);
                 return (*fn)(L);
             }
@@ -92,12 +76,11 @@ namespace lua {
                 // rethrow lua errors as such
                 e.push_lua_error(L);
             }
+            catch(std::exception &e) {
+                L->pushstring(e.what());
+            }
             catch(...) {
-                // C++ exceptions (pointers to them, actually) are stored as lua userdata and
-                // then thrown
-                L->createuserdata<std::exception_ptr>(std::current_exception());
-                L->rawgetfield(REGISTRYINDEX, cpp_exception_metatable);
-                L->setmetatable(-2);
+                L->pushstring("Unknown exception");
             }
 
             // lua_error does longjmp(), so destructors for objects in this function will not be
@@ -238,21 +221,11 @@ namespace lua {
             pushlightuserdata(this);
             rawsetfield(REGISTRYINDEX, this_cpp_object);
 
-            // a metatable for C++ exceptions travelling through lua code
-            newmetatable(cpp_exception_metatable);
-            lua_pushcfunction(cobj, &exception_to_string);
-            rawsetfield(-2, "__tostring");
-            pushboolean(false);
-            rawsetfield(-2, "__metatable");
-            pushdestructor<std::exception_ptr>();
-            rawsetfield(-2, "__gc");
-            pop();
-
             // a metatable for C++ functions callable from lua code
             newmetatable(cpp_function_metatable);
             pushboolean(false);
             rawsetfield(-2, "__metatable");
-            pushdestructor<FbTk::Slot<int, state *> >();
+            pushdestructor<Slot>();
             rawsetfield(-2, "__gc");
             pop();
 
@@ -279,25 +252,7 @@ namespace lua {
             throw std::bad_alloc();
         }
 
-        checkstack(3);
-        rawgetfield(REGISTRYINDEX, cpp_exception_metatable);
-        if(getmetatable(-2)) {
-            if(rawequal(-1, -2)) {
-                // it's a C++ exception, rethrow it
-                std::exception_ptr *ptr = static_cast<std::exception_ptr *>(touserdata(-3));
-                assert(ptr);
-
-                /*
-                 * we create a copy, so we can pop the object without fearing the exception will
-                 * be collected by lua's GC
-                 */
-                std::exception_ptr t(*ptr); ptr = NULL;
-                pop(3);
-                std::rethrow_exception(t);
-            }
-            pop(2);
-        }
-        // it's a lua exception, wrap it
+        // wrap the lua exception and throw it
         if(r == LUA_ERRERR)
             throw lua::errfunc_error(this);
         else
