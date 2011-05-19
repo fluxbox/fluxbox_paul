@@ -8,7 +8,7 @@ fbsetroot_LDADD=../src/FbRootWindow.o ../src/FbAtoms.o \
 			../src/FbTk/libFbTk.a
 fluxbox_update_configs_SOURCES=	fluxbox-update_configs.cc
 fluxbox_update_configs_LDADD=	../src/defaults.o ../src/Resources.o \
-			../src/FbTk/libFbTk.a
+			../src/FbTk/libFbTk.a ../libs/lua/src/liblua.a
 fluxbox_remote_SOURCES=	fluxbox-remote.cc
 
 MAINTAINERCLEANFILES=	Makefile.in

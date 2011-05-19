@@ -707,11 +707,14 @@ dnl AM_MAINTAINER_MODE
 dnl Output files
 AM_CONFIG_HEADER(config.h)
 
+AC_CONFIG_COMMANDS([libs/lua/src/Makefile], [cp $srcdir/libs/lua/src/Makefile libs/lua/src/Makefile])
+
 AC_OUTPUT(Makefile
 version.h
 src/Makefile
 src/FbTk/Makefile
 src/tests/Makefile
+libs/Makefile
 util/Makefile
 util/fbrun/Makefile
 data/Makefile
