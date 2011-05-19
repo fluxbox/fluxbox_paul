@@ -30,7 +30,7 @@ namespace lua {
         const char cpp_exception_metatable[] = "lua::cpp_exception_metatable";
         const char cpp_function_metatable [] = "lua::cpp_function_metatable";
         const char lua_exception_namespace[] = "lua::lua_exception_namespace";
-        const char this_cpp_object		  [] = "lua::this_cpp_object";
+        const char this_cpp_object	  [] = "lua::this_cpp_object";
 
         // converts C++ exceptions to strings, so lua can do something with them
         int exception_to_string(lua_State *l)
@@ -245,7 +245,7 @@ namespace lua {
         newmetatable(cpp_function_metatable);
         pushboolean(false);
         rawsetfield(-2, "__metatable");
-        pushdestructor<cpp_function>();
+        pushdestructor<FbTk::Slot<int, state *> >();
         rawsetfield(-2, "__gc");
         pop();
 
@@ -399,16 +399,13 @@ namespace lua {
         return r;
     }
 
-    void state::pushclosure(const cpp_function &fn, int n)
+    void state::do_pushclosure(int n)
     {
-        checkstack(2);
-
-        createuserdata<cpp_function>(fn);
         rawgetfield(REGISTRYINDEX, cpp_function_metatable);
         setmetatable(-2);
 
         insert(-n-1);
-        lua_pushcclosure(cobj.get(), &closure_trampoline, n+1);
+        lua_pushcclosure(cobj, &closure_trampoline, n+1);
     }
 
     void state::rawgetfield(int index, const char *k) throw(std::bad_alloc)
