@@ -130,29 +130,30 @@ namespace lua {
 
     // a fancy wrapper around lua_State
     class state {
-        std::shared_ptr<lua_State> cobj;
+        lua_State *cobj;
 
         // destructor for C++ objects stored as lua userdata
         template<typename T>
-            static int destroy_cpp_object(lua_State *l)
-            {
-                T *ptr = static_cast<T *>(lua_touserdata(l, -1));
-                assert(ptr);
-                try {
-                    // throwing exceptions in destructors is a bad idea
-                    // but we catch (and ignore) them, just in case
-                    ptr->~T();
-                }
-                catch(...) {
-                }
-                return 0;
+        static int destroy_cpp_object(lua_State *l)
+        {
+            T *ptr = static_cast<T *>(lua_touserdata(l, -1));
+            assert(ptr);
+            try {
+                // throwing exceptions in destructors is a bad idea
+                // but we catch (and ignore) them, just in case
+                ptr->~T();
             }
+            catch(...) {
+            }
+            return 0;
+        }
 
         bool safe_compare(lua_CFunction trampoline, int index1, int index2);
         void do_pushclosure(int n);
 
     public:
         state();
+        ~state() { lua_close(cobj); }
 
         /*
          * Lua functions come in three flavours
@@ -179,68 +180,68 @@ namespace lua {
 
         // type a, never throw
         int absindex(int index) throw() { return index<0 && -index<=gettop() ? gettop()+1+index : index; }
-        bool getmetatable(int index) throw() { return lua_getmetatable(cobj.get(), index); }
-        int gettop() throw() { return lua_gettop(cobj.get()); }
-        void insert(int index) throw() { lua_insert(cobj.get(), index); }
-        bool isboolean(int index) throw() { return lua_isboolean(cobj.get(), index); }
-        bool isfunction(int index) throw() { return lua_isfunction(cobj.get(), index); }
-        bool islightuserdata(int index) throw() { return lua_islightuserdata(cobj.get(), index); }
-        bool isnil(int index) throw() { return lua_isnil(cobj.get(), index); }
-        bool isnone(int index) throw() { return lua_isnone(cobj.get(), index); }
-        bool isnumber(int index) throw() { return lua_isnumber(cobj.get(), index); }
-        bool isstring(int index) throw() { return lua_isstring(cobj.get(), index); }
-        void pop(int n = 1) throw() { lua_pop(cobj.get(), n); }
-        void pushboolean(bool b) throw() { lua_pushboolean(cobj.get(), b); }
-        void pushinteger(integer n) throw() { lua_pushinteger(cobj.get(), n); }
-        void pushlightuserdata(void *p) throw() { lua_pushlightuserdata(cobj.get(), p); }
-        void pushnil() throw() { lua_pushnil(cobj.get()); }
-        void pushnumber(number n) throw() { lua_pushnumber(cobj.get(), n); }
-        void pushvalue(int index) throw() { lua_pushvalue(cobj.get(), index); }
-        void rawget(int index) throw() { lua_rawget(cobj.get(), index); }
-        void rawgeti(int index, int n) throw() { lua_rawgeti(cobj.get(), index, n); }
-        bool rawequal(int index1, int index2) throw() { return lua_rawequal(cobj.get(), index1, index2); }
-        void replace(int index) throw() { lua_replace(cobj.get(), index); }
+        bool getmetatable(int index) throw() { return lua_getmetatable(cobj, index); }
+        int gettop() throw() { return lua_gettop(cobj); }
+        void insert(int index) throw() { lua_insert(cobj, index); }
+        bool isboolean(int index) throw() { return lua_isboolean(cobj, index); }
+        bool isfunction(int index) throw() { return lua_isfunction(cobj, index); }
+        bool islightuserdata(int index) throw() { return lua_islightuserdata(cobj, index); }
+        bool isnil(int index) throw() { return lua_isnil(cobj, index); }
+        bool isnone(int index) throw() { return lua_isnone(cobj, index); }
+        bool isnumber(int index) throw() { return lua_isnumber(cobj, index); }
+        bool isstring(int index) throw() { return lua_isstring(cobj, index); }
+        void pop(int n = 1) throw() { lua_pop(cobj, n); }
+        void pushboolean(bool b) throw() { lua_pushboolean(cobj, b); }
+        void pushinteger(integer n) throw() { lua_pushinteger(cobj, n); }
+        void pushlightuserdata(void *p) throw() { lua_pushlightuserdata(cobj, p); }
+        void pushnil() throw() { lua_pushnil(cobj); }
+        void pushnumber(number n) throw() { lua_pushnumber(cobj, n); }
+        void pushvalue(int index) throw() { lua_pushvalue(cobj, index); }
+        void rawget(int index) throw() { lua_rawget(cobj, index); }
+        void rawgeti(int index, int n) throw() { lua_rawgeti(cobj, index, n); }
+        bool rawequal(int index1, int index2) throw() { return lua_rawequal(cobj, index1, index2); }
+        void replace(int index) throw() { lua_replace(cobj, index); }
         // lua_setmetatable returns int, but docs don't specify it's meaning :/
-        int setmetatable(int index) throw() { return lua_setmetatable(cobj.get(), index); }
-        void settop(int index) throw() { return lua_settop(cobj.get(), index); }
-        bool toboolean(int index) throw() { return lua_toboolean(cobj.get(), index); }
-        integer tointeger(int index) throw() { return lua_tointeger(cobj.get(), index); }
-        number tonumber(int index) throw() { return lua_tonumber(cobj.get(), index); }
-        void* touserdata(int index) throw() { return lua_touserdata(cobj.get(), index); }
-        Type type(int index) throw() { return static_cast<Type>(lua_type(cobj.get(), index)); }
+        int setmetatable(int index) throw() { return lua_setmetatable(cobj, index); }
+        void settop(int index) throw() { return lua_settop(cobj, index); }
+        bool toboolean(int index) throw() { return lua_toboolean(cobj, index); }
+        integer tointeger(int index) throw() { return lua_tointeger(cobj, index); }
+        number tonumber(int index) throw() { return lua_tonumber(cobj, index); }
+        void* touserdata(int index) throw() { return lua_touserdata(cobj, index); }
+        Type type(int index) throw() { return static_cast<Type>(lua_type(cobj, index)); }
         // typename is a reserved word :/
-        const char* type_name(Type tp) throw() { return lua_typename(cobj.get(), tp); }
-        void unref(int t, int ref) throw() { return luaL_unref(cobj.get(), t, ref); }
+        const char* type_name(Type tp) throw() { return lua_typename(cobj, tp); }
+        void unref(int t, int ref) throw() { return luaL_unref(cobj, t, ref); }
 
         // type b, throw only on memory allocation errors
         // checkstack correctly throws bad_alloc, because lua_checkstack kindly informs us of
         // that sitution
         void checkstack(int extra) throw(std::bad_alloc);
-        const char* gsub(const char *s, const char *p, const char *r) { return luaL_gsub(cobj.get(), s, p, r); }
-        bool newmetatable(const char *tname) { return luaL_newmetatable(cobj.get(), tname); }
-        void newtable() { lua_newtable(cobj.get()); }
-        void *newuserdata(size_t size) { return lua_newuserdata(cobj.get(), size); }
+        const char* gsub(const char *s, const char *p, const char *r) { return luaL_gsub(cobj, s, p, r); }
+        bool newmetatable(const char *tname) { return luaL_newmetatable(cobj, tname); }
+        void newtable() { lua_newtable(cobj); }
+        void *newuserdata(size_t size) { return lua_newuserdata(cobj, size); }
         // Functor can be anything that FbTk::Slot can handle, everything else remains
         // identical
         template<typename Functor>
         void pushclosure(const Functor &fn, int n);
         template<typename Functor>
         void pushfunction(const Functor &fn) { pushclosure(fn, 0); }
-        void pushstring(const char *s) { lua_pushstring(cobj.get(), s); }
-        void pushstring(const char *s, size_t len) { lua_pushlstring(cobj.get(), s, len); }
-        void pushstring(const std::string &s) { lua_pushlstring(cobj.get(), s.c_str(), s.size()); }
+        void pushstring(const char *s) { lua_pushstring(cobj, s); }
+        void pushstring(const char *s, size_t len) { lua_pushlstring(cobj, s, len); }
+        void pushstring(const std::string &s) { lua_pushlstring(cobj, s.c_str(), s.size()); }
         void rawgetfield(int index, const char *k) throw(std::bad_alloc);
-        void rawset(int index) { lua_rawset(cobj.get(), index); }
+        void rawset(int index) { lua_rawset(cobj, index); }
         void rawsetfield(int index, const char *k) throw(std::bad_alloc);
-        int ref(int t) { return luaL_ref(cobj.get(), t); }
+        int ref(int t) { return luaL_ref(cobj, t); }
         // len recieves length, if not null. Returned value may contain '\0'
-        const char* tocstring(int index, size_t *len = NULL) { return lua_tolstring(cobj.get(), index, len); }
+        const char* tocstring(int index, size_t *len = NULL) { return lua_tolstring(cobj, index, len); }
         // Don't use pushclosure() to create a __gc function. The problem is that lua calls them
         // in an unspecified order, and we may end up destroying the object holding the
         // std::function before we get a chance to call it. This pushes a function that simply
         // calls ~T when the time comes. Only set it as __gc on userdata of type T.
         template<typename T>
-        void pushdestructor() { lua_pushcfunction(cobj.get(), &destroy_cpp_object<T>); }
+        void pushdestructor() { lua_pushcfunction(cobj, &destroy_cpp_object<T>); }
 
         // type c, throw everything but the kitchen sink
         // call() is a protected mode call, we don't allow unprotected calls
