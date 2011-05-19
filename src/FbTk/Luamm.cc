@@ -221,51 +221,56 @@ namespace lua {
     }
 
     state::state()
+        : cobj(luaL_newstate())
     {
-        if(lua_State *l = luaL_newstate())
-            cobj.reset(l, &lua_close);
-        else {
+        if(cobj == NULL) {
             // docs say this can happen only in case of a memory allocation error
             throw std::bad_alloc();
         }
 
-        // set our panic function
-        lua_atpanic(cobj.get(), panic_throw);
+        try {
+            // set our panic function
+            lua_atpanic(cobj, panic_throw);
 
-        checkstack(2);
+            checkstack(2);
 
-        // store a pointer to ourselves
-        pushlightuserdata(this);
-        rawsetfield(REGISTRYINDEX, this_cpp_object);
+            // store a pointer to ourselves
+            pushlightuserdata(this);
+            rawsetfield(REGISTRYINDEX, this_cpp_object);
 
-        // a metatable for C++ exceptions travelling through lua code
-        newmetatable(cpp_exception_metatable);
-        lua_pushcfunction(cobj.get(), &exception_to_string);
-        rawsetfield(-2, "__tostring");
-        pushboolean(false);
-        rawsetfield(-2, "__metatable");
-        pushdestructor<std::exception_ptr>();
-        rawsetfield(-2, "__gc");
-        pop();
+            // a metatable for C++ exceptions travelling through lua code
+            newmetatable(cpp_exception_metatable);
+            lua_pushcfunction(cobj, &exception_to_string);
+            rawsetfield(-2, "__tostring");
+            pushboolean(false);
+            rawsetfield(-2, "__metatable");
+            pushdestructor<std::exception_ptr>();
+            rawsetfield(-2, "__gc");
+            pop();
 
-        // a metatable for C++ functions callable from lua code
-        newmetatable(cpp_function_metatable);
-        pushboolean(false);
-        rawsetfield(-2, "__metatable");
-        pushdestructor<FbTk::Slot<int, state *> >();
-        rawsetfield(-2, "__gc");
-        pop();
+            // a metatable for C++ functions callable from lua code
+            newmetatable(cpp_function_metatable);
+            pushboolean(false);
+            rawsetfield(-2, "__metatable");
+            pushdestructor<FbTk::Slot<int, state *> >();
+            rawsetfield(-2, "__gc");
+            pop();
 
-        // while they're travelling through C++ code, lua exceptions will reside here
-        newtable();
-        rawsetfield(REGISTRYINDEX, lua_exception_namespace);
+            // while they're travelling through C++ code, lua exceptions will reside here
+            newtable();
+            rawsetfield(REGISTRYINDEX, lua_exception_namespace);
 
-        luaL_openlibs(cobj.get());
+            luaL_openlibs(cobj);
+        }
+        catch(...) {
+            lua_close(cobj);
+            throw;
+        }
     }
 
     void state::call(int nargs, int nresults, int errfunc)
     {
-        int r = lua_pcall(cobj.get(), nargs, nresults, errfunc);
+        int r = lua_pcall(cobj, nargs, nresults, errfunc);
         if(r == 0)
             return;
 
@@ -301,7 +306,7 @@ namespace lua {
 
     void state::checkstack(int extra) throw(std::bad_alloc)
     {
-        if(not lua_checkstack(cobj.get(), extra))
+        if(not lua_checkstack(cobj, extra))
             throw std::bad_alloc();
     }
 
@@ -309,7 +314,7 @@ namespace lua {
     {
         assert(n>=0);
         checkstack(1);
-        lua_pushcfunction(cobj.get(), safe_concat_trampoline);
+        lua_pushcfunction(cobj, safe_concat_trampoline);
         insert(-n-1);
         call(n, 1, 0);
     }
@@ -326,7 +331,7 @@ namespace lua {
     int state::gc(int what, int data)
     {
         checkstack(3);
-        lua_pushcfunction(cobj.get(), safe_gc_trampoline);
+        lua_pushcfunction(cobj, safe_gc_trampoline);
         pushinteger(what);
         pushinteger(data);
         call(2, 1, 0);
@@ -349,7 +354,7 @@ namespace lua {
         checkstack(2);
         pushvalue(index);
         insert(-2);
-        lua_pushcfunction(cobj.get(), (&safe_misc_trampoline<&lua_gettable, 1>));
+        lua_pushcfunction(cobj, (&safe_misc_trampoline<&lua_gettable, 1>));
         insert(-3);
         call(2, 1, 0);
     }
@@ -362,7 +367,7 @@ namespace lua {
     void state::loadfile(const char *filename)
         throw(lua::syntax_error, lua::file_error, std::bad_alloc)
         {
-            switch(luaL_loadfile(cobj.get(), filename)) {
+            switch(luaL_loadfile(cobj, filename)) {
                 case 0:
                     return;
                 case LUA_ERRSYNTAX:
@@ -378,7 +383,7 @@ namespace lua {
 
     void state::loadstring(const char *s) throw(lua::syntax_error, std::bad_alloc)
     {
-        switch(luaL_loadstring(cobj.get(), s)) {
+        switch(luaL_loadstring(cobj, s)) {
             case 0:
                 return;
             case LUA_ERRSYNTAX:
@@ -395,7 +400,7 @@ namespace lua {
         checkstack(2);
         pushvalue(index);
         insert(-2);
-        lua_pushcfunction(cobj.get(), &safe_next_trampoline);
+        lua_pushcfunction(cobj, &safe_next_trampoline);
         insert(-3);
 
         call(2, MULTRET, 0);
@@ -416,10 +421,10 @@ namespace lua {
     }
 
     void state::rawgetfield(int index, const char *k) throw(std::bad_alloc)
-    { lua::rawgetfield(cobj.get(), index, k); }
+    { lua::rawgetfield(cobj, index, k); }
 
     void state::rawsetfield(int index, const char *k) throw(std::bad_alloc)
-    { lua::rawsetfield(cobj.get(), index, k); }
+    { lua::rawsetfield(cobj, index, k); }
 
     bool state::safe_compare(lua_CFunction trampoline, int index1, int index2)
     {
@@ -432,7 +437,7 @@ namespace lua {
         index2 = absindex(index2);
 
         checkstack(3);
-        lua_pushcfunction(cobj.get(), trampoline);
+        lua_pushcfunction(cobj, trampoline);
         pushvalue(index1);
         pushvalue(index2);
         call(2, 1, 0);
@@ -456,7 +461,7 @@ namespace lua {
         checkstack(2);
         pushvalue(index);
         insert(-3);
-        lua_pushcfunction(cobj.get(), (&safe_misc_trampoline<&lua_settable, 0>));
+        lua_pushcfunction(cobj, (&safe_misc_trampoline<&lua_settable, 0>));
         insert(-4);
         call(3, 0, 0);
     }
@@ -464,7 +469,7 @@ namespace lua {
     std::string state::tostring(int index) throw(lua::not_string_error)
     {
         size_t len;
-        const char *str = lua_tolstring(cobj.get(), index, &len);
+        const char *str = lua_tolstring(cobj, index, &len);
         if(not str)
             throw not_string_error();
         return std::string(str, len);
