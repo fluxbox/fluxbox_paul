@@ -1,6 +1,7 @@
 noinst_LIBRARIES = libFbTk.a
 
 AM_CPPFLAGS=@CPPFLAGS@
+INCLUDES = -I$(top_srcdir)/libs/lua/src
 
 if XFT
 xft_SOURCE= XftFontImp.hh XftFontImp.cc

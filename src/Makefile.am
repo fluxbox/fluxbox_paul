@@ -39,6 +39,7 @@ PROGRAM_PREFIX=@program_prefix@
 PROGRAM_SUFFIX=@program_suffix@
 
 AM_CPPFLAGS=
+INCLUDES = -I$(top_srcdir)/libs/lua/src
 
 bin_PROGRAMS= fluxbox
 BUILT_SOURCES = defaults.hh defaults.cc
@@ -166,4 +167,4 @@ fluxbox_SOURCES = AtomHandler.hh ArrowButton.hh ArrowButton.cc \
 	${REMEMBER_SOURCE} ${TOOLBAR_SOURCE}
 
 
-LDADD=FbTk/libFbTk.a FbTk/LogicCommands.o defaults.$(OBJEXT)
+LDADD=FbTk/libFbTk.a ../libs/lua/src/liblua.a FbTk/LogicCommands.o defaults.$(OBJEXT)
