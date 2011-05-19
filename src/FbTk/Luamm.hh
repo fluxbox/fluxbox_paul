@@ -238,7 +238,7 @@ namespace lua {
         const char* tocstring(int index, size_t *len = NULL) { return lua_tolstring(cobj, index, len); }
         // Don't use pushclosure() to create a __gc function. The problem is that lua calls them
         // in an unspecified order, and we may end up destroying the object holding the
-        // std::function before we get a chance to call it. This pushes a function that simply
+        // FbTk::Slot before we get a chance to call it. This pushes a function that simply
         // calls ~T when the time comes. Only set it as __gc on userdata of type T.
         template<typename T>
         void pushdestructor() { lua_pushcfunction(cobj, &destroy_cpp_object<T>); }
