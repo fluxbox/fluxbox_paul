@@ -267,8 +267,14 @@ namespace lua {
         std::string tostring(int index) throw(lua::not_string_error);
         // allocate a new lua userdata of appropriate size, and create a object in it
         // pushes the userdata on stack and returns the pointer
-        template<typename T, typename... Args>
-            T* createuserdata(Args&&... args);
+        template<typename T>
+        T* createuserdata();
+        template<typename T, typename Arg1>
+        T* createuserdata(const Arg1 &arg1);
+        template<typename T, typename Arg1, typename Arg2>
+        T* createuserdata(const Arg1 &arg1, const Arg2 &arg2);
+        template<typename T, typename Arg1, typename Arg2, typename Arg3>
+        T* createuserdata(const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3);
     };
 
     /*
@@ -303,13 +309,46 @@ namespace lua {
         void operator-=(int n_) throw() { n-=n_; assert(n >= 0); }
     };
 
-    template<typename T, typename... Args>
-    T* state::createuserdata(Args&&... args)
+    template<typename T>
+    T* state::createuserdata()
     {
         stack_sentry s(*this);
 
         void *t = newuserdata(sizeof(T));
-        new(t) T(std::forward<Args>(args)...);
+        new(t) T;
+        ++s;
+        return static_cast<T *>(t);
+    }
+
+    template<typename T, typename Arg1>
+    T* state::createuserdata(const Arg1 &arg1)
+    {
+        stack_sentry s(*this);
+
+        void *t = newuserdata(sizeof(T));
+        new(t) T(arg1);
+        ++s;
+        return static_cast<T *>(t);
+    }
+
+    template<typename T, typename Arg1, typename Arg2>
+    T* state::createuserdata(const Arg1 &arg1, const Arg2 &arg2)
+    {
+        stack_sentry s(*this);
+
+        void *t = newuserdata(sizeof(T));
+        new(t) T(arg1, arg2);
+        ++s;
+        return static_cast<T *>(t);
+    }
+
+    template<typename T, typename Arg1, typename Arg2, typename Arg3>
+    T* state::createuserdata(const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3)
+    {
+        stack_sentry s(*this);
+
+        void *t = newuserdata(sizeof(T));
+        new(t) T(arg1, arg2, arg3);
         ++s;
         return static_cast<T *>(t);
     }
