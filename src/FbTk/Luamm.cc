@@ -108,10 +108,6 @@ namespace lua {
         /*
          * This function is called when lua encounters an error outside of any protected
          * environment
-         * Throwing the exception through lua code appears to work, even if it was compiled
-         * without -fexceptions. If it turns out, it fails in some conditions, it could be
-         * replaced with some longjmp() magic. But that shouldn't be necessary, as this function
-         * will not be called under normal conditions (we execute everything in protected mode).
          */
         int panic_throw(lua_State *l)
         {
@@ -187,6 +183,17 @@ namespace lua {
 
         L->rawgetfield(REGISTRYINDEX, lua_exception_namespace);
         L->insert(-2);
+        key = L->ref(-2);
+        L->pop(1);
+    }
+
+    exception::exception(const exception &other)
+        : std::runtime_error(other), L(other.L)
+    {
+        L->checkstack(2);
+
+        L->rawgetfield(REGISTRYINDEX, lua_exception_namespace);
+        L->rawgeti(-1, other.key);
         key = L->ref(-2);
         L->pop(1);
     }
