@@ -27,13 +27,15 @@
 #include <stdexcept>
 
 #include <lua.h>
+#include <lauxlib.h>
+
+#include "Slot.hh"
 
 namespace lua {
     class state;
 
     typedef lua_Integer integer;
     typedef lua_Number number;
-    typedef std::function<int(state *)> cpp_function;
 
     enum {
         ENVIRONINDEX = LUA_ENVIRONINDEX,
@@ -175,7 +177,9 @@ namespace lua {
             }
 
         bool safe_compare(lua_CFunction trampoline, int index1, int index2);
-        public:
+        void do_pushclosure(int n);
+
+    public:
         state();
 
         /*
@@ -244,10 +248,12 @@ namespace lua {
         bool newmetatable(const char *tname) { return luaL_newmetatable(cobj.get(), tname); }
         void newtable() { lua_newtable(cobj.get()); }
         void *newuserdata(size_t size) { return lua_newuserdata(cobj.get(), size); }
-        // cpp_function can be anything that std::function can handle, everything else remains
+        // Functor can be anything that FbTk::Slot can handle, everything else remains
         // identical
-        void pushclosure(const cpp_function &fn, int n);
-        void pushfunction(const cpp_function &fn) { pushclosure(fn, 0); }
+        template<typename Functor>
+        void pushclosure(const Functor &fn, int n);
+        template<typename Functor>
+        void pushfunction(const Functor &fn) { pushclosure(fn, 0); }
         void pushstring(const char *s) { lua_pushstring(cobj.get(), s); }
         void pushstring(const char *s, size_t len) { lua_pushlstring(cobj.get(), s, len); }
         void pushstring(const std::string &s) { lua_pushlstring(cobj.get(), s.c_str(), s.size()); }
@@ -262,8 +268,7 @@ namespace lua {
         // std::function before we get a chance to call it. This pushes a function that simply
         // calls ~T when the time comes. Only set it as __gc on userdata of type T.
         template<typename T>
-            void pushdestructor()
-            { lua_pushcfunction(cobj.get(), &destroy_cpp_object<T>); }
+        void pushdestructor() { lua_pushcfunction(cobj.get(), &destroy_cpp_object<T>); }
 
         // type c, throw everything but the kitchen sink
         // call() is a protected mode call, we don't allow unprotected calls
@@ -279,7 +284,8 @@ namespace lua {
         void loadstring(const char *s) throw(lua::syntax_error, std::bad_alloc);
         bool next(int index);
         // register is a reserved word :/
-        void register_fn(const char *name, const cpp_function &f) { pushfunction(f); setglobal(name); }
+        template<typename Functor>
+        void register_fn(const char *name, const Functor &f) { pushfunction(f); setglobal(name); }
         void setfield(int index, const char *k);
         void setglobal(const char *name) { setfield(GLOBALSINDEX, name); }
         void settable(int index);
@@ -327,15 +333,24 @@ namespace lua {
     };
 
     template<typename T, typename... Args>
-        T* state::createuserdata(Args&&... args)
-        {
-            stack_sentry s(*this);
+    T* state::createuserdata(Args&&... args)
+    {
+        stack_sentry s(*this);
 
-            void *t = newuserdata(sizeof(T));
-            new(t) T(std::forward<Args>(args)...);
-            ++s;
-            return static_cast<T *>(t);
-        }
+        void *t = newuserdata(sizeof(T));
+        new(t) T(std::forward<Args>(args)...);
+        ++s;
+        return static_cast<T *>(t);
+    }
+
+    template<typename Functor>
+    void state::pushclosure(const Functor &fn, int n)
+    {
+        checkstack(2);
+
+        createuserdata<FbTk::SlotImpl<Functor, int, state *> >(fn);
+        do_pushclosure(n);
+    }
 }
 
 #endif // FBTK_LUAMM_HH
