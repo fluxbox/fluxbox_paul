@@ -226,4 +226,33 @@ void ResourceManager::unlock() {
     }
 }
 
+// add the resource and load its value
+void ResourceManager::addResource(Resource_base &r) {
+    m_resourcelist.push_back(&r);
+    m_resourcelist.unique();
+
+    // lock ensures that the database is loaded.
+    lock();
+
+    if (m_database == 0) {
+        unlock();
+        return;
+    }
+
+    XrmValue value;
+    char *value_type;
+
+    // now, load the value for this resource
+    if (XrmGetResource(**m_database, r.name().c_str(),
+                       r.altName().c_str(), &value_type, &value)) {
+        r.setFromString(value.addr);
+    } else {
+        std::cerr<<"Failed to read: "<<r.name()<<std::endl;
+        std::cerr<<"Setting default value"<<std::endl;
+        r.setDefaultValue();
+    }
+
+    unlock();
+}
+
 } // end namespace FbTk
