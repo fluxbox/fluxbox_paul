@@ -233,6 +233,7 @@ namespace lua {
         void rawgetfield(int index, const char *k) throw(std::bad_alloc);
         void rawset(int index) { lua_rawset(cobj, index); }
         void rawsetfield(int index, const char *k) throw(std::bad_alloc);
+        void rawseti(int index, int n) { lua_rawseti(cobj, index, n); }
         int ref(int t) { return luaL_ref(cobj, t); }
         // len recieves length, if not null. Returned value may contain '\0'
         const char* tocstring(int index, size_t *len = NULL) { return lua_tolstring(cobj, index, len); }
