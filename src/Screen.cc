@@ -74,6 +74,7 @@
 #include "FbTk/STLUtil.hh"
 #include "FbTk/KeyUtil.hh"
 #include "FbTk/Util.hh"
+#include "FbTk/Luamm.hh"
 
 //use GNU extensions
 #ifndef _GNU_SOURCE
@@ -258,6 +259,19 @@ setFromString(const char *strval) {
         }
     }
     setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<FbWinFrame::TabPlacement>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+
+    setFromString(l.isstring(-1) ? l.tostring(-1).c_str() : "");
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<FbWinFrame::TabPlacement>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
 }
 
 } // end namespace FbTk

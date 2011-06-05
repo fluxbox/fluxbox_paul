@@ -43,6 +43,7 @@
 #include "FbTk/Transparent.hh"
 #include "FbTk/MacroCommand.hh"
 #include "FbTk/MemFun.hh"
+#include "FbTk/Luamm.hh"
 
 #include "FbCommands.hh"
 #include "Layer.hh"
@@ -162,6 +163,21 @@ void FbTk::Resource<Slit::Placement>::setFromString(const char *strval) {
         m_value = Slit::RIGHTBOTTOM;
     else
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<Slit::Placement>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<Slit::Placement>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
 }
 
 } // end namespace FbTk

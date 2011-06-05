@@ -51,6 +51,7 @@
 #include "FbTk/STLUtil.hh"
 #include "FbTk/Select2nd.hh"
 #include "FbTk/Compose.hh"
+#include "FbTk/Luamm.hh"
 
 #include <typeinfo>
 #include <iterator>
@@ -90,6 +91,21 @@ void FbTk::Resource<FbTk::Container::Alignment>::setFromString(const char *str) 
         m_value = FbTk::Container::RELATIVE;
     else
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<FbTk::Container::Alignment>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<FbTk::Container::Alignment>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
 }
 
 } // end namespace FbTk

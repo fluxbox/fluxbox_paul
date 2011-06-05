@@ -31,6 +31,7 @@
 #include "Debug.hh"
 
 #include "FbTk/EventManager.hh"
+#include "FbTk/Luamm.hh"
 
 #include <string>
 #include <iostream>
@@ -625,6 +626,22 @@ setFromString(char const *strval) {
 }
 
 template<>
+void FbTk::Resource<FocusControl::FocusModel>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<FocusControl::FocusModel>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
+}
+
+
+template<>
 std::string FbTk::Resource<FocusControl::TabFocusModel>::getString() const {
     switch (m_value) {
     case FocusControl::MOUSETABFOCUS:
@@ -646,6 +663,21 @@ setFromString(char const *strval) {
         m_value = FocusControl::CLICKTABFOCUS;
     else
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<FocusControl::TabFocusModel>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<FocusControl::TabFocusModel>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
 }
 
 } // end namespace FbTk

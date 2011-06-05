@@ -23,6 +23,7 @@
 
 #include "FbTk/StringUtil.hh"
 #include "FbTk/Resource.hh"
+#include "FbTk/Luamm.hh"
 #include "WinButton.hh"
 
 #include "fluxbox.hh"
@@ -40,8 +41,6 @@
 
 using std::string;
 using std::vector;
-
-using namespace FbTk;
 
 //-----------------------------------------------------------------
 //---- accessors for int, bool, and some enums with Resource ------
@@ -61,6 +60,22 @@ setFromString(const char* strval) {
 }
 
 template<>
+void FbTk::Resource<int>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isnumber(-1))
+        *this = l.tonumber(-1);
+    else if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<int>::pushToLua(lua::state &l) const {
+    l.pushnumber(*this);
+}
+
+
+template<>
 string FbTk::Resource<string>::
 getString() const { return **this; }
 
@@ -68,6 +83,19 @@ template<>
 void FbTk::Resource<string>::
 setFromString(const char *strval) {
     *this = strval;
+}
+
+template<>
+void FbTk::Resource<string>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        *this = l.tostring(-1);
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<string>::pushToLua(lua::state &l) const {
+    l.pushstring(*this);
 }
 
 
@@ -83,41 +111,66 @@ setFromString(char const *strval) {
     *this = (bool)!strcasecmp(strval, "true");
 }
 
+template<>
+void FbTk::Resource<bool>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else if(l.isnumber(-1))
+        *this = l.tointeger(-1) != 0;
+    else
+        *this = l.toboolean(-1);
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<bool>::pushToLua(lua::state &l) const {
+    l.pushboolean(*this);
+}
+
+
+namespace {
+    struct ButtonPair {
+        WinButton::Type type;
+        const char *name;
+    };
+    const ButtonPair button_map[] = {
+        { WinButton::SHADE, "Shade" },
+        { WinButton::MINIMIZE, "Minimize" },
+        { WinButton::MAXIMIZE, "Maximize" },
+        { WinButton::CLOSE, "Close" },
+        { WinButton::STICK, "Stick" },
+        { WinButton::MENUICON, "MenuIcon" }
+    };
+
+    const char *buttonToStr(WinButton::Type t) {
+        for(size_t i = 0; i < sizeof(button_map)/sizeof(button_map[0]); ++i) {
+            if(button_map[i].type == t)
+                return button_map[i].name;
+        }
+        assert(0);
+    }
+
+    WinButton::Type strToButton(const char *v) {
+        for(size_t i = 0; i < sizeof(button_map)/sizeof(button_map[0]); ++i) {
+            if(strcasecmp(v, button_map[i].name) == 0)
+                return button_map[i].type;
+        }
+        throw std::runtime_error("bad button");
+    }
+}
 
 template<>
 string FbTk::Resource<vector<WinButton::Type> >::
 getString() const {
     string retval;
     for (size_t i = 0; i < m_value.size(); i++) {
-        switch (m_value[i]) {
-        case WinButton::SHADE:
-            retval.append("Shade");
-            break;
-        case WinButton::MINIMIZE:
-            retval.append("Minimize");
-            break;
-        case WinButton::MAXIMIZE:
-            retval.append("Maximize");
-            break;
-        case WinButton::CLOSE:
-            retval.append("Close");
-            break;
-        case WinButton::STICK:
-            retval.append("Stick");
-            break;
-        case WinButton::MENUICON:
-            retval.append("MenuIcon");
-            break;
-        default:
-            break;
-        }
+        retval.append(buttonToStr(m_value[i]));
         retval.append(" ");
     }
 
     return retval;
 }
-
-
 
 template<>
 void FbTk::Resource<vector<WinButton::Type> >::
@@ -127,23 +180,47 @@ setFromString(char const *strval) {
     //clear old values
     m_value.clear();
 
-    std::string v;
     for (size_t i = 0; i < val.size(); i++) {
-        v = FbTk::StringUtil::toLower(val[i]);
-        if (v == "maximize")
-            m_value.push_back(WinButton::MAXIMIZE);
-        else if (v == "minimize")
-            m_value.push_back(WinButton::MINIMIZE);
-        else if (v == "shade")
-            m_value.push_back(WinButton::SHADE);
-        else if (v == "stick")
-            m_value.push_back(WinButton::STICK);
-        else if (v == "menuicon")
-            m_value.push_back(WinButton::MENUICON);
-        else if (v == "close")
-            m_value.push_back(WinButton::CLOSE);
+        try {
+            m_value.push_back(strToButton(val[i].c_str()));
+        }
+        catch(std::runtime_error &) {
+        }
     }
 }
+
+template<>
+void FbTk::Resource<vector<WinButton::Type> >::setFromLua(lua::state &l) {
+    l.checkstack(1);
+    lua::stack_sentry s(l, -1);
+
+    if(l.type(-1) == lua::TTABLE) {
+        for(size_t i = 0; l.rawgeti(-1, i), !l.isnil(-1); l.pop(), ++i) {
+            if(l.isstring(-1)) {
+                try {
+                    m_value.push_back(strToButton(l.tostring(-1).c_str()));
+                }
+                catch(std::runtime_error &) {
+                }
+            }
+        }
+        l.pop();
+    }
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<vector<WinButton::Type> >::pushToLua(lua::state &l) const {
+    l.checkstack(2);
+    l.newtable();
+    lua::stack_sentry s(l);
+
+    for (size_t i = 0; i < m_value.size(); ++i) {
+        l.pushstring(buttonToStr(m_value[i]));
+        l.rawseti(-2, i);
+    }
+}
+
 
 template<>
 string FbTk::Resource<Fluxbox::TabsAttachArea>::
@@ -164,6 +241,26 @@ setFromString(char const *strval) {
 }
 
 template<>
+void FbTk::Resource<Fluxbox::TabsAttachArea>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+
+    if(l.isstring(-1) && strcasecmp(l.tostring(-1).c_str(), "Titlebar") == 0)
+        m_value = Fluxbox::ATTACH_AREA_TITLEBAR;
+    else
+        m_value = Fluxbox::ATTACH_AREA_WINDOW;
+
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<Fluxbox::TabsAttachArea>::pushToLua(lua::state &l) const {
+    l.checkstack(1);
+
+    l.pushstring(getString());
+}
+
+
+template<>
 string FbTk::Resource<unsigned int>::
 getString() const {
     return FbTk::StringUtil::number2String(m_value);
@@ -174,6 +271,21 @@ void FbTk::Resource<unsigned int>::
 setFromString(const char *strval) {
     if (!FbTk::StringUtil::extractNumber(strval, m_value))
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<unsigned int>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isnumber(-1))
+        *this = l.tonumber(-1);
+    else if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<unsigned int>::pushToLua(lua::state &l) const {
+    l.pushnumber(*this);
 }
 
 
@@ -188,6 +300,21 @@ void FbTk::Resource<long long>::
 setFromString(const char *strval) {
     if (!FbTk::StringUtil::extractNumber(strval, m_value))
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<long long>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isnumber(-1))
+        *this = l.tonumber(-1);
+    else if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<long long>::pushToLua(lua::state &l) const {
+    l.pushnumber(*this);
 }
 
 
@@ -209,6 +336,30 @@ setFromString(const char *strval) {
 }
 
 template<>
+void FbTk::Resource<ResourceLayer>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+
+    int tempnum = -1;
+    if(l.isnumber(-1))
+        tempnum = l.tonumber(-1);
+    else if(l.isstring(-1))
+        tempnum = ::ResourceLayer::getNumFromString(l.tostring(-1));
+
+    if (tempnum >= 0 && tempnum < ::ResourceLayer::NUM_LAYERS)
+        m_value = tempnum;
+    else
+        setDefaultValue();
+
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<ResourceLayer>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
+}
+
+
+template<>
 string FbTk::Resource<long>::
 getString() const {
     return FbTk::StringUtil::number2String(m_value);
@@ -219,6 +370,21 @@ void FbTk::Resource<long>::
 setFromString(const char *strval) {
     if (!FbTk::StringUtil::extractNumber(strval, m_value))
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<long>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isnumber(-1))
+        *this = l.tonumber(-1);
+    else if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<long>::pushToLua(lua::state &l) const {
+    l.pushnumber(*this);
 }
 
 } // end namespace FbTk

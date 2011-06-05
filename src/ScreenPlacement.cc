@@ -31,6 +31,7 @@
 #include "Window.hh"
 
 #include "FbTk/Menu.hh"
+#include "FbTk/Luamm.hh"
 
 #include <iostream>
 #include <exception>
@@ -218,6 +219,21 @@ void FbTk::Resource<ScreenPlacement::PlacementPolicy>::setFromString(const char 
         setDefaultValue();
 }
 
+template<>
+void FbTk::Resource<ScreenPlacement::PlacementPolicy>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<ScreenPlacement::PlacementPolicy>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
+}
+
 
 template <>
 std::string FbTk::Resource<ScreenPlacement::RowDirection>::getString() const {
@@ -242,6 +258,21 @@ void FbTk::Resource<ScreenPlacement::RowDirection>::setFromString(const char *st
         setDefaultValue();
 }
 
+template<>
+void FbTk::Resource<ScreenPlacement::RowDirection>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<ScreenPlacement::RowDirection>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
+}
+
 template <>
 std::string FbTk::Resource<ScreenPlacement::ColumnDirection>::getString() const {
     switch (*(*this)) {
@@ -263,6 +294,21 @@ void FbTk::Resource<ScreenPlacement::ColumnDirection>::setFromString(const char 
         *(*this) = ScreenPlacement::BOTTOMTOP;
     else
         setDefaultValue();
+}
+
+template<>
+void FbTk::Resource<ScreenPlacement::ColumnDirection>::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1))
+        setFromString(l.tostring(-1).c_str());
+    else
+        setDefaultValue();
+    l.pop();
+}
+
+template<>
+void FbTk::Resource<ScreenPlacement::ColumnDirection>::pushToLua(lua::state &l) const {
+    l.pushstring(getString());
 }
 
 } // end namespace FbTk
