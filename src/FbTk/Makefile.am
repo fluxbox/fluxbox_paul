@@ -2,6 +2,7 @@ noinst_LIBRARIES = libFbTk.a
 
 AM_CPPFLAGS=@CPPFLAGS@
 INCLUDES = -I$(top_srcdir)/libs/lua/src
+CLEANFILES = LResourceHelper-lua.cc LResourceHelper.luac
 
 if XFT
 xft_SOURCE= XftFontImp.hh XftFontImp.cc
@@ -66,8 +67,15 @@ libFbTk_a_SOURCES = App.hh App.cc Color.cc Color.hh Command.hh \
 	Slot.hh Signal.hh MemFun.hh SelectArg.hh \
 	Util.hh \
 	RelCalcHelper.hh RelCalcHelper.cc \
-	Luamm.cc Luamm.hh \
+	Luamm.cc Luamm.hh LResource.cc LResource.hh LResourceHelper-lua.cc \
 	${xpm_SOURCE} \
 	${xft_SOURCE} \
 	${xmb_SOURCE} \
 	$(imlib2_SOURCE)
+
+%.luac: %.lua Makefile
+	$(top_builddir)/libs/lua/src/luac -o $@ $<
+
+
+%-lua.cc: %.luac $(top_srcdir)/luatoc.sh Makefile
+	$(top_srcdir)/luatoc.sh $< $@ $(<:.luac=)
