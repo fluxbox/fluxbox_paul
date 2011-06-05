@@ -37,6 +37,24 @@ using std::string;
 
 namespace FbTk {
 
+ResourceManager_base::~ResourceManager_base() {
+}
+
+string ResourceManager_base::resourceValue(const string &resname) const {
+    const Resource_base *res = findResource(resname);
+    if (res != 0)
+        return res->getString();
+
+    return "";
+}
+
+void ResourceManager_base::setResourceValue(const string &resname, const string &value) {
+    Resource_base *res = findResource(resname);
+    if (res != 0)
+        res->setFromString(value.c_str());
+
+}
+
 ResourceManager::ResourceManager(const char *filename, bool lock_db) :
  m_db_lock(0),
  m_database(0),
@@ -184,21 +202,6 @@ const Resource_base *ResourceManager::findResource(const string &resname) const 
             return *i;
     }
     return 0;
-}
-
-string ResourceManager::resourceValue(const string &resname) const {
-    const Resource_base *res = findResource(resname);
-    if (res != 0)
-        return res->getString();
-
-    return "";
-}
-
-void ResourceManager::setResourceValue(const string &resname, const string &value) {
-    Resource_base *res = findResource(resname);
-    if (res != 0)
-        res->setFromString(value.c_str());
-
 }
 
 ResourceManager &ResourceManager::lock() {

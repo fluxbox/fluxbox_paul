@@ -33,6 +33,10 @@
 #include <typeinfo>
 #include "XrmDatabaseHelper.hh"
 
+namespace lua {
+    class state;
+}
+
 namespace FbTk {
 
 class ResourceException: public std::exception {
@@ -62,6 +66,12 @@ public:
     /// get name of this resource
     const std::string& name() const { return m_name; }
 
+    // Sets the resource value using the value on top of lua stack. Pops the value.
+    virtual void setFromLua(lua::state &l) = 0;
+
+    // pushes the value of the resource on the stack
+    virtual void pushToLua(lua::state &l) const = 0;
+
 protected:
     Resource_base(const std::string &name, const std::string &altname):
     m_name(name), m_altname(altname)
@@ -75,7 +85,45 @@ private:
 template <typename T>
 class Resource;
 
-class ResourceManager
+class ResourceManager_base
+{
+public:
+    typedef std::list<Resource_base *> ResourceList;
+
+    virtual ~ResourceManager_base();
+
+    /// Save all resouces registered to this class
+    /// @return true on success
+    virtual bool save(const char *filename, const char *mergefilename=0) = 0;
+
+
+
+    /// Add resource to list, only used in Resource<T>
+    virtual void addResource(Resource_base &r) = 0;
+
+    /// Remove a specific resource, only used in Resource<T>
+    virtual void removeResource(Resource_base &r) = 0;
+
+    /// searches for the resource with the resourcename
+    /// @return pointer to resource base on success, else 0.
+    virtual Resource_base *findResource(const std::string &resourcename) = 0;
+    /// searches for the resource with the resourcename
+    /// @return pointer to resource base on success, else 0.
+    virtual const Resource_base *findResource(const std::string &resourcename) const = 0;
+
+    std::string resourceValue(const std::string &resourcename) const;
+    void setResourceValue(const std::string &resourcename, const std::string &value);
+
+    /**
+     * Will search and cast the resource to Resource<Type>,
+     * it will throw exception if it fails
+     * @return reference to resource type
+     */
+    template <typename ResourceType>
+    Resource<ResourceType> &getResource(const std::string &resource);
+};
+
+class ResourceManager: public ResourceManager_base
 {
 public:
     typedef std::list<Resource_base *> ResourceList;
@@ -96,30 +144,19 @@ public:
 
 
     /// Add resource to list, only used in Resource<T>
-    void addResource(Resource_base &r);
+    virtual void addResource(Resource_base &r);
 
     /// Remove a specific resource, only used in Resource<T>
-    void removeResource(Resource_base &r) {
+    virtual void removeResource(Resource_base &r) {
         m_resourcelist.remove(&r);
     }
 
     /// searches for the resource with the resourcename
     /// @return pointer to resource base on success, else 0.
-    Resource_base *findResource(const std::string &resourcename);
+    virtual Resource_base *findResource(const std::string &resourcename);
     /// searches for the resource with the resourcename
     /// @return pointer to resource base on success, else 0.
-    const Resource_base *findResource(const std::string &resourcename) const;
-
-    std::string resourceValue(const std::string &resourcename) const;
-    void setResourceValue(const std::string &resourcename, const std::string &value);
-
-    /**
-     * Will search and cast the resource to Resource<Type>,
-     * it will throw exception if it fails
-     * @return reference to resource type
-     */
-    template <typename ResourceType>
-    Resource<ResourceType> &getResource(const std::string &resource);
+    virtual const Resource_base *findResource(const std::string &resourcename) const;
 
     // this marks the database as "in use" and will avoid reloading
     // resources unless it is zero.
@@ -164,7 +201,7 @@ template <typename T>
 class Resource:public Resource_base, public Accessor<T> {
 public:
     typedef T Type;
-    Resource(ResourceManager &rm, T val, const std::string &name, const std::string &altname):
+    Resource(ResourceManager_base &rm, T val, const std::string &name, const std::string &altname):
         Resource_base(name, altname), m_value(val), m_defaultval(val), m_rm(rm) {
         m_rm.addResource(*this); // add this to resource handler
     }
@@ -180,6 +217,9 @@ public:
     /// @return string value of resource
     std::string getString() const;
 
+    virtual void setFromLua(lua::state &l);
+    virtual void pushToLua(lua::state &l) const;
+
     operator T() const { return m_value; }
     T& get() { return m_value; }
     T& operator*() { return m_value; }
@@ -188,13 +228,13 @@ public:
     const T *operator->() const { return &m_value; }
 private:
     T m_value, m_defaultval;
-    ResourceManager &m_rm;
+    ResourceManager_base &m_rm;
 };
 
 
 
 template <typename ResourceType>
-Resource<ResourceType> &ResourceManager::getResource(const std::string &resname) {
+Resource<ResourceType> &ResourceManager_base::getResource(const std::string &resname) {
     Resource_base *res = findResource(resname);
     if (res == 0) {
         throw ResourceException("Could not find resource \"" +
