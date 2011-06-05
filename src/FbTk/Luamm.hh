@@ -23,6 +23,7 @@
 #define FBTK_LUAMM_HH
 
 #include <assert.h>
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 
@@ -255,7 +256,8 @@ namespace lua {
         void getglobal(const char *name) { getfield(GLOBALSINDEX, name); }
         bool lessthan(int index1, int index2);
         void loadfile(const char *filename) throw(lua::syntax_error, lua::file_error, std::bad_alloc);
-        void loadstring(const char *s) throw(lua::syntax_error, std::bad_alloc);
+        void loadstring(const char *s, const char *chunkname = NULL) throw(lua::syntax_error, std::bad_alloc) { loadstring(s, strlen(s), chunkname); }
+        void loadstring(const char *s, size_t len, const char *chunkname = NULL) throw(lua::syntax_error, std::bad_alloc);
         bool next(int index);
         // register is a reserved word :/
         template<typename Functor>

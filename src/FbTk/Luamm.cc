@@ -145,6 +145,19 @@ namespace lua {
             return r ? 3 : 1;
         }
 
+        struct reader_data {
+            const void *s;
+            size_t len;
+        };
+
+        const char *string_reader(lua_State *, void *data, size_t *size)
+        {
+            reader_data *d = static_cast<reader_data *>(data);
+            *size = d->len;
+            d->len = 0;
+            return static_cast<const char *>(d->s);
+        }
+
     }
 
     std::string exception::get_error_msg(state *L)
@@ -336,9 +349,13 @@ namespace lua {
             }
         }
 
-    void state::loadstring(const char *s) throw(lua::syntax_error, std::bad_alloc)
+    void
+    state::loadstring(const char *s, size_t len, const char *chunkname)
+                        throw(lua::syntax_error, std::bad_alloc)
     {
-        switch(luaL_loadstring(cobj, s)) {
+        reader_data data = { s, len };
+
+        switch(lua_load(cobj, string_reader, &data, chunkname)) {
             case 0:
                 return;
             case LUA_ERRSYNTAX:
