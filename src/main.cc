@@ -432,7 +432,7 @@ void updateConfigFilesIfNeeded(const std::string& rc_file) {
     }
 }
 
-
+#include "WinButton.hh"
 int main(int argc, char **argv) {
 
     FbTk::NLSInit("fluxbox.cat");

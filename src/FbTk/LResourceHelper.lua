@@ -7,7 +7,7 @@ local function myerror(table, msg)
 end;
 
 local function check_arg(table, key)
-    if type(key) ~= 'string' then
+    if type(key) ~= 'string' and type(key) ~= 'number' then
         myerror(table, 'expecting strings as keys.');
     end;
     if string.match(key, "^_") then
@@ -53,11 +53,21 @@ local function index(table, key)
     return t;
 end;
 
+local function append_name(str, name)
+    if type(name) == 'string' and string.match(name, '^%a+$') then
+        return str .. '.' .. name;
+    elseif type(name) == 'number' then
+        return str .. '[' .. string.format('%g', name) .. ']';
+    else
+        return nil;
+    end;
+end;
+
 new_cat = function(table, key)
     local meta = getmetatable(table);
     local mt = {
         __newindex = newindex, __index = index,
-        _magic = cat_magic, _fullname = meta._fullname .. '.' .. key, _state = 0
+        _magic = cat_magic, _fullname = append_name(meta._fullname, key), _state = 0
     };
     meta[key] = setmetatable({}, mt);
     return meta[key];
@@ -69,10 +79,18 @@ local function register_resource(root, name, object)
 
     local head, tail = string.match(name, '^(%a+)%.?(.*)');
     local t = meta[head];
+    local mt = getmetatable(t);
+    if mt ~= nil and mt._magic == cat_magic then
+        t = mt;
+    end;
+
     if tail == '' then
-        meta[head] = object;
         if getmetatable(object) == res_magic then
+            meta[head] = object;
             write_resource(object, t);
+        else
+            meta[head] = nil;
+            root[head] = object;
         end;
         return t;
     end;
@@ -83,44 +101,41 @@ local function register_resource(root, name, object)
     return register_resource(t, tail, object);
 end;
 
-local function dump_value(val)
-    if type(val) == "string" then
-        return string.format('%q', val);
-    elseif type(val) == "number" then
-        return string.format('%g', val);
+local function dump_(key, value, fd)
+    if type(value) == 'string' then
+        fd:write(key, ' = ', string.format('%q', value), '\n');
+    elseif type(value) == 'number' then
+        fd:write(key, ' = ', string.format('%g', value), '\n');
+    elseif type(value) == 'table' then
+        fd:write(key, ' = {}\n');
+        for k, v in pairs(value) do
+            k = append_name(key, k);
+
+            local mt = getmetatable(v);
+            if mt ~= nil and mt._magic == cat_magic then
+                v = mt;
+            elseif mt == res_magic then
+                v = read_resource(v);
+            end;
+
+            if k ~= nil then
+                dump_(k, v, fd);
+            end;
+        end;
+        fd:write('\n');
     else
         error('Unsupported value type: ' .. type(val));
     end;
 end;
 
-local function dump_(root, fd)
+local function dump(root, file)
+    local fd = io.open(file, 'w');
     local meta = getmetatable(root);
-    if not string.match(meta._fullname, "^[%a.]+$") then
+    if not string.match(meta._fullname, "^[%a]+$") then
         error("Someone has been messing with metatables.");
     end;
 
-    for k, v in pairs(meta) do
-        if type(k) == "string" and string.match(k, "^%a+$") then
-            local mt = getmetatable(v);
-
-            fd:write(meta._fullname, '.', k, ' = ');
-            if mt ~= nil and mt._magic == cat_magic then
-                fd:write('{}\n');
-                dump(v);
-                fd:write('\n');
-            else
-                if mt == res_magic then
-                    v = read_resource(v);
-                end;
-                fd:write(dump_value(v), '\n');
-            end;
-        end;
-    end;
-end;
-
-local function dump(root, file)
-    local fd = io.open(file, 'w');
-    dump_(root, fd);
+    dump_(meta._fullname, meta, fd);
     fd:close();
 end;
 
