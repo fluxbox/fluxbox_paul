@@ -400,7 +400,7 @@ void updateConfigFilesIfNeeded(const std::string& rc_file) {
     const int CONFIG_VERSION = 13; // TODO: move this to 'defaults.hh' or 'config.h'
 
     FbTk::ResourceManager r_mgr(rc_file.c_str(), false);
-    FbTk::Resource<int> c_version(r_mgr, 0, "session.configVersion", "Session.ConfigVersion");
+    FbTk::IntResource c_version(r_mgr, 0, "session.configVersion", "Session.ConfigVersion");
 
     if (!r_mgr.load(rc_file.c_str())) {
         _FB_USES_NLS;

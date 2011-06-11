@@ -32,13 +32,19 @@
  */
 class  ResourceLayer {
 public:
-    enum {
+    enum Type {
         MENU = 0,
+        LAYER1 = 1,
         ABOVE_DOCK = 2,
+        LAYER3 = 3,
         DOCK = 4,
+        LAYER5 = 5,
         TOP = 6,
+        LAYER7 = 7,
         NORMAL = 8,
+        LAYER9 = 9,
         BOTTOM = 10,
+        LAYER11 = 11,
         DESKTOP = 12,
         NUM_LAYERS = 13
     };

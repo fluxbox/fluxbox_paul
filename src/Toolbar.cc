@@ -84,69 +84,24 @@ using std::list;
 
 using FbTk::STLUtil::forAll;
 
-namespace {
-
-struct ToolbarPlacementString {
-    Toolbar::Placement placement;
-    const char* str;
-};
-
-const ToolbarPlacementString placement_strings[] = {
-    { Toolbar::TOPLEFT, "TopLeft" },
-    { Toolbar::TOPCENTER, "TopCenter" },
-    { Toolbar::TOPRIGHT, "TopRight" },
-    { Toolbar::BOTTOMLEFT, "BottomLeft" },
-    { Toolbar::BOTTOMCENTER, "BottomCenter" },
-    { Toolbar::BOTTOMRIGHT, "BottomRight" },
-    { Toolbar::LEFTBOTTOM, "LeftBottom" },
-    { Toolbar::LEFTCENTER, "LeftCenter" },
-    { Toolbar::LEFTTOP, "LeftTop" },
-    { Toolbar::RIGHTBOTTOM, "RightBottom" },
-    { Toolbar::RIGHTCENTER, "RightCenter" },
-    { Toolbar::RIGHTTOP, "RightTop" }
-};
-
-}
-
 namespace FbTk {
 
 template<>
-string FbTk::Resource<Toolbar::Placement>::
-getString() const {
-
-    size_t i = (m_value == FbTk::Util::clamp(m_value, Toolbar::TOPLEFT, Toolbar::RIGHTTOP)
-                ? m_value
-                : Toolbar::DEFAULT) - Toolbar::TOPLEFT;
-    return placement_strings[i].str;
-}
-
-template<>
-void FbTk::Resource<Toolbar::Placement>::
-setFromString(const char *strval) {
-    size_t i;
-    for (i = 0; i < sizeof(placement_strings)/sizeof(ToolbarPlacementString); ++i) {
-        if (strcasecmp(strval, placement_strings[i].str) == 0) {
-            m_value = placement_strings[i].placement;
-            return;
-        }
-    }
-    setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<Toolbar::Placement>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<Toolbar::Placement>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<Toolbar::Placement>::Pair EnumTraits<Toolbar::Placement>::s_map[] = {
+    { "TopLeft",      Toolbar::TOPLEFT },
+    { "TopCenter",    Toolbar::TOPCENTER },
+    { "TopRight",     Toolbar::TOPRIGHT },
+    { "BottomLeft",   Toolbar::BOTTOMLEFT },
+    { "BottomCenter", Toolbar::BOTTOMCENTER },
+    { "BottomRight",  Toolbar::BOTTOMRIGHT },
+    { "LeftBottom",   Toolbar::LEFTBOTTOM },
+    { "LeftCenter",   Toolbar::LEFTCENTER },
+    { "LeftTop",      Toolbar::LEFTTOP },
+    { "RightBottom",  Toolbar::RIGHTBOTTOM },
+    { "RightCenter",  Toolbar::RIGHTCENTER },
+    { "RightTop",     Toolbar::RIGHTTOP },
+    { NULL,           Toolbar::RIGHTTOP }
+};
 
 } // end namespace FbTk
 
@@ -230,7 +185,7 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
                        scrn.name() + ".toolbar.widthPercent", scrn.altName() + ".Toolbar.WidthPercent"),
     m_rc_alpha(scrn.resourceManager(), 255,
                        scrn.name() + ".toolbar.alpha", scrn.altName() + ".Toolbar.Alpha"),
-    m_rc_layernum(scrn.resourceManager(), ResourceLayer(ResourceLayer::DOCK),
+    m_rc_layernum(scrn.resourceManager(), ResourceLayer::DOCK,
                   scrn.name() + ".toolbar.layer", scrn.altName() + ".Toolbar.Layer"),
     m_rc_on_head(scrn.resourceManager(), 1,
                  scrn.name() + ".toolbar.onhead", scrn.altName() + ".Toolbar.onHead"),
@@ -255,7 +210,7 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
                           FbTk::MemFun(*this, &Toolbar::screenChanged));
 
 
-    moveToLayer((*m_rc_layernum).getNum());
+    moveToLayer(static_cast<int>(*m_rc_layernum));
 
     m_layermenu.setLabel(_FB_XTEXT(Toolbar, Layer, "Toolbar Layer", "Title of toolbar layer menu"));
     m_placementmenu.setLabel(_FB_XTEXT(Toolbar, Placement, "Toolbar Placement", "Title of toolbar placement menu"));
@@ -785,7 +740,7 @@ void Toolbar::toggleHidden() {
 
 void Toolbar::moveToLayer(int layernum) {
     m_layeritem.moveToLayer(layernum);
-    *m_rc_layernum = layernum;
+    *m_rc_layernum = static_cast<ResourceLayer::Type>(layernum);
 }
 
 void Toolbar::setupMenus(bool skip_new_placement) {

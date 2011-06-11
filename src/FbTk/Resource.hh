@@ -31,11 +31,8 @@
 
 #include <exception>
 #include <typeinfo>
+#include "ResTraits.hh"
 #include "XrmDatabaseHelper.hh"
-
-namespace lua {
-    class state;
-}
 
 namespace FbTk {
 
@@ -82,7 +79,7 @@ private:
     std::string m_altname; ///< alternative name
 };
 
-template <typename T>
+template <typename T, typename Traits>
 class Resource;
 
 class ResourceManager_base
@@ -119,8 +116,8 @@ public:
      * it will throw exception if it fails
      * @return reference to resource type
      */
-    template <typename ResourceType>
-    Resource<ResourceType> &getResource(const std::string &resource);
+    template <typename ResourceType, typename Traits>
+    Resource<ResourceType, Traits> &getResource(const std::string &resource);
 };
 
 class ResourceManager: public ResourceManager_base
@@ -189,15 +186,10 @@ private:
 
 /// Real resource class
 /**
- * usage: Resource<int> someresource(resourcemanager, 10, "someresourcename", "somealternativename");
- * and then implement setFromString and getString
- * example:
- * template <>
- * void Resource<int>::setFromString(const char *str) {
- *   *(*this) = atoi(str);
- * }
+ * usage: Resource<int, IntTraits<int> > someresource(resourcemanager, 10, "someresourcename", "somealternativename");
+ * If there is no traits class for your type, you have to implement one.
  */
-template <typename T>
+template <typename T, typename Traits>
 class Resource:public Resource_base, public Accessor<T> {
 public:
     typedef T Type;
@@ -211,14 +203,30 @@ public:
 
     void setDefaultValue() {  m_value = m_defaultval; }
     /// sets resource from string, specialized, must be implemented
-    void setFromString(const char *strval);
+    void setFromString(const char *strval) {
+        try {
+            m_value = Traits::fromString(strval);
+        }
+        catch(ConversionError &e) {
+            std::cerr << name() << ": " << e.what() << std::endl;
+            setDefaultValue();
+        }
+    }
     Accessor<T> &operator =(const T& newvalue) { m_value = newvalue; return *this;}
     /// specialized, must be implemented
     /// @return string value of resource
-    std::string getString() const;
+    std::string getString() const { return Traits::toString(m_value); }
 
-    virtual void setFromLua(lua::state &l);
-    virtual void pushToLua(lua::state &l) const;
+    virtual void setFromLua(lua::state &l) {
+        try {
+            m_value = Traits::fromLua(l);
+        }
+        catch(ConversionError &e) {
+            std::cerr << name() << ": " << e.what() << std::endl;
+            setDefaultValue();
+        }
+    }
+    virtual void pushToLua(lua::state &l) const { Traits::toLua(m_value, l); }
 
     operator T() const { return m_value; }
     T& get() { return m_value; }
@@ -232,17 +240,16 @@ private:
 };
 
 
-
-template <typename ResourceType>
-Resource<ResourceType> &ResourceManager_base::getResource(const std::string &resname) {
+template <typename ResourceType, typename Traits>
+Resource<ResourceType, Traits> &ResourceManager_base::getResource(const std::string &resname) {
     Resource_base *res = findResource(resname);
     if (res == 0) {
         throw ResourceException("Could not find resource \"" +
                                 resname + "\"");
     }
 
-    Resource<ResourceType> *res_type =
-        dynamic_cast<Resource<ResourceType> *>(res);
+    Resource<ResourceType, Traits> *res_type =
+        dynamic_cast<Resource<ResourceType, Traits> *>(res);
     if (res_type == 0) {
         throw ResourceException("Could not convert resource \"" +
                                 resname +
@@ -251,6 +258,11 @@ Resource<ResourceType> &ResourceManager_base::getResource(const std::string &res
 
     return *res_type;
 }
+
+typedef Resource<bool, BoolTraits> BoolResource;
+typedef Resource<int, IntTraits<int> > IntResource;
+typedef Resource<unsigned int, IntTraits<unsigned int> > UIntResource;
+typedef Resource<std::string, StringTraits> StringResource;
 
 } // end namespace FbTk
 

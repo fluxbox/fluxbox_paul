@@ -182,133 +182,28 @@ void ScreenPlacement::placeAndShowMenu(FbTk::Menu& menu, int x, int y, bool resp
 namespace FbTk {
 
 template <>
-std::string FbTk::Resource<ScreenPlacement::PlacementPolicy>::getString() const {
-    switch (*(*this)) {
-    case ScreenPlacement::ROWSMARTPLACEMENT:
-        return "RowSmartPlacement";
-    case ScreenPlacement::COLSMARTPLACEMENT:
-        return "ColSmartPlacement";
-    case ScreenPlacement::ROWMINOVERLAPPLACEMENT:
-        return "RowMinOverlapPlacement";
-    case ScreenPlacement::COLMINOVERLAPPLACEMENT:
-        return "ColMinOverlapPlacement";
-    case ScreenPlacement::UNDERMOUSEPLACEMENT:
-        return "UnderMousePlacement";
-    case ScreenPlacement::CASCADEPLACEMENT:
-        return "CascadePlacement";
-    }
-
-    return "RowSmartPlacement";
-}
+const EnumTraits<ScreenPlacement::PlacementPolicy>::Pair EnumTraits<ScreenPlacement::PlacementPolicy>::s_map[] = {
+    { "RowSmartPlacement",      ScreenPlacement::ROWSMARTPLACEMENT },
+    { "ColSmartPlacement",      ScreenPlacement::COLSMARTPLACEMENT },
+    { "RowMinOverlapPlacement", ScreenPlacement::ROWMINOVERLAPPLACEMENT },
+    { "ColMinOverlapPlacement", ScreenPlacement::COLMINOVERLAPPLACEMENT },
+    { "UnderMousePlacement",    ScreenPlacement::UNDERMOUSEPLACEMENT },
+    { "CascadePlacement",       ScreenPlacement::CASCADEPLACEMENT },
+    { NULL,                     ScreenPlacement::CASCADEPLACEMENT }
+};
 
 template <>
-void FbTk::Resource<ScreenPlacement::PlacementPolicy>::setFromString(const char *str) {
-    if (strcasecmp("RowSmartPlacement", str) == 0)
-        *(*this) = ScreenPlacement::ROWSMARTPLACEMENT;
-    else if (strcasecmp("ColSmartPlacement", str) == 0)
-        *(*this) = ScreenPlacement::COLSMARTPLACEMENT;
-    else if (strcasecmp("RowMinOverlapPlacement", str) == 0)
-        *(*this) = ScreenPlacement::ROWMINOVERLAPPLACEMENT;
-    else if (strcasecmp("ColMinOverlapPlacement", str) == 0)
-        *(*this) = ScreenPlacement::COLMINOVERLAPPLACEMENT;
-    else if (strcasecmp("UnderMousePlacement", str) == 0)
-        *(*this) = ScreenPlacement::UNDERMOUSEPLACEMENT;
-    else if (strcasecmp("CascadePlacement", str) == 0)
-        *(*this) = ScreenPlacement::CASCADEPLACEMENT;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::PlacementPolicy>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::PlacementPolicy>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
-
+const EnumTraits<ScreenPlacement::RowDirection>::Pair EnumTraits<ScreenPlacement::RowDirection>::s_map[] = {
+    { "LeftToRight",            ScreenPlacement::LEFTRIGHT },
+    { "RightToLeft",            ScreenPlacement::RIGHTLEFT },
+    { NULL,                     ScreenPlacement::RIGHTLEFT },
+};
 
 template <>
-std::string FbTk::Resource<ScreenPlacement::RowDirection>::getString() const {
-    switch (*(*this)) {
-    case ScreenPlacement::LEFTRIGHT:
-        return "LeftToRight";
-    case ScreenPlacement::RIGHTLEFT:
-        return "RightToLeft";
-    }
-
-    return "LeftToRight";
-}
-
-
-template <>
-void FbTk::Resource<ScreenPlacement::RowDirection>::setFromString(const char *str) {
-    if (strcasecmp("LeftToRight", str) == 0)
-        *(*this) = ScreenPlacement::LEFTRIGHT;
-    else if (strcasecmp("RightToLeft", str) == 0)
-        *(*this) = ScreenPlacement::RIGHTLEFT;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::RowDirection>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::RowDirection>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
-
-template <>
-std::string FbTk::Resource<ScreenPlacement::ColumnDirection>::getString() const {
-    switch (*(*this)) {
-    case ScreenPlacement::TOPBOTTOM:
-        return "TopToBottom";
-    case ScreenPlacement::BOTTOMTOP:
-        return "BottomToTop";
-    }
-
-    return "TopToBottom";
-}
-
-
-template <>
-void FbTk::Resource<ScreenPlacement::ColumnDirection>::setFromString(const char *str) {
-    if (strcasecmp("TopToBottom", str) == 0)
-        *(*this) = ScreenPlacement::TOPBOTTOM;
-    else if (strcasecmp("BottomToTop", str) == 0)
-        *(*this) = ScreenPlacement::BOTTOMTOP;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::ColumnDirection>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<ScreenPlacement::ColumnDirection>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<ScreenPlacement::ColumnDirection>::Pair EnumTraits<ScreenPlacement::ColumnDirection>::s_map[] = {
+    { "TopToBottom",            ScreenPlacement::TOPBOTTOM },
+    { "BottomToTop",            ScreenPlacement::BOTTOMTOP },
+    { NULL,                     ScreenPlacement::BOTTOMTOP },
+};
 
 } // end namespace FbTk

@@ -215,20 +215,6 @@ struct TabPlacementString {
     const char* str;
 };
 
-const TabPlacementString placement_strings[] = {
-    { FbWinFrame::TOPLEFT, "TopLeft" },
-    { FbWinFrame::TOP, "Top" },
-    { FbWinFrame::TOPRIGHT, "TopRight" },
-    { FbWinFrame::BOTTOMLEFT, "BottomLeft" },
-    { FbWinFrame::BOTTOM, "Bottom" },
-    { FbWinFrame::BOTTOMRIGHT, "BottomRight" },
-    { FbWinFrame::LEFTBOTTOM, "LeftBottom" },
-    { FbWinFrame::LEFT, "Left" },
-    { FbWinFrame::LEFTTOP, "LeftTop" },
-    { FbWinFrame::RIGHTBOTTOM, "RightBottom" },
-    { FbWinFrame::RIGHT, "Right" },
-    { FbWinFrame::RIGHTTOP, "RightTop" }
-};
 
 
 } // end anonymous namespace
@@ -238,41 +224,21 @@ const TabPlacementString placement_strings[] = {
 namespace FbTk {
 
 template<>
-string FbTk::Resource<FbWinFrame::TabPlacement>::
-getString() const {
-
-    size_t i = (m_value == FbTk::Util::clamp(m_value, FbWinFrame::TOPLEFT, FbWinFrame::RIGHTTOP)
-                ? m_value 
-                : FbWinFrame::DEFAULT) - 1;
-    return placement_strings[i].str;
-}
-
-template<>
-void FbTk::Resource<FbWinFrame::TabPlacement>::
-setFromString(const char *strval) {
-
-    size_t i;
-    for (i = 0; i < sizeof(placement_strings)/sizeof(TabPlacementString); ++i) {
-        if (strcasecmp(strval, placement_strings[i].str) == 0) {
-            m_value = placement_strings[i].placement;
-            return;
-        }
-    }
-    setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<FbWinFrame::TabPlacement>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-
-    setFromString(l.isstring(-1) ? l.tostring(-1).c_str() : "");
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<FbWinFrame::TabPlacement>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<FbWinFrame::TabPlacement>::Pair EnumTraits<FbWinFrame::TabPlacement>::s_map[] = {
+    { "TopLeft",     FbWinFrame::TOPLEFT },
+    { "Top",         FbWinFrame::TOP },
+    { "TopRight",    FbWinFrame::TOPRIGHT },
+    { "BottomLeft",  FbWinFrame::BOTTOMLEFT },
+    { "Bottom",      FbWinFrame::BOTTOM },
+    { "BottomRight", FbWinFrame::BOTTOMRIGHT },
+    { "LeftBottom",  FbWinFrame::LEFTBOTTOM },
+    { "Left",        FbWinFrame::LEFT },
+    { "LeftTop",     FbWinFrame::LEFTTOP },
+    { "RightBottom", FbWinFrame::RIGHTBOTTOM },
+    { "Right",       FbWinFrame::RIGHT },
+    { "RightTop",    FbWinFrame::RIGHTTOP },
+    { NULL,          FbWinFrame::RIGHTTOP }
+};
 
 } // end namespace FbTk
 
@@ -1609,7 +1575,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     try {
         focus_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Configmenu, FocusNew,
             "Focus New Windows", "Focus newly created windows"),
-            m_resource_manager.getResource<bool>(name() + ".focusNewWindows"),
+            m_resource_manager.getResource<bool, FbTk::BoolTraits>(name() + ".focusNewWindows"),
             saverc_cmd));
     } catch (FbTk::ResourceException & e) {
         cerr<<e.what()<<endl;

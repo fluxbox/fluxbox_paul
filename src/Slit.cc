@@ -92,95 +92,24 @@ using std::dec;
 namespace FbTk {
 
 template<>
-string FbTk::Resource<Slit::Placement>::getString() const {
-    switch (m_value) {
-    case Slit::TOPLEFT:
-        return string("TopLeft");
-        break;
-    case Slit::LEFTCENTER:
-        return string("LeftCenter");
-        break;
-    case Slit::BOTTOMLEFT:
-        return string("BottomLeft");
-        break;
-    case Slit::TOPCENTER:
-        return string("TopCenter");
-        break;
-    case Slit::BOTTOMCENTER:
-        return string("BottomCenter");
-        break;
-    case Slit::TOPRIGHT:
-        return string("TopRight");
-        break;
-    case Slit::RIGHTCENTER:
-        return string("RightCenter");
-        break;
-    case Slit::BOTTOMRIGHT:
-        return string("BottomRight");
-        break;
-    case Slit::LEFTTOP:
-        return string("LeftTop");
-        break;
-    case Slit::RIGHTTOP:
-        return string("RightTop");
-        break;
-    case Slit::LEFTBOTTOM:
-        return string("LeftBottom");
-        break;
-    case Slit::RIGHTBOTTOM:
-        return string("RightBottom");
-        break;
-    }
-    //default string
-    return string("RightBottom");
-}
-
-template<>
-void FbTk::Resource<Slit::Placement>::setFromString(const char *strval) {
-    if (strcasecmp(strval, "TopLeft")==0)
-        m_value = Slit::TOPLEFT;
-    else if (strcasecmp(strval, "LeftCenter")==0)
-        m_value = Slit::LEFTCENTER;
-    else if (strcasecmp(strval, "BottomLeft")==0)
-        m_value = Slit::BOTTOMLEFT;
-    else if (strcasecmp(strval, "TopCenter")==0)
-        m_value = Slit::TOPCENTER;
-    else if (strcasecmp(strval, "BottomCenter")==0)
-        m_value = Slit::BOTTOMCENTER;
-    else if (strcasecmp(strval, "TopRight")==0)
-        m_value = Slit::TOPRIGHT;
-    else if (strcasecmp(strval, "RightCenter")==0)
-        m_value = Slit::RIGHTCENTER;
-    else if (strcasecmp(strval, "BottomRight")==0)
-        m_value = Slit::BOTTOMRIGHT;
-    else if (strcasecmp(strval, "LeftTop")==0)
-        m_value = Slit::LEFTTOP;
-    else if (strcasecmp(strval, "LeftBottom")==0)
-        m_value = Slit::LEFTBOTTOM;
-    else if (strcasecmp(strval, "RightTop")==0)
-        m_value = Slit::RIGHTTOP;
-    else if (strcasecmp(strval, "RightBottom")==0)
-        m_value = Slit::RIGHTBOTTOM;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<Slit::Placement>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<Slit::Placement>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<Slit::Placement>::Pair EnumTraits<Slit::Placement>::s_map[] = {
+    { "TopLeft", Slit::TOPLEFT },
+    { "LeftCenter",   Slit::LEFTCENTER },
+    { "BottomLeft",   Slit::BOTTOMLEFT },
+    { "TopCenter",    Slit::TOPCENTER },
+    { "BottomCenter", Slit::BOTTOMCENTER },
+    { "TopRight",     Slit::TOPRIGHT },
+    { "RightCenter",  Slit::RIGHTCENTER },
+    { "BottomRight",  Slit::BOTTOMRIGHT },
+    { "LeftTop",      Slit::LEFTTOP },
+    { "RightTop",     Slit::RIGHTTOP },
+    { "LeftBottom",   Slit::LEFTBOTTOM },
+    { "RightBottom",  Slit::RIGHTBOTTOM },
+    { NULL,           Slit::RIGHTBOTTOM },
+};
 
 } // end namespace FbTk
+
 namespace {
 
 class SlitClientMenuItem: public FbTk::MenuItem{
@@ -273,7 +202,7 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
                  scr.name() + ".slit.alpha", scr.altName() + ".Slit.Alpha"),
       m_rc_on_head(scr.resourceManager(), 0,
                    scr.name() + ".slit.onhead", scr.altName() + ".Slit.onHead"),
-      m_rc_layernum(scr.resourceManager(), ResourceLayer(ResourceLayer::DOCK),
+      m_rc_layernum(scr.resourceManager(), ResourceLayer::DOCK,
                     scr.name() + ".slit.layer", scr.altName() + ".Slit.Layer") {
 
     _FB_USES_NLS;
@@ -319,7 +248,7 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
                                     true));
     m_layermenu->setLabel(_FB_XTEXT(Slit, Layer, "Slit Layer", "Title of Slit Layer Menu"));
 
-    moveToLayer((*m_rc_layernum).getNum());
+    moveToLayer(static_cast<int>(*m_rc_layernum));
 
 
 
@@ -1287,7 +1216,7 @@ void Slit::setupMenu() {
 
 void Slit::moveToLayer(int layernum) {
     m_layeritem->moveToLayer(layernum);
-    *m_rc_layernum = layernum;
+    *m_rc_layernum = static_cast<ResourceLayer::Type>(layernum);
 }
 
 void Slit::saveOnHead(int head) {
