@@ -163,7 +163,7 @@ struct VectorTraits {
 
         for(size_t i = 0; i < x.size(); ++i) {
             Traits::toLua(x[i], l);
-            l.rawseti(-2, i);
+            l.rawseti(-2, i+1);
         }
     }
 
@@ -189,7 +189,7 @@ struct VectorTraits {
         Type retval;
 
         if(l.type(-1) == lua::TTABLE) {
-            for(size_t i = 0; l.rawgeti(-1, i), !l.isnil(-1); ++i) {
+            for(size_t i = 1; l.rawgeti(-1, i), !l.isnil(-1); ++i) {
                 try {
                     retval.push_back(Traits::fromLua(l));
                 }
