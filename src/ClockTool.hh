@@ -79,7 +79,7 @@ private:
     Pixmap m_pixmap;
     FbTk::Timer m_timer;
 
-    FbTk::Resource<std::string> m_timeformat;
+    FbTk::StringResource m_timeformat;
 
     FbTk::StringConvertor m_stringconvertor;
 

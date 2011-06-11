@@ -234,20 +234,20 @@ private:
 
     //--- Resources
 
-    FbTk::Resource<bool> m_rc_ignoreborder;
-    FbTk::Resource<bool> m_rc_pseudotrans;
-    FbTk::Resource<int> m_rc_colors_per_channel,
+    FbTk::BoolResource m_rc_ignoreborder;
+    FbTk::BoolResource m_rc_pseudotrans;
+    FbTk::IntResource m_rc_colors_per_channel,
         m_rc_double_click_interval,
         m_rc_tabs_padding;
-    FbTk::Resource<std::string> m_rc_stylefile,
+    FbTk::StringResource m_rc_stylefile,
         m_rc_styleoverlayfile,
         m_rc_menufile, m_rc_keyfile, m_rc_slitlistfile,
         m_rc_appsfile;
 
 
-    FbTk::Resource<TabsAttachArea> m_rc_tabs_attach_area;
-    FbTk::Resource<unsigned int> m_rc_cache_life, m_rc_cache_max;
-    FbTk::Resource<time_t> m_rc_auto_raise_delay;
+    FbTk::Resource<TabsAttachArea, FbTk::EnumTraits<TabsAttachArea> > m_rc_tabs_attach_area;
+    FbTk::UIntResource m_rc_cache_life, m_rc_cache_max;
+    FbTk::Resource<time_t, FbTk::IntTraits<time_t> > m_rc_auto_raise_delay;
 
     typedef std::map<Window, WinClient *> WinClientMap;
     WinClientMap m_window_search;

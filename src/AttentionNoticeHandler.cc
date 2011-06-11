@@ -67,10 +67,10 @@ void AttentionNoticeHandler::addAttention(Focusable &client) {
     ResourceManager &res = client.screen().resourceManager();
     std::string res_name = client.screen().name() + ".demandsAttentionTimeout";
     std::string res_alt_name = client.screen().name() + ".DemandsAttentionTimeout";
-    Resource<int> *timeout_res = dynamic_cast<Resource<int>* >(res.findResource(res_name));
+    IntResource *timeout_res = dynamic_cast<IntResource* >(res.findResource(res_name));
     if (timeout_res == 0) {
         // no resource, create one and add it to managed resources
-        timeout_res = new FbTk::Resource<int>(res, 500, res_name, res_alt_name);
+        timeout_res = new FbTk::IntResource(res, 500, res_name, res_alt_name);
         client.screen().addManagedResource(timeout_res);
     }
     // disable if timeout is zero

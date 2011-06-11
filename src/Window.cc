@@ -251,6 +251,11 @@ private:
     int m_mode;
 };
 
+typedef FbTk::Resource<
+                vector<WinButton::Type>,
+                FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type> >
+> WinButtonsResource;
+
 }
 
 
@@ -3430,9 +3435,6 @@ void FluxboxWindow::setupWindow() {
     // sets up our window
     // we allow both to be done at once to share the commands
 
-    using namespace FbTk;
-    typedef FbTk::Resource<vector<WinButton::Type> > WinButtonsResource;
-
     string titlebar_name[2];
     string titlebar_alt_name[2];
     titlebar_name[0] = screen().name() + ".titlebar.left";
@@ -3495,7 +3497,6 @@ void FluxboxWindow::updateButtons() {
     titlebar_name[0] = screen().name() + ".titlebar.left";
     titlebar_name[1] = screen().name() + ".titlebar.right";
 
-    typedef FbTk::Resource<vector<WinButton::Type> > WinButtonsResource;
     WinButtonsResource *titlebar_side[2];
     ResourceManager &rm = screen().resourceManager();
 

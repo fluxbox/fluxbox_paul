@@ -68,45 +68,12 @@ using std::endl;
 namespace FbTk {
 
 template<>
-void FbTk::Resource<FbTk::Container::Alignment>::setDefaultValue() {
-    m_value = FbTk::Container::RELATIVE;
-}
-
-template<>
-string FbTk::Resource<FbTk::Container::Alignment>::getString() const {
-    if (m_value == FbTk::Container::LEFT)
-        return string("Left");
-    if (m_value == FbTk::Container::RIGHT)
-        return string("Right");
-    return string("Relative");
-}
-
-template<>
-void FbTk::Resource<FbTk::Container::Alignment>::setFromString(const char *str) {
-    if (strcasecmp(str, "Left") == 0)
-        m_value = FbTk::Container::LEFT;
-    else if (strcasecmp(str, "Right") == 0)
-        m_value = FbTk::Container::RIGHT;
-    else if (strcasecmp(str, "Relative") == 0)
-        m_value = FbTk::Container::RELATIVE;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<FbTk::Container::Alignment>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<FbTk::Container::Alignment>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<Container::Alignment>::Pair EnumTraits<Container::Alignment>::s_map[] = {
+    { "Left",     Container::LEFT },
+    { "Right",    Container::RIGHT },
+    { "Relative", Container::RELATIVE }, 
+    { NULL,       Container::RELATIVE }
+};
 
 } // end namespace FbTk
 

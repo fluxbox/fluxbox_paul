@@ -158,9 +158,9 @@ private:
 
     BScreen &m_screen;
 
-    FbTk::Resource<FocusModel> m_focus_model;    
-    FbTk::Resource<TabFocusModel> m_tab_focus_model;
-    FbTk::Resource<bool> m_focus_new;
+    FbTk::Resource<FocusModel, FbTk::EnumTraits<FocusModel> > m_focus_model;    
+    FbTk::Resource<TabFocusModel, FbTk::EnumTraits<TabFocusModel> > m_tab_focus_model;
+    FbTk::BoolResource m_focus_new;
 
     // This list keeps the order of window focusing for this screen
     // Screen global so it works for sticky windows too.

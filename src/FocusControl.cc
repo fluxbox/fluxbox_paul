@@ -599,86 +599,19 @@ void FocusControl::setFocusedWindow(WinClient *client) {
 namespace FbTk {
 
 template<>
-std::string FbTk::Resource<FocusControl::FocusModel>::getString() const {
-    switch (m_value) {
-    case FocusControl::MOUSEFOCUS:
-        return string("MouseFocus");
-    case FocusControl::STRICTMOUSEFOCUS:
-        return string("StrictMouseFocus");
-    case FocusControl::CLICKFOCUS:
-        return string("ClickFocus");
-    }
-    // default string
-    return string("ClickFocus");
-}
+const EnumTraits<FocusControl::FocusModel>::Pair EnumTraits<FocusControl::FocusModel>::s_map[] = {
+    { "MouseFocus",       FocusControl::MOUSEFOCUS },
+    { "StrictMouseFocus", FocusControl::STRICTMOUSEFOCUS },
+    { "ClickFocus",       FocusControl::CLICKFOCUS },
+    { NULL,               FocusControl::CLICKFOCUS }
+};
 
 template<>
-void FbTk::Resource<FocusControl::FocusModel>::
-setFromString(char const *strval) {
-    if (strcasecmp(strval, "MouseFocus") == 0)
-        m_value = FocusControl::MOUSEFOCUS;
-    else if (strcasecmp(strval, "StrictMouseFocus") == 0)
-        m_value = FocusControl::STRICTMOUSEFOCUS;
-    else if (strcasecmp(strval, "ClickToFocus") == 0)
-        m_value = FocusControl::CLICKFOCUS;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<FocusControl::FocusModel>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<FocusControl::FocusModel>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
-
-
-template<>
-std::string FbTk::Resource<FocusControl::TabFocusModel>::getString() const {
-    switch (m_value) {
-    case FocusControl::MOUSETABFOCUS:
-        return string("SloppyTabFocus");
-    case FocusControl::CLICKTABFOCUS:
-        return string("ClickToTabFocus");
-    }
-    // default string
-    return string("ClickToTabFocus");
-}
-
-template<>
-void FbTk::Resource<FocusControl::TabFocusModel>::
-setFromString(char const *strval) {
-
-    if (strcasecmp(strval, "SloppyTabFocus") == 0 )
-        m_value = FocusControl::MOUSETABFOCUS;
-    else if (strcasecmp(strval, "ClickToTabFocus") == 0)
-        m_value = FocusControl::CLICKTABFOCUS;
-    else
-        setDefaultValue();
-}
-
-template<>
-void FbTk::Resource<FocusControl::TabFocusModel>::setFromLua(lua::state &l) {
-    lua::stack_sentry s(l, -1);
-    if(l.isstring(-1))
-        setFromString(l.tostring(-1).c_str());
-    else
-        setDefaultValue();
-    l.pop();
-}
-
-template<>
-void FbTk::Resource<FocusControl::TabFocusModel>::pushToLua(lua::state &l) const {
-    l.pushstring(getString());
-}
+const EnumTraits<FocusControl::TabFocusModel>::Pair EnumTraits<FocusControl::TabFocusModel>::s_map[] = {
+    { "SloppyTabFocus",   FocusControl::MOUSETABFOCUS },
+    { "ClickToTabFocus",  FocusControl::CLICKTABFOCUS },
+    { NULL,               FocusControl::CLICKTABFOCUS }
+};
 
 } // end namespace FbTk
 
