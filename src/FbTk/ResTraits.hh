@@ -55,7 +55,7 @@ struct IntTraits {
         lua::stack_sentry s(l, -1);
 
         if(l.isnumber(-1))
-            return l.tonumber(-1);
+            return static_cast<T>(l.tonumber(-1));
         else if(l.isstring(-1))
             return fromString(l.tostring(-1));
         throw ConversionError( std::string("Cannot convert to integer from lua type ")
