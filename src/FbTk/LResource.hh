@@ -43,13 +43,9 @@ public:
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
-    Resource_base *findResource(const std::string &resname);
-    const Resource_base *findResource(const std::string &resname) const;
 
 private:
-    typedef std::list<Resource_base *> ResourceList;
 
-    ResourceList m_resourcelist;
     lua::state *m_l;
     std::string m_root;
 };
