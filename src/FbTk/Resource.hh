@@ -87,7 +87,7 @@ class ResourceManager_base
 public:
     typedef std::list<Resource_base *> ResourceList;
 
-    virtual ~ResourceManager_base();
+    virtual ~ResourceManager_base() {}
 
     /// Save all resouces registered to this class
     /// @return true on success
@@ -96,17 +96,19 @@ public:
 
 
     /// Add resource to list, only used in Resource<T>
-    virtual void addResource(Resource_base &r) = 0;
+    virtual void addResource(Resource_base &r);
 
     /// Remove a specific resource, only used in Resource<T>
-    virtual void removeResource(Resource_base &r) = 0;
+    virtual void removeResource(Resource_base &r) {
+        m_resourcelist.remove(&r);
+    }
 
     /// searches for the resource with the resourcename
     /// @return pointer to resource base on success, else 0.
-    virtual Resource_base *findResource(const std::string &resourcename) = 0;
+    Resource_base *findResource(const std::string &resourcename);
     /// searches for the resource with the resourcename
     /// @return pointer to resource base on success, else 0.
-    virtual const Resource_base *findResource(const std::string &resourcename) const = 0;
+    const Resource_base *findResource(const std::string &resourcename) const;
 
     std::string resourceValue(const std::string &resourcename) const;
     void setResourceValue(const std::string &resourcename, const std::string &value);
@@ -118,13 +120,14 @@ public:
      */
     template <typename ResourceType, typename Traits>
     Resource<ResourceType, Traits> &getResource(const std::string &resource);
+
+protected:
+    ResourceList m_resourcelist;
 };
 
 class ResourceManager: public ResourceManager_base
 {
 public:
-    typedef std::list<Resource_base *> ResourceList;
-
     // lock specifies if the database should be opened with one level locked
     // (useful for constructing inside initial set of constructors)
     ResourceManager(const char *filename, bool lock_db);
@@ -139,21 +142,8 @@ public:
     virtual bool save(const char *filename, const char *mergefilename=0);
 
 
-
     /// Add resource to list, only used in Resource<T>
     virtual void addResource(Resource_base &r);
-
-    /// Remove a specific resource, only used in Resource<T>
-    virtual void removeResource(Resource_base &r) {
-        m_resourcelist.remove(&r);
-    }
-
-    /// searches for the resource with the resourcename
-    /// @return pointer to resource base on success, else 0.
-    virtual Resource_base *findResource(const std::string &resourcename);
-    /// searches for the resource with the resourcename
-    /// @return pointer to resource base on success, else 0.
-    virtual const Resource_base *findResource(const std::string &resourcename) const;
 
     // this marks the database as "in use" and will avoid reloading
     // resources unless it is zero.
@@ -175,8 +165,6 @@ protected:
     int m_db_lock;
 
 private:
-
-    ResourceList m_resourcelist;
 
     XrmDatabaseHelper *m_database;
 

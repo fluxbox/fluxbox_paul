@@ -108,8 +108,7 @@ void LResourceManager::addResource(Resource_base &r) {
     m_l->checkstack(5);
     lua::stack_sentry s(*m_l);
 
-    m_resourcelist.push_back(&r);
-    m_resourcelist.unique();
+    ResourceManager_base::addResource(r);
 
     m_l->getfield(lua::REGISTRYINDEX, register_resource);
     m_l->getfield(lua::GLOBALSINDEX, m_root.c_str());
@@ -133,31 +132,7 @@ void LResourceManager::removeResource(Resource_base &r) {
     *static_cast<Resource_base **>(m_l->touserdata(-1)) = NULL;
     m_l->pop();
 
-    m_resourcelist.remove(&r);
-}
-
-Resource_base *LResourceManager::findResource(const std::string &resname) {
-    // find resource name
-    ResourceList::const_iterator i = m_resourcelist.begin();
-    ResourceList::const_iterator i_end = m_resourcelist.end();
-    for (; i != i_end; ++i) {
-        if ((*i)->name() == resname ||
-                (*i)->altName() == resname)
-            return *i;
-    }
-    return 0;
-}
-
-const Resource_base *LResourceManager::findResource(const std::string &resname) const {
-    // find resource name
-    ResourceList::const_iterator i = m_resourcelist.begin();
-    ResourceList::const_iterator i_end = m_resourcelist.end();
-    for (; i != i_end; ++i) {
-        if ((*i)->name() == resname ||
-                (*i)->altName() == resname)
-            return *i;
-    }
-    return 0;
+    ResourceManager_base::removeResource(r);
 }
 
 } // end namespace FbTk

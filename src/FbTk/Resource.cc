@@ -37,7 +37,34 @@ using std::string;
 
 namespace FbTk {
 
-ResourceManager_base::~ResourceManager_base() {
+
+void ResourceManager_base::addResource(Resource_base &r) {
+    m_resourcelist.push_back(&r);
+    m_resourcelist.unique();
+}
+
+Resource_base *ResourceManager_base::findResource(const string &resname) {
+   // find resource name
+    ResourceList::iterator i = m_resourcelist.begin();
+    ResourceList::iterator i_end = m_resourcelist.end();
+    for (; i != i_end; ++i) {
+        if ((*i)->name() == resname ||
+            (*i)->altName() == resname)
+            return *i;
+    }
+    return 0;
+}
+
+const Resource_base *ResourceManager_base::findResource(const string &resname) const {
+   // find resource name
+    ResourceList::const_iterator i = m_resourcelist.begin();
+    ResourceList::const_iterator i_end = m_resourcelist.end();
+    for (; i != i_end; ++i) {
+        if ((*i)->name() == resname ||
+            (*i)->altName() == resname)
+            return *i;
+    }
+    return 0;
 }
 
 string ResourceManager_base::resourceValue(const string &resname) const {
@@ -180,30 +207,6 @@ bool ResourceManager::save(const char *filename, const char *mergefilename) {
     return true;
 }
 
-Resource_base *ResourceManager::findResource(const string &resname) {
-   // find resource name
-    ResourceList::iterator i = m_resourcelist.begin();
-    ResourceList::iterator i_end = m_resourcelist.end();
-    for (; i != i_end; ++i) {
-        if ((*i)->name() == resname ||
-            (*i)->altName() == resname)
-            return *i;
-    }
-    return 0;
-}
-
-const Resource_base *ResourceManager::findResource(const string &resname) const {
-   // find resource name
-    ResourceList::const_iterator i = m_resourcelist.begin();
-    ResourceList::const_iterator i_end = m_resourcelist.end();
-    for (; i != i_end; ++i) {
-        if ((*i)->name() == resname ||
-            (*i)->altName() == resname)
-            return *i;
-    }
-    return 0;
-}
-
 ResourceManager &ResourceManager::lock() {
     ++m_db_lock;
     // if the lock was zero, then load the database
@@ -231,8 +234,7 @@ void ResourceManager::unlock() {
 
 // add the resource and load its value
 void ResourceManager::addResource(Resource_base &r) {
-    m_resourcelist.push_back(&r);
-    m_resourcelist.unique();
+    ResourceManager_base::addResource(r);
 
     // lock ensures that the database is loaded.
     lock();
