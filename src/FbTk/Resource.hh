@@ -123,6 +123,10 @@ public:
     template <typename ResourceType, typename Traits>
     Resource<ResourceType, Traits> &getResource(const std::string &resource);
 
+    const std::string &root() const { return m_root; }
+    ResourceList::const_iterator begin() { return m_resourcelist.begin(); }
+    ResourceList::const_iterator end() { return m_resourcelist.end(); }
+
 protected:
     ResourceList m_resourcelist;
     const std::string m_root;
