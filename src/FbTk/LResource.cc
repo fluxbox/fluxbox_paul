@@ -82,6 +82,22 @@ void LResourceManager::initState(lua::state &l) {
     l.setfield(lua::REGISTRYINDEX, make_root);
 }
 
+void LResourceManager::convert(ResourceManager &old, const std::string &new_file) {
+    lua::state l;
+    initState(l);
+
+    LResourceManager new_rm(old.root(), l);
+    for(ResourceList::const_iterator i = old.begin(); i != old.end(); ++i) {
+        // adding the resource to new_rm will set it to default value
+        // we save the value to a temp variable so we can restore it later
+        const std::string &t = (*i)->getString();
+        new_rm.addResource(**i);
+        (*i)->setFromString(t.c_str());
+    }
+
+    new_rm.save(new_file.c_str(), NULL);
+}
+
 LResourceManager::LResourceManager(const std::string &root, lua::state &l)
                         : ResourceManager_base(root), m_l(&l) {
     l.checkstack(2);

@@ -38,6 +38,7 @@ namespace FbTk {
 class LResourceManager: public ResourceManager_base {
 public:
     static void initState(lua::state &l);
+    static void convert(ResourceManager &old, const std::string &new_file);
 
     LResourceManager(const std::string &root, lua::state &l);
     virtual bool save(const char *filename, const char *);
