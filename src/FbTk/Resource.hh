@@ -87,6 +87,8 @@ class ResourceManager_base
 public:
     typedef std::list<Resource_base *> ResourceList;
 
+    ResourceManager_base(const std::string &root) : m_root(root) {}
+
     virtual ~ResourceManager_base() {}
 
     /// Save all resouces registered to this class
@@ -123,6 +125,7 @@ public:
 
 protected:
     ResourceList m_resourcelist;
+    const std::string m_root;
 };
 
 class ResourceManager: public ResourceManager_base
@@ -130,7 +133,8 @@ class ResourceManager: public ResourceManager_base
 public:
     // lock specifies if the database should be opened with one level locked
     // (useful for constructing inside initial set of constructors)
-    ResourceManager(const char *filename, bool lock_db);
+    ResourceManager(const std::string &root, const std::string &alt_root,
+            const char *filename, bool lock_db);
     virtual ~ResourceManager();
 
     /// Load all resources registered to this class
@@ -169,6 +173,7 @@ private:
     XrmDatabaseHelper *m_database;
 
     std::string m_filename;
+    std::string m_alt_root;
 };
 
 

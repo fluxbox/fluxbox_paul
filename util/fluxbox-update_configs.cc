@@ -90,11 +90,11 @@ void update_add_mouse_evens_to_keys(FbTk::ResourceManager& rm,
     // different screens? the ability is going away until we make per-screen
     // keys files, anyway, so let's just use the first screen's setting
     FbTk::BoolResource rc_wheeling(rm, true,
-            "session.screen0.desktopwheeling",
-            "Session.Screen0.DesktopWheeling");
+            "screen0.desktopwheeling",
+            "Screen0.DesktopWheeling");
     FbTk::BoolResource rc_reverse(rm, false,
-            "session.screen0.reversewheeling",
-            "Session.Screen0.ReverseWheeling");
+            "screen0.reversewheeling",
+            "Screen0.ReverseWheeling");
     if (*rc_wheeling) {
         if (*rc_reverse) { // if you ask me, this should have been default
             new_keyfile += "OnDesktop Mouse4 :PrevWorkspace\n";
@@ -115,7 +115,7 @@ void update_move_groups_entries_to_apps_file(FbTk::ResourceManager& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     FbTk::StringResource rc_groupfile(rm, "~/.fluxbox/groups",
-            "session.groupFile", "Session.GroupFile");
+            "groupFile", "GroupFile");
     string groupfilename = FbTk::StringUtil::expandFilename(*rc_groupfile);
     string whole_groupfile = read_file(groupfilename);
     string whole_appsfile = read_file(appsfilename);
@@ -159,14 +159,14 @@ void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager& rm,
 
     // scrolling on toolbar needs to match user's toolbar wheeling settings
     FbTk::StringResource rc_wheeling(rm, "Off",
-            "session.screen0.iconbar.wheelMode",
-            "Session.Screen0.Iconbar.WheelMode");
+            "screen0.iconbar.wheelMode",
+            "Screen0.Iconbar.WheelMode");
     FbTk::BoolResource rc_screen(rm, true,
-            "session.screen0.desktopwheeling",
-            "Session.Screen0.DesktopWheeling");
+            "screen0.desktopwheeling",
+            "Screen0.DesktopWheeling");
     FbTk::BoolResource rc_reverse(rm, false,
-            "session.screen0.reversewheeling",
-            "Session.Screen0.ReverseWheeling");
+            "screen0.reversewheeling",
+            "Screen0.ReverseWheeling");
     if (strcasecmp((*rc_wheeling).c_str(), "On") == 0 ||
             (strcasecmp((*rc_wheeling).c_str(), "Screen") == 0 && *rc_screen)) {
         keep_changes = true;
@@ -196,11 +196,11 @@ void update_move_modkey_to_keys_file(FbTk::ResourceManager& rm,
 
     // need to match user's resize model
     FbTk::StringResource rc_mode(rm, "Bottom",
-            "session.screen0.resizeMode",
-            "Session.Screen0.ResizeMode");
+            "screen0.resizeMode",
+            "Screen0.ResizeMode");
     FbTk::StringResource rc_modkey(rm, "Mod1",
-            "session.modKey",
-            "Session.ModKey");
+            "modKey",
+            "ModKey");
 
     new_keyfile += "OnWindow " + *rc_modkey +
         " Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}\n";
@@ -229,8 +229,8 @@ void update_window_patterns_for_iconbar(FbTk::ResourceManager& rm,
     // it won't get freed, but that's ok
     FbTk::StringResource *rc_mode =
         new FbTk::StringResource(rm, "Workspace",
-                                   "session.screen0.iconbar.mode",
-                                   "Session.Screen0.Iconbar.Mode");
+                                   "screen0.iconbar.mode",
+                                   "Screen0.Iconbar.Mode");
 
     std::string mode = FbTk::StringUtil::toLower(**rc_mode);
     if (mode == "none")
@@ -260,8 +260,8 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager& rm,
     new_keyfile += "OnTitlebar Double Mouse1 :Shade\n";
     new_keyfile += "OnTitlebar Mouse3 :WindowMenu\n";
 
-    FbTk::BoolResource rc_reverse(rm, false,"session.screen0.reversewheeling", "Session.Screen0.ReverseWheeling");
-    FbTk::StringResource  scroll_action(rm, "", "session.screen0.windowScrollAction", "Session.Screen0.WindowScrollAction");
+    FbTk::BoolResource rc_reverse(rm, false,"screen0.reversewheeling", "Screen0.ReverseWheeling");
+    FbTk::StringResource  scroll_action(rm, "", "screen0.windowScrollAction", "Screen0.WindowScrollAction");
     if (strcasecmp((*scroll_action).c_str(), "shade") == 0) {
         if (*rc_reverse) {
             new_keyfile += "OnTitlebar Mouse5 :ShadeOn\n";
@@ -307,8 +307,8 @@ void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceMana
 
     FbTk::BoolResource *show =
         new FbTk::BoolResource(rm, false,
-                "session.screen0.tabs.usePixmap",
-                "Session.Screen0.Tabs.UsePixmap");
+                "screen0.tabs.usePixmap",
+                "Screen0.Tabs.UsePixmap");
     if (!*show) // only change if the setting didn't already exist
         *show = false;
 }
@@ -321,13 +321,13 @@ void update_change_format_of_split_placement_menu(FbTk::ResourceManager& rm,
 
     FbTk::StringResource *placement =
         new FbTk::StringResource(rm, "BottomRight",
-                "session.screen0.slit.placement",
-                "Session.Screen0.Slit.Placement");
+                "screen0.slit.placement",
+                "Screen0.Slit.Placement");
 
     FbTk::StringResource *direction =
         new FbTk::StringResource(rm, "Vertical",
-                "session.screen0.slit.direction",
-                "Session.Screen0.Slit.Direction");
+                "screen0.slit.direction",
+                "Screen0.Slit.Direction");
 
     if (strcasecmp((**direction).c_str(), "vertical") == 0) {
         if (strcasecmp((**placement).c_str(), "BottomRight") == 0)
@@ -556,9 +556,9 @@ int run_updates(int old_version, FbTk::ResourceManager &rm) {
     int new_version = old_version;
 
     FbTk::StringResource rc_keyfile(rm, "~/.fluxbox/keys",
-            "session.keyFile", "Session.KeyFile");
+            "keyFile", "KeyFile");
     FbTk::StringResource rc_appsfile(rm, "~/.fluxbox/apps",
-            "session.appsFile", "Session.AppsFile");
+            "appsFile", "AppsFile");
 
     string appsfilename = FbTk::StringUtil::expandFilename(*rc_appsfile);
     string keyfilename = FbTk::StringUtil::expandFilename(*rc_keyfile);
@@ -617,7 +617,7 @@ int main(int argc, char **argv) {
     if (rc_filename.empty())
         rc_filename = getenv("HOME") + string("/.fluxbox/init");
 
-    FbTk::ResourceManager resource_manager(rc_filename.c_str(),false);
+    FbTk::ResourceManager resource_manager("session", "Session", rc_filename.c_str(),false);
     if (!resource_manager.load(rc_filename.c_str())) {
         // couldn't load rc file
         cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<rc_filename<<endl;
@@ -634,7 +634,7 @@ int main(int argc, char **argv) {
     // I feel like putting this in a separate function for no apparent reason
 
     FbTk::IntResource config_version(resource_manager, 0,
-            "session.configVersion", "Session.ConfigVersion");
+            "configVersion", "ConfigVersion");
 
     if (check) {
         cout << rc_filename << ": " << *config_version << endl

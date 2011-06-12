@@ -82,10 +82,13 @@ void ResourceManager_base::setResourceValue(const string &resname, const string 
 
 }
 
-ResourceManager::ResourceManager(const char *filename, bool lock_db) :
+ResourceManager::ResourceManager(const std::string &root, const std::string &alt_root,
+                const char *filename, bool lock_db) :
+ ResourceManager_base(root),
  m_db_lock(0),
  m_database(0),
- m_filename(filename ? filename : "")
+ m_filename(filename ? filename : ""),
+ m_alt_root(alt_root)
 {
     static bool xrm_initialized = false;
     if (!xrm_initialized) {
@@ -131,8 +134,8 @@ bool ResourceManager::load(const char *filename) {
     for (; i != i_end; ++i) {
 
         Resource_base *resource = *i;
-        if (XrmGetResource(**m_database, resource->name().c_str(),
-                           resource->altName().c_str(), &value_type, &value))
+        if (XrmGetResource(**m_database, (m_root + '.' + resource->name()).c_str(),
+                           (m_alt_root + '.' + resource->altName()).c_str(), &value_type, &value))
             resource->setFromString(value.addr);
         else {
             _FB_USES_NLS;
@@ -166,13 +169,12 @@ bool ResourceManager::save(const char *filename, const char *mergefilename) {
     // empty database
     XrmDatabaseHelper database;
 
-    string rc_string;
     ResourceList::iterator i = m_resourcelist.begin();
     ResourceList::iterator i_end = m_resourcelist.end();
     //write all resources to database
     for (; i != i_end; ++i) {
         Resource_base *resource = *i;
-        rc_string = resource->name() + string(": ") + resource->getString();
+        const string &rc_string = m_root + '.' + resource->name() + ": " + resource->getString();
         XrmPutLineResource(&*database, rc_string.c_str());
     }
 
@@ -248,8 +250,8 @@ void ResourceManager::addResource(Resource_base &r) {
     char *value_type;
 
     // now, load the value for this resource
-    if (XrmGetResource(**m_database, r.name().c_str(),
-                       r.altName().c_str(), &value_type, &value)) {
+    if (XrmGetResource(**m_database, (m_root + '.' + r.name()).c_str(),
+                       (m_alt_root + '.' + r.altName()).c_str(), &value_type, &value)) {
         r.setFromString(value.addr);
     } else {
         std::cerr<<"Failed to read: "<<r.name()<<std::endl;

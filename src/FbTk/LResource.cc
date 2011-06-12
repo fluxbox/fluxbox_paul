@@ -82,8 +82,8 @@ void LResourceManager::initState(lua::state &l) {
     l.setfield(lua::REGISTRYINDEX, make_root);
 }
 
-LResourceManager::LResourceManager(lua::state &l, const std::string &root)
-                        : m_l(&l), m_root(root) {
+LResourceManager::LResourceManager(const std::string &root, lua::state &l)
+                        : ResourceManager_base(root), m_l(&l) {
     l.checkstack(2);
     lua::stack_sentry s(l);
 
