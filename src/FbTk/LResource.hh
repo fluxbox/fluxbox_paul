@@ -39,7 +39,7 @@ class LResourceManager: public ResourceManager_base {
 public:
     static void initState(lua::state &l);
 
-    LResourceManager(lua::state &l, const std::string &root);
+    LResourceManager(const std::string &root, lua::state &l);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
@@ -47,7 +47,6 @@ public:
 private:
 
     lua::state *m_l;
-    std::string m_root;
 };
 
 } // end namespace FbTk

@@ -228,28 +228,28 @@ Fluxbox::Fluxbox(int argc, char **argv,
                  const std::string& rc_path, const std::string& rc_filename, bool xsync)
     : FbTk::App(dpy_name.c_str()),
       m_fbatoms(FbAtoms::instance()),
-      m_resourcemanager(rc_filename.c_str(), true),
+      m_resourcemanager("session", "Session", rc_filename.c_str(), true),
       // TODO: shouldn't need a separate one for screen
       m_screen_rm(m_resourcemanager),
 
       m_RC_PATH(rc_path),
       m_RC_INIT_FILE("init"),
-      m_rc_ignoreborder(m_resourcemanager, false, "session.ignoreBorder", "Session.IgnoreBorder"),
-      m_rc_pseudotrans(m_resourcemanager, false, "session.forcePseudoTransparency", "Session.forcePseudoTransparency"),
+      m_rc_ignoreborder(m_resourcemanager, false, "ignoreBorder", "IgnoreBorder"),
+      m_rc_pseudotrans(m_resourcemanager, false, "forcePseudoTransparency", "forcePseudoTransparency"),
       m_rc_colors_per_channel(m_resourcemanager, 4,
-                              "session.colorsPerChannel", "Session.ColorsPerChannel"),
-      m_rc_double_click_interval(m_resourcemanager, 250, "session.doubleClickInterval", "Session.DoubleClickInterval"),
-      m_rc_tabs_padding(m_resourcemanager, 0, "session.tabPadding", "Session.TabPadding"),
-      m_rc_stylefile(m_resourcemanager, DEFAULTSTYLE, "session.styleFile", "Session.StyleFile"),
-      m_rc_styleoverlayfile(m_resourcemanager, m_RC_PATH + "/overlay", "session.styleOverlay", "Session.StyleOverlay"),
-      m_rc_menufile(m_resourcemanager, m_RC_PATH + "/menu", "session.menuFile", "Session.MenuFile"),
-      m_rc_keyfile(m_resourcemanager, m_RC_PATH + "/keys", "session.keyFile", "Session.KeyFile"),
-      m_rc_slitlistfile(m_resourcemanager, m_RC_PATH + "/slitlist", "session.slitlistFile", "Session.SlitlistFile"),
-      m_rc_appsfile(m_resourcemanager, m_RC_PATH + "/apps", "session.appsFile", "Session.AppsFile"),
-      m_rc_tabs_attach_area(m_resourcemanager, ATTACH_AREA_WINDOW, "session.tabsAttachArea", "Session.TabsAttachArea"),
-      m_rc_cache_life(m_resourcemanager, 5, "session.cacheLife", "Session.CacheLife"),
-      m_rc_cache_max(m_resourcemanager, 200, "session.cacheMax", "Session.CacheMax"),
-      m_rc_auto_raise_delay(m_resourcemanager, 250, "session.autoRaiseDelay", "Session.AutoRaiseDelay"),
+                              "colorsPerChannel", "ColorsPerChannel"),
+      m_rc_double_click_interval(m_resourcemanager, 250, "doubleClickInterval", "DoubleClickInterval"),
+      m_rc_tabs_padding(m_resourcemanager, 0, "tabPadding", "TabPadding"),
+      m_rc_stylefile(m_resourcemanager, DEFAULTSTYLE, "styleFile", "StyleFile"),
+      m_rc_styleoverlayfile(m_resourcemanager, m_RC_PATH + "/overlay", "styleOverlay", "StyleOverlay"),
+      m_rc_menufile(m_resourcemanager, m_RC_PATH + "/menu", "menuFile", "MenuFile"),
+      m_rc_keyfile(m_resourcemanager, m_RC_PATH + "/keys", "keyFile", "KeyFile"),
+      m_rc_slitlistfile(m_resourcemanager, m_RC_PATH + "/slitlist", "slitlistFile", "SlitlistFile"),
+      m_rc_appsfile(m_resourcemanager, m_RC_PATH + "/apps", "appsFile", "AppsFile"),
+      m_rc_tabs_attach_area(m_resourcemanager, ATTACH_AREA_WINDOW, "tabsAttachArea", "TabsAttachArea"),
+      m_rc_cache_life(m_resourcemanager, 5, "cacheLife", "CacheLife"),
+      m_rc_cache_max(m_resourcemanager, 200, "cacheMax", "CacheMax"),
+      m_rc_auto_raise_delay(m_resourcemanager, 250, "autoRaiseDelay", "AutoRaiseDelay"),
       m_masked_window(0),
       m_mousescreen(0),
       m_keyscreen(0),
@@ -397,8 +397,8 @@ Fluxbox::Fluxbox(int argc, char **argv,
     for (size_t s = 0; s < screens.size(); s++) {
         std::string sc_nr = FbTk::StringUtil::number2String(screens[s]);
         BScreen *screen = new BScreen(m_screen_rm.lock(),
-                                      std::string("session.screen") + sc_nr,
-                                      std::string("session.Screen") + sc_nr,
+                                      std::string("screen") + sc_nr,
+                                      std::string("Screen") + sc_nr,
                                       screens[s], ::ResourceLayer::NUM_LAYERS);
 
         // already handled
@@ -1146,7 +1146,7 @@ void Fluxbox::save_rc() {
     for (; it != it_end; ++it) {
         BScreen *screen = *it;
 
-        std::string workspaces_string("session.screen");
+        std::string workspaces_string("screen");
         workspaces_string += FbTk::StringUtil::number2String(screen->screenNumber());
         workspaces_string += ".workspaceNames: ";
 
@@ -1239,10 +1239,10 @@ void Fluxbox::load_rc(BScreen &screen) {
 
     std::string screen_number = FbTk::StringUtil::number2String(screen.screenNumber());
 
-    std::string name_lookup("session.screen");
+    std::string name_lookup("screen");
     name_lookup += screen_number;
     name_lookup += ".workspaceNames";
-    std::string class_lookup("session.screen");
+    std::string class_lookup("screen");
     class_lookup += screen_number;
     class_lookup += ".WorkspaceNames";
 
