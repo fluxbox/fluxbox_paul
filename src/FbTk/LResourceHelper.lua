@@ -102,11 +102,7 @@ local function register_resource(root, name, object)
 end;
 
 local function dump_(key, value, fd)
-    if type(value) == 'string' then
-        fd:write(key, ' = ', string.format('%q', value), '\n');
-    elseif type(value) == 'number' then
-        fd:write(key, ' = ', string.format('%g', value), '\n');
-    elseif type(value) == 'table' then
+    if type(value) == 'table' then
         fd:write(key, ' = {}\n');
         for k, v in pairs(value) do
             k = append_name(key, k);
@@ -124,7 +120,20 @@ local function dump_(key, value, fd)
         end;
         fd:write('\n');
     else
-        error('Unsupported value type: ' .. type(val));
+        if type(value) == 'string' then
+            value = string.format('%q', value);
+        elseif type(value) == 'number' then
+            value = string.format('%g', value);
+        elseif type(value) == 'boolean' then
+            if value then
+                value = "true";
+            else
+                value = "false";
+            end;
+        else
+            error('Unsupported value type for ' .. key .. ': ' .. type(value));
+        end;
+        fd:write(key, ' = ', value, '\n');
     end;
 end;
 
