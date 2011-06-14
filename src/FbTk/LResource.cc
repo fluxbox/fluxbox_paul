@@ -104,6 +104,11 @@ LResourceManager::LResourceManager(const std::string &root, lua::state &l)
     lua::stack_sentry s(l);
 
     l.getfield(lua::REGISTRYINDEX, make_root);
+    if(l.isnil(-1)) {
+        l.pop();
+        initState(l);
+        l.getfield(lua::REGISTRYINDEX, make_root);
+    }
     l.pushstring(root);
     l.call(1, 0);
 }
