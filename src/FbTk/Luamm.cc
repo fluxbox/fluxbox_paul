@@ -173,7 +173,7 @@ namespace lua {
     }
 
     exception::exception(state *l)
-        : std::runtime_error(get_error_msg(l)), L(l)
+        : std::runtime_error(get_error_msg(l)), L(l), L_valid(l->get_valid())
     {
         L->checkstack(1);
 
@@ -184,7 +184,7 @@ namespace lua {
     }
 
     exception::exception(const exception &other)
-        : std::runtime_error(other), L(other.L)
+        : std::runtime_error(other), L(other.L), L_valid(other.L_valid)
     {
         L->checkstack(2);
 
@@ -196,7 +196,7 @@ namespace lua {
 
     exception::~exception() throw()
     {
-        if(not L)
+        if(not L or not *L_valid)
             return;
         L->checkstack(1);
 
@@ -217,7 +217,7 @@ namespace lua {
     }
 
     state::state()
-        : cobj(luaL_newstate())
+        : cobj(luaL_newstate()), valid(new bool(true))
     {
         if(cobj == NULL) {
             // docs say this can happen only in case of a memory allocation error
@@ -249,6 +249,7 @@ namespace lua {
             luaL_openlibs(cobj);
         }
         catch(...) {
+            *valid = false;
             lua_close(cobj);
             throw;
         }
