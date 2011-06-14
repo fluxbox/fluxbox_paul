@@ -31,6 +31,7 @@
 #include <lua.h>
 #include <lualib.h>
 
+#include "RefCount.hh"
 #include "Slot.hh"
 
 namespace lua {
@@ -84,6 +85,7 @@ namespace lua {
      */
     class exception: public std::runtime_error {
         state *L;
+        FbTk::RefCount<const bool> L_valid;
         int key;
 
         static std::string get_error_msg(state *L);
@@ -152,9 +154,19 @@ namespace lua {
         bool safe_compare(lua_CFunction trampoline, int index1, int index2);
         void do_pushclosure(int n);
 
+        /**
+         * The pointed-to value is true if this object still exists. We need this because the
+         * exceptions have to know if they may reference it to remove the saved lua exception. If
+         * this object is destroyed then the exception was already collected by the garbage
+         * colletor and referencing this would generate a segfault.
+         */
+        FbTk::RefCount<bool> valid;
+
     public:
         state();
-        ~state() { lua_close(cobj); }
+        ~state() { *valid = false; lua_close(cobj); }
+
+        FbTk::RefCount<const bool> get_valid() const { return valid; }
 
         /*
          * Lua functions come in three flavours
