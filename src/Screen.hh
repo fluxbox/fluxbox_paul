@@ -191,7 +191,7 @@ public:
 
     const Workspaces &getWorkspacesList() const { return m_workspaces_list; }
     Workspaces &getWorkspacesList() { return m_workspaces_list; }
-    const WorkspaceNames &getWorkspaceNames() const { return m_workspace_names; }
+    const WorkspaceNames &getWorkspaceNames() const { return *resource.workspace_names; }
     /**
        @name Screen signals
     */
@@ -322,7 +322,7 @@ public:
     /// remove all workspace names
     void removeWorkspaceNames();
     /// add a workspace name to the end of the workspace name list
-    void addWorkspaceName(const char *name);
+    void addWorkspaceName(const std::string &name);
     /// add a window to the icon list
     void addIcon(FluxboxWindow *win);
     /// remove a window from the icon list
@@ -510,7 +510,6 @@ private:
 
     Workspace *m_current_workspace;
 
-    WorkspaceNames m_workspace_names;
     Workspaces m_workspaces_list;
 
     std::auto_ptr<FbWinFrameTheme> m_focused_windowtheme,
@@ -527,6 +526,12 @@ private:
 
     struct ScreenResource {
         ScreenResource(FbTk::ResourceManager_base &rm, const std::string &scrname);
+
+        static const char workspace_names_delim[];
+        FbTk::Resource<
+                std::vector<std::string>,
+                FbTk::VectorTraits<FbTk::StringTraits, workspace_names_delim>
+        > workspace_names;
 
         FbTk::BoolResource opaque_move, full_max,
             max_ignore_inc, max_disable_move, max_disable_resize,

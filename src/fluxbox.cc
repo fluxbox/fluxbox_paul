@@ -1131,36 +1131,6 @@ void Fluxbox::save_rc() {
         cerr<<_FB_CONSOLETEXT(Fluxbox, BadRCFile, "rc filename is invalid!", "Bad settings file")<<endl;
 
 
-    ScreenList::iterator it = m_screen_list.begin();
-    ScreenList::iterator it_end = m_screen_list.end();
-    for (; it != it_end; ++it) {
-        BScreen *screen = *it;
-
-        std::string workspaces_string("screen");
-        workspaces_string += FbTk::StringUtil::number2String(screen->screenNumber());
-        workspaces_string += ".workspaceNames: ";
-
-        // these are static, but may not be saved in the users resource file,
-        // writing these resources will allow the user to edit them at a later
-        // time... but loading the defaults before saving allows us to rewrite the
-        // users changes...
-
-        const BScreen::WorkspaceNames& names = screen->getWorkspaceNames();
-        for (size_t i=0; i < names.size(); i++) {
-            workspaces_string += FbTk::FbStringUtil::FbStrToLocale(names[i]);
-            workspaces_string += ',';
-        }
-
-        XrmPutLineResource(&new_rc, workspaces_string.c_str());
-
-    }
-
-    XrmDatabase old_rc = XrmGetFileDatabase(dbfile.c_str());
-
-    XrmMergeDatabases(new_rc, &old_rc);
-    XrmPutFileDatabase(old_rc, dbfile.c_str());
-    XrmDestroyDatabase(old_rc);
-
     fbdbg<<__FILE__<<"("<<__LINE__<<"): ------------ SAVING DONE"<<endl;
 
 }
@@ -1272,11 +1242,6 @@ void Fluxbox::reconfigure() {
 void Fluxbox::real_reconfigure() {
 
     FbTk::Transparent::usePseudoTransparent(*m_rc_pseudotrans);
-
-    ScreenList::iterator screen_it = m_screen_list.begin();
-    ScreenList::iterator screen_it_end = m_screen_list.end();
-    for (; screen_it != screen_it_end; ++screen_it)
-        load_rc(*(*screen_it));
 
     STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
     m_key->reconfigure();
