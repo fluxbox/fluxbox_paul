@@ -243,8 +243,11 @@ const EnumTraits<FbWinFrame::TabPlacement>::Pair EnumTraits<FbWinFrame::TabPlace
 } // end namespace FbTk
 
 
+const char BScreen::ScreenResource::workspace_names_delim[] = ",";
+
 BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
                                         const string &scrname):
+    workspace_names(rm, std::vector<std::string>(), scrname + ".workspaceNames"),
     opaque_move(rm, true, scrname + ".opaqueMove"),
     full_max(rm, false, scrname+".fullMaximization"),
     max_ignore_inc(rm, true, scrname+".maxIgnoreIncrement"),
@@ -387,9 +390,6 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
         keys->registerWindow(rootWindow().window(), *this,
                              Keys::GLOBAL|Keys::ON_DESKTOP);
     rootWindow().setCursor(XCreateFontCursor(disp, XC_left_ptr));
-
-    // load this screens resources
-    fluxbox->load_rc(*this);
 
     // setup image cache engine
     m_image_control.reset(new FbTk::ImageControl(scrn,
@@ -856,15 +856,14 @@ void BScreen::reconfigure() {
 
     // realize the number of workspaces from the init-file
     const unsigned int nr_ws = *resource.workspaces;
-    if (nr_ws > m_workspaces_list.size()) {
-        while(nr_ws != m_workspaces_list.size()) {
-            addWorkspace();
-        }
-    } else if (nr_ws < m_workspaces_list.size()) {
-        while(nr_ws != m_workspaces_list.size()) {
-            removeLastWorkspace();
-        }
-    }
+    while(nr_ws > m_workspaces_list.size())
+        addWorkspace();
+    while(nr_ws < m_workspaces_list.size())
+        removeLastWorkspace();
+
+    // and update their names
+    for(size_t i = 0; i < std::min(m_workspaces_list.size(), resource.workspace_names->size()); ++i)
+        m_workspaces_list[i]->setName( (*resource.workspace_names)[i] );
 
     // update menu filenames
     m_rootmenu->reloadHelper()->setMainFile(fluxbox->getMenuFilename());
@@ -904,14 +903,14 @@ void BScreen::reconfigureTabs() {
 void BScreen::updateWorkspaceName(unsigned int w) {
     Workspace *space = getWorkspace(w);
     if (space) {
-        m_workspace_names[w] = space->name();
+        (*resource.workspace_names)[w] = space->name();
         m_workspacenames_sig.emit(*this);
         Fluxbox::instance()->save_rc();
     }
 }
 
 void BScreen::removeWorkspaceNames() {
-    m_workspace_names.clear();
+    resource.workspace_names->clear();
 }
 
 void BScreen::addIcon(FluxboxWindow *w) {
@@ -1345,17 +1344,17 @@ void BScreen::updateAvailableWorkspaceArea() {
         m_workspace_area_sig.emit(*this);
 }
 
-void BScreen::addWorkspaceName(const char *name) {
-    m_workspace_names.push_back(FbTk::FbStringUtil::LocaleStrToFb(name));
-    Workspace *wkspc = getWorkspace(m_workspace_names.size()-1);
+void BScreen::addWorkspaceName(const std::string &name) {
+    resource.workspace_names->push_back(name);
+    Workspace *wkspc = getWorkspace(resource.workspace_names->size()-1);
     if (wkspc)
-        wkspc->setName(m_workspace_names.back());
+        wkspc->setName(name);
 }
 
 
 string BScreen::getNameOfWorkspace(unsigned int workspace) const {
-    if (workspace < m_workspace_names.size())
-        return m_workspace_names[workspace];
+    if (workspace < resource.workspace_names->size())
+        return (*resource.workspace_names)[workspace];
     else
         return "";
 }
