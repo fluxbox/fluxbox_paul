@@ -54,7 +54,7 @@ local function index(table, key)
 end;
 
 local function append_name(str, name)
-    if type(name) == 'string' and string.match(name, '^%a+$') then
+    if type(name) == 'string' and string.match(name, '^%a%w*$') then
         return str .. '.' .. name;
     elseif type(name) == 'number' then
         return str .. '[' .. string.format('%g', name) .. ']';
@@ -77,14 +77,14 @@ local function register_resource(root, name, object)
     local meta = getmetatable(root);
     meta._state = 1;
 
-    local head, tail = string.match(name, '^(%a+)%.?(.*)');
+    local head, tail = string.match(name, '^(%a%w*)%.?(.*)');
     local t = meta[head];
     local mt = getmetatable(t);
-    if mt ~= nil and mt._magic == cat_magic then
-        t = mt;
-    end;
 
     if tail == '' then
+        if mt ~= nil and mt._magic == cat_magic then
+            t = mt;
+        end;
         if getmetatable(object) == res_magic then
             meta[head] = object;
             write_resource(object, t);
@@ -95,7 +95,7 @@ local function register_resource(root, name, object)
         return t;
     end;
 
-    if t == nil then
+    if mt == nil or mt._magic ~= cat_magic then
         t = new_cat(root, head);
     end;
     return register_resource(t, tail, object);
