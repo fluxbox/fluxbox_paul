@@ -251,9 +251,10 @@ private:
     int m_mode;
 };
 
+extern const char win_buttons_delim[] = " \t\n";
 typedef FbTk::Resource<
                 vector<WinButton::Type>,
-                FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type> >
+                FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type>, win_buttons_delim>
 > WinButtonsResource;
 
 }
