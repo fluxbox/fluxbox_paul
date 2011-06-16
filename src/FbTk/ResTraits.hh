@@ -160,7 +160,7 @@ struct EnumTraits {
     }
 };
 
-template<typename Traits>
+template<typename Traits, const char *delim>
 struct VectorTraits {
     typedef std::vector<typename Traits::Type> Type;
     static std::string toString(const Type &x) {
@@ -186,7 +186,7 @@ struct VectorTraits {
 
     static Type fromString(const std::string &x) {
         std::vector<std::string> val;
-        StringUtil::stringtok(val, x);
+        StringUtil::stringtok(val, x, delim);
         Type retval;
 
         for(size_t i = 0; i < val.size(); i++) {
