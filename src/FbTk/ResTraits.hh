@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "FbString.hh"
 #include "Luamm.hh"
 #include "StringUtil.hh"
 
@@ -65,11 +66,27 @@ struct IntTraits {
 
 struct StringTraits {
     typedef std::string Type;
-    static std::string toString(const std::string &x) { return x; }
+    static const std::string &toString(const std::string &x) { return x; }
     static void toLua(const std::string &x, lua::state &l) { l.pushstring(x); }
-    static std::string fromString(const std::string &x) { return x; }
+    static const std::string &fromString(const std::string &x) { return x; }
 
     static std::string fromLua(lua::state &l) {
+        lua::stack_sentry s(l, -1);
+
+        if(l.isstring(-1) || l.isnumber(-1))
+            return l.tostring(-1);
+        throw ConversionError( std::string("Cannot convert to string from lua type ")
+                                + l.type_name(l.type(-1)) );
+    }
+};
+
+struct FbStringTraits {
+    typedef FbString Type;
+    static std::string toString(const FbString &x) { return FbStringUtil::FbStrToLocale(x); }
+    static void toLua(const FbString &x, lua::state &l) { l.pushstring(toString(x)); }
+    static FbString fromString(const std::string &x) { return FbStringUtil::LocaleStrToFb(x); }
+
+    static FbString fromLua(lua::state &l) {
         lua::stack_sentry s(l, -1);
 
         if(l.isstring(-1) || l.isnumber(-1))
