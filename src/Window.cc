@@ -3436,17 +3436,13 @@ void FluxboxWindow::setupWindow() {
     // we allow both to be done at once to share the commands
 
     string titlebar_name[2];
-    string titlebar_alt_name[2];
     titlebar_name[0] = screen().name() + ".titlebar.left";
-    titlebar_alt_name[0] = screen().altName() + ".Titlebar.Left";
     titlebar_name[1] = screen().name() + ".titlebar.right";
-    titlebar_alt_name[1] = screen().altName() + ".Titlebar.Right";
 
     WinButtonsResource *titlebar_side[2];
 
 
-
-    ResourceManager &rm = screen().resourceManager();
+    ResourceManager_base &rm = screen().resourceManager();
 
     // create resource for titlebar
     for (int i=0; i < 2; ++i) {
@@ -3480,7 +3476,7 @@ void FluxboxWindow::setupWindow() {
         titlebar_side[i] =
             new WinButtonsResource(rm,
                                    WinButtonsResource::Type(begin, end),
-                                   titlebar_name[i], titlebar_alt_name[i]);
+                                   titlebar_name[i]);
 
 
         screen().addManagedResource(titlebar_side[i]);
@@ -3498,7 +3494,7 @@ void FluxboxWindow::updateButtons() {
     titlebar_name[1] = screen().name() + ".titlebar.right";
 
     WinButtonsResource *titlebar_side[2];
-    ResourceManager &rm = screen().resourceManager();
+    ResourceManager_base &rm = screen().resourceManager();
 
     bool need_update = false;
     // get resource for titlebar

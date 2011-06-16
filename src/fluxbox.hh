@@ -26,7 +26,7 @@
 #define FLUXBOX_HH
 
 #include "FbTk/App.hh"
-#include "FbTk/Resource.hh"
+#include "FbTk/LResource.hh"
 #include "FbTk/Timer.hh"
 #include "FbTk/SignalHandler.hh"
 #include "FbTk/Signal.hh"
@@ -225,9 +225,10 @@ private:
     /// Called when a window layer changes
     void windowLayerChanged(FluxboxWindow &win);
 
+    std::auto_ptr<lua::state> m_l;
     std::auto_ptr<FbAtoms> m_fbatoms;
 
-    FbTk::ResourceManager m_resourcemanager, &m_screen_rm;
+    FbTk::LResourceManager m_resourcemanager;
 
     std::string m_RC_PATH;
     const char *m_RC_INIT_FILE;

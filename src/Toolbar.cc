@@ -175,25 +175,18 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
     m_theme(scrn.screenNumber()),
     m_tool_factory(scrn),
     m_strut(0),
-    // lock rcmanager here
-    m_rc_auto_hide(scrn.resourceManager().lock(), false,
-                   scrn.name() + ".toolbar.autoHide", scrn.altName() + ".Toolbar.AutoHide"),
-    m_rc_maximize_over(scrn.resourceManager(), false,
-                       scrn.name() + ".toolbar.maxOver", scrn.altName() + ".Toolbar.MaxOver"),
-    m_rc_visible(scrn.resourceManager(), true, scrn.name() + ".toolbar.visible", scrn.altName() + ".Toolbar.Visible"),
-    m_rc_width_percent(scrn.resourceManager(), 100,
-                       scrn.name() + ".toolbar.widthPercent", scrn.altName() + ".Toolbar.WidthPercent"),
-    m_rc_alpha(scrn.resourceManager(), 255,
-                       scrn.name() + ".toolbar.alpha", scrn.altName() + ".Toolbar.Alpha"),
-    m_rc_layernum(scrn.resourceManager(), ResourceLayer::DOCK,
-                  scrn.name() + ".toolbar.layer", scrn.altName() + ".Toolbar.Layer"),
-    m_rc_on_head(scrn.resourceManager(), 1,
-                 scrn.name() + ".toolbar.onhead", scrn.altName() + ".Toolbar.onHead"),
+    m_rc_auto_hide(scrn.resourceManager(), false, scrn.name() + ".toolbar.autoHide"),
+    m_rc_maximize_over(scrn.resourceManager(), false, scrn.name() + ".toolbar.maxOver"),
+    m_rc_visible(scrn.resourceManager(), true, scrn.name() + ".toolbar.visible"),
+    m_rc_width_percent(scrn.resourceManager(), 100, scrn.name() + ".toolbar.widthPercent"),
+    m_rc_alpha(scrn.resourceManager(), 255, scrn.name() + ".toolbar.alpha"),
+    m_rc_layernum(scrn.resourceManager(), ResourceLayer::DOCK, scrn.name() + ".toolbar.layer"),
+    m_rc_on_head(scrn.resourceManager(), 1, scrn.name() + ".toolbar.onhead"),
     m_rc_placement(scrn.resourceManager(), Toolbar::BOTTOMCENTER,
-                   scrn.name() + ".toolbar.placement", scrn.altName() + ".Toolbar.Placement"),
-    m_rc_height(scrn.resourceManager(), 0, scrn.name() + ".toolbar.height", scrn.altName() + ".Toolbar.Height"),
+                   scrn.name() + ".toolbar.placement"),
+    m_rc_height(scrn.resourceManager(), 0, scrn.name() + ".toolbar.height"),
     m_rc_tools(scrn.resourceManager(), "prevworkspace, workspacename, nextworkspace, iconbar, systemtray, clock",
-               scrn.name() + ".toolbar.tools", scrn.altName() + ".Toolbar.Tools"),
+               scrn.name() + ".toolbar.tools"),
     m_shape(new FbTk::Shape(frame.window, 0)),
     m_resize_lock(false) {
     _FB_USES_NLS;
@@ -239,7 +232,6 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
     frame.window.showSubwindows();
     //    frame.window.show();
 
-    scrn.resourceManager().unlock();
     // setup to listen to child events
     FbTk::EventManager::instance()->addParent(*this, window());
     Fluxbox::instance()->keys()->registerWindow(window().window(), *this,

@@ -89,8 +89,8 @@ public:
     typedef std::vector<std::string> WorkspaceNames;
     typedef std::list<std::pair<FbTk::FbString, FbTk::Menu *> > ExtraMenus;
 
-    BScreen(FbTk::ResourceManager &rm,
-            const std::string &screenname, const std::string &altscreenname,
+    BScreen(FbTk::ResourceManager_base &rm,
+            const std::string &screenname,
             int scrn, int number_of_layers);
     ~BScreen();
 
@@ -284,10 +284,9 @@ public:
 
     FbTk::MultLayers &layerManager() { return m_layermanager; }
     const FbTk::MultLayers &layerManager() const { return m_layermanager; }
-    FbTk::ResourceManager &resourceManager() { return m_resource_manager; }
-    const FbTk::ResourceManager &resourceManager() const { return m_resource_manager; }
+    FbTk::ResourceManager_base &resourceManager() { return m_resource_manager; }
+    const FbTk::ResourceManager_base &resourceManager() const { return m_resource_manager; }
     const std::string &name() const { return m_name; }
-    const std::string &altName() const { return m_altname; }
     bool isShuttingdown() const { return m_shutdown; }
     bool isRestart();
 
@@ -527,8 +526,7 @@ private:
     FbTk::FbWindow m_dummy_window;
 
     struct ScreenResource {
-        ScreenResource(FbTk::ResourceManager &rm, const std::string &scrname,
-                       const std::string &altscrname);
+        ScreenResource(FbTk::ResourceManager_base &rm, const std::string &scrname);
 
         FbTk::BoolResource opaque_move, full_max,
             max_ignore_inc, max_disable_move, max_disable_resize,
@@ -552,8 +550,8 @@ private:
     /// Holds manage resources that screen destroys
     FbTk::ResourceManager::ResourceList m_managed_resources;
 
-    FbTk::ResourceManager &m_resource_manager;
-    const std::string m_name, m_altname;
+    FbTk::ResourceManager_base &m_resource_manager;
+    const std::string m_name;
 
     FocusControl *m_focus_control;
     ScreenPlacement *m_placement_strategy;
