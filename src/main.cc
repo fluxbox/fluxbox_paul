@@ -231,7 +231,7 @@ struct Options {
 #endif
         if (env && strlen(env) > 0) {
             rc_path.assign(std::string(env) + "/." + realProgramName("fluxbox"));
-            rc_file = rc_path + "/init";
+            rc_file = rc_path + "/init2";
         }
     }
 
@@ -396,7 +396,7 @@ void setupConfigFiles(const std::string& dirname, const std::string& rc) {
 // configs might be out of date, so run fluxbox-update_configs
 // if necassary.
 void updateConfigFilesIfNeeded(const std::string& rc_file) {
-
+/* XXX
     const int CONFIG_VERSION = 13; // TODO: move this to 'defaults.hh' or 'config.h'
 
     FbTk::ResourceManager r_mgr("session", "Session", rc_file.c_str(), false);
@@ -429,7 +429,7 @@ void updateConfigFilesIfNeeded(const std::string& rc_file) {
 #ifdef HAVE_SYNC
         sync();
 #endif // HAVE_SYNC
-    }
+    }*/
 }
 
 #include "WinButton.hh"
@@ -475,7 +475,7 @@ int main(int argc, char **argv) {
     updateConfigFilesIfNeeded(opts.rc_file);
 
     auto_ptr<Fluxbox> fluxbox;
-    try {
+//    try {
 
         fluxbox.reset(new Fluxbox(argc, argv,
                     opts.session_display,
@@ -486,7 +486,7 @@ int main(int argc, char **argv) {
 
         exitcode = EXIT_SUCCESS;
 
-    } catch (out_of_range &oor) {
+  /*  } catch (out_of_range &oor) {
         cerr <<"Fluxbox: "
             << _FB_CONSOLETEXT(main, ErrorOutOfRange, "Out of range", "Error message")
             << ": "
@@ -520,7 +520,7 @@ int main(int argc, char **argv) {
             << _FB_CONSOLETEXT(main, ErrorUnknown, "Unknown error", "Error message")
             << "." << endl;
         abort();
-    }
+    }*/
 
     bool restarting = false;
     string restart_argument;
