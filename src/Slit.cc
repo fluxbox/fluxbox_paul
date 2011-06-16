@@ -189,21 +189,14 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
       m_strut(0),
       // resources
       // lock in first resource
-      m_rc_kde_dockapp(scr.resourceManager(), true,
-                       scr.name() + ".slit.acceptKdeDockapps", scr.altName() + ".Slit.AcceptKdeDockapps"),
-      m_rc_auto_hide(scr.resourceManager().lock(), false,
-                     scr.name() + ".slit.autoHide", scr.altName() + ".Slit.AutoHide"),
+      m_rc_kde_dockapp(scr.resourceManager(), true, scr.name() + ".slit.acceptKdeDockapps"),
+      m_rc_auto_hide(scr.resourceManager(), false, scr.name() + ".slit.autoHide"),
       // TODO: this resource name must change
-      m_rc_maximize_over(scr.resourceManager(), false,
-                         scr.name() + ".slit.maxOver", scr.altName() + ".Slit.MaxOver"),
-      m_rc_placement(scr.resourceManager(), RIGHTBOTTOM,
-                     scr.name() + ".slit.placement", scr.altName() + ".Slit.Placement"),
-      m_rc_alpha(scr.resourceManager(), 255,
-                 scr.name() + ".slit.alpha", scr.altName() + ".Slit.Alpha"),
-      m_rc_on_head(scr.resourceManager(), 0,
-                   scr.name() + ".slit.onhead", scr.altName() + ".Slit.onHead"),
-      m_rc_layernum(scr.resourceManager(), ResourceLayer::DOCK,
-                    scr.name() + ".slit.layer", scr.altName() + ".Slit.Layer") {
+      m_rc_maximize_over(scr.resourceManager(), false, scr.name() + ".slit.maxOver"),
+      m_rc_placement(scr.resourceManager(), RIGHTBOTTOM, scr.name() + ".slit.placement"),
+      m_rc_alpha(scr.resourceManager(), 255, scr.name() + ".slit.alpha"),
+      m_rc_on_head(scr.resourceManager(), 0, scr.name() + ".slit.onhead"),
+      m_rc_layernum(scr.resourceManager(), ResourceLayer::DOCK, scr.name() + ".slit.layer") {
 
     _FB_USES_NLS;
 
@@ -256,8 +249,6 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
     loadClientList(filename);
 
     setupMenu();
-
-    scr.resourceManager().unlock();
 }
 
 

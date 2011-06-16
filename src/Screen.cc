@@ -243,42 +243,39 @@ const EnumTraits<FbWinFrame::TabPlacement>::Pair EnumTraits<FbWinFrame::TabPlace
 } // end namespace FbTk
 
 
-BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager &rm,
-                                        const string &scrname,
-                                        const string &altscrname):
-    opaque_move(rm, true, scrname + ".opaqueMove", altscrname+".OpaqueMove"),
-    full_max(rm, false, scrname+".fullMaximization", altscrname+".FullMaximization"),
-    max_ignore_inc(rm, true, scrname+".maxIgnoreIncrement", altscrname+".MaxIgnoreIncrement"),
-    max_disable_move(rm, false, scrname+".maxDisableMove", altscrname+".MaxDisableMove"),
-    max_disable_resize(rm, false, scrname+".maxDisableResize", altscrname+".MaxDisableResize"),
-    workspace_warping(rm, true, scrname+".workspacewarping", altscrname+".WorkspaceWarping"),
-    show_window_pos(rm, false, scrname+".showwindowposition", altscrname+".ShowWindowPosition"),
-    auto_raise(rm, true, scrname+".autoRaise", altscrname+".AutoRaise"),
-    click_raises(rm, true, scrname+".clickRaises", altscrname+".ClickRaises"),
-    default_deco(rm, "NORMAL", scrname+".defaultDeco", altscrname+".DefaultDeco"),
-    tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement", altscrname+".Tab.Placement"),
-    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu"), scrname+".windowMenu", altscrname+".WindowMenu"),
-    typing_delay(rm, 0, scrname+".noFocusWhileTypingDelay", altscrname+".NoFocusWhileTypingDelay"),
-    workspaces(rm, 4, scrname+".workspaces", altscrname+".Workspaces"),
-    edge_snap_threshold(rm, 10, scrname+".edgeSnapThreshold", altscrname+".EdgeSnapThreshold"),
-    focused_alpha(rm, 255, scrname+".window.focus.alpha", altscrname+".Window.Focus.Alpha"),
-    unfocused_alpha(rm, 255, scrname+".window.unfocus.alpha", altscrname+".Window.Unfocus.Alpha"),
-    menu_alpha(rm, 255, scrname+".menu.alpha", altscrname+".Menu.Alpha"),
-    menu_delay(rm, 200, scrname + ".menuDelay", altscrname+".MenuDelay"),
-    tab_width(rm, 64, scrname + ".tab.width", altscrname+".Tab.Width"),
-    tooltip_delay(rm, 500, scrname + ".tooltipDelay", altscrname+".TooltipDelay"),
-    allow_remote_actions(rm, false, scrname+".allowRemoteActions", altscrname+".AllowRemoteActions"),
-    clientmenu_use_pixmap(rm, true, scrname+".clientMenu.usePixmap", altscrname+".ClientMenu.UsePixmap"),
-    tabs_use_pixmap(rm, true, scrname+".tabs.usePixmap", altscrname+".Tabs.UsePixmap"),
-    max_over_tabs(rm, false, scrname+".tabs.maxOver", altscrname+".Tabs.MaxOver"),
-    default_internal_tabs(rm, true /* TODO: autoconf option? */ , scrname+".tabs.intitlebar", altscrname+".Tabs.InTitlebar") {
-
+BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
+                                        const string &scrname):
+    opaque_move(rm, true, scrname + ".opaqueMove"),
+    full_max(rm, false, scrname+".fullMaximization"),
+    max_ignore_inc(rm, true, scrname+".maxIgnoreIncrement"),
+    max_disable_move(rm, false, scrname+".maxDisableMove"),
+    max_disable_resize(rm, false, scrname+".maxDisableResize"),
+    workspace_warping(rm, true, scrname+".workspacewarping"),
+    show_window_pos(rm, false, scrname+".showwindowposition"),
+    auto_raise(rm, true, scrname+".autoRaise"),
+    click_raises(rm, true, scrname+".clickRaises"),
+    default_deco(rm, "NORMAL", scrname+".defaultDeco"),
+    tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement"),
+    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu"), scrname+".windowMenu"),
+    typing_delay(rm, 0, scrname+".noFocusWhileTypingDelay"),
+    workspaces(rm, 4, scrname+".workspaces"),
+    edge_snap_threshold(rm, 10, scrname+".edgeSnapThreshold"),
+    focused_alpha(rm, 255, scrname+".window.focus.alpha"),
+    unfocused_alpha(rm, 255, scrname+".window.unfocus.alpha"),
+    menu_alpha(rm, 255, scrname+".menu.alpha"),
+    menu_delay(rm, 200, scrname + ".menuDelay"),
+    tab_width(rm, 64, scrname + ".tab.width"),
+    tooltip_delay(rm, 500, scrname + ".tooltipDelay"),
+    allow_remote_actions(rm, false, scrname+".allowRemoteActions"),
+    clientmenu_use_pixmap(rm, true, scrname+".clientMenu.usePixmap"),
+    tabs_use_pixmap(rm, true, scrname+".tabs.usePixmap"),
+    max_over_tabs(rm, false, scrname+".tabs.maxOver"),
+    default_internal_tabs(rm, true /* TODO: autoconf option? */ , scrname+".tabs.intitlebar") {
 
 }
 
-BScreen::BScreen(FbTk::ResourceManager &rm,
+BScreen::BScreen(FbTk::ResourceManager_base &rm,
                  const string &screenname,
-                 const string &altscreenname,
                  int scrn, int num_layers) :
     m_layermanager(num_layers),
     m_image_control(0),
@@ -297,10 +294,9 @@ BScreen::BScreen(FbTk::ResourceManager &rm,
     m_tooltip_window(new TooltipWindow(m_root_window, *this, *m_focused_windowtheme)),
     m_dummy_window(scrn, -1, -1, 1, 1, 0, true, false, CopyFromParent,
                    InputOnly),
-    resource(rm, screenname, altscreenname),
+    resource(rm, screenname),
     m_resource_manager(rm),
     m_name(screenname),
-    m_altname(altscreenname),
     m_focus_control(new FocusControl(*this)),
     m_placement_strategy(new ScreenPlacement(*this)),
     m_cycling(false), m_cycle_opts(0),
@@ -462,8 +458,6 @@ BScreen::BScreen(FbTk::ResourceManager &rm,
     m_slit.reset(new Slit(*this, *layerManager().getLayer(ResourceLayer::DESKTOP),
                  fluxbox->getSlitlistFilename().c_str()));
 #endif // SLIT
-
-    rm.unlock();
 
     XFlush(disp);
 }

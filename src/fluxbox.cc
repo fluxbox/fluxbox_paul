@@ -45,7 +45,7 @@
 #include "FbTk/EventManager.hh"
 #include "FbTk/StringUtil.hh"
 #include "FbTk/Util.hh"
-#include "FbTk/Resource.hh"
+#include "FbTk/LResource.hh"
 #include "FbTk/SimpleCommand.hh"
 #include "FbTk/XrmDatabaseHelper.hh"
 #include "FbTk/Command.hh"
@@ -227,10 +227,9 @@ Fluxbox::Fluxbox(int argc, char **argv,
                  const std::string& dpy_name,
                  const std::string& rc_path, const std::string& rc_filename, bool xsync)
     : FbTk::App(dpy_name.c_str()),
+      m_l(new lua::state()),
       m_fbatoms(FbAtoms::instance()),
-      m_resourcemanager("session", "Session", rc_filename.c_str(), true),
-      // TODO: shouldn't need a separate one for screen
-      m_screen_rm(m_resourcemanager),
+      m_resourcemanager("session", *m_l),
 
       m_RC_PATH(rc_path),
       m_RC_INIT_FILE("init"),
@@ -396,9 +395,8 @@ Fluxbox::Fluxbox(int argc, char **argv,
     // create screens
     for (size_t s = 0; s < screens.size(); s++) {
         std::string sc_nr = FbTk::StringUtil::number2String(screens[s]);
-        BScreen *screen = new BScreen(m_screen_rm.lock(),
+        BScreen *screen = new BScreen(m_resourcemanager,
                                       std::string("screen") + sc_nr,
-                                      std::string("Screen") + sc_nr,
                                       screens[s], ::ResourceLayer::NUM_LAYERS);
 
         // already handled
@@ -440,20 +438,13 @@ Fluxbox::Fluxbox(int argc, char **argv,
 
     m_reconfigure_wait = false;
 
-    m_resourcemanager.unlock();
     ungrab();
-
-    if (m_resourcemanager.lockDepth() != 0) {
-        fbdbg<<"--- resource manager lockdepth = "<<m_resourcemanager.lockDepth()<<endl;
-    }
 
     m_starting = false;
     //
     // For dumping theme items
     // FbTk::ThemeManager::instance().listItems();
     //
-    //    m_resourcemanager.dump();
-
 }
 
 
@@ -1136,7 +1127,6 @@ void Fluxbox::save_rc() {
 
     if (!dbfile.empty()) {
         m_resourcemanager.save(dbfile.c_str(), dbfile.c_str());
-        m_screen_rm.save(dbfile.c_str(), dbfile.c_str());
     } else
         cerr<<_FB_CONSOLETEXT(Fluxbox, BadRCFile, "rc filename is invalid!", "Bad settings file")<<endl;
 
@@ -1190,9 +1180,14 @@ string Fluxbox::getDefaultDataFilename(const char *name) const {
 /// loads resources
 void Fluxbox::load_rc() {
     _FB_USES_NLS;
+    lua::stack_sentry s(*m_l);
 
     string dbfile(getRcFilename());
 
+    m_l->loadfile(dbfile.c_str());
+    m_l->call(0, 0);
+
+    /* XXX
     if (!dbfile.empty()) {
         if (!m_resourcemanager.load(dbfile.c_str())) {
             cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<dbfile<<endl;
@@ -1203,7 +1198,7 @@ void Fluxbox::load_rc() {
     } else {
         if (!m_resourcemanager.load(DEFAULT_INITFILE))
             cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
-    }
+    } */
 
     if (m_rc_menufile->empty())
         m_rc_menufile.setDefaultValue();
@@ -1230,6 +1225,7 @@ void Fluxbox::load_rc(BScreen &screen) {
 
     XrmDatabaseHelper database;
 
+    // XXX make this a regular resource
     database = XrmGetFileDatabase(dbfile.c_str());
     if (database==0)
         database = XrmGetFileDatabase(DEFAULT_INITFILE);
@@ -1263,18 +1259,6 @@ void Fluxbox::load_rc(BScreen &screen) {
             screen.addWorkspaceName((*it).c_str());
         }
 
-    }
-
-    if (!dbfile.empty()) {
-        if (!m_screen_rm.load(dbfile.c_str())) {
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<dbfile<<endl;
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with", "Retrying rc file loading with (the following file)")<<": "<<DEFAULT_INITFILE<<endl;
-            if (!m_screen_rm.load(DEFAULT_INITFILE))
-                cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
-        }
-    } else {
-        if (!m_screen_rm.load(DEFAULT_INITFILE))
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
     }
 }
 
