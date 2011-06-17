@@ -1121,7 +1121,6 @@ void Fluxbox::shutdown() {
 /// saves resources
 void Fluxbox::save_rc() {
     _FB_USES_NLS;
-    XrmDatabase new_rc = 0;
 
     string dbfile(getRcFilename());
 
