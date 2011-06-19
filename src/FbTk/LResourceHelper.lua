@@ -22,7 +22,9 @@ local function newindex(table, key, value)
     local meta = getmetatable(table);
     local t, mt = check_arg(table, key);
 
-    if type(value) == 'table' then
+    if mt == res_magic then
+        write_resource(t, value);
+    elseif type(value) == 'table' then
         if mt == res_magic then
             myerror(table, '"' .. key .. '" is a resource.');
         end;
@@ -35,8 +37,6 @@ local function newindex(table, key, value)
     else
         if mt ~= nil and mt._magic == cat_magic and mt._state == 1 then
             myerror(table, '"' .. key .. '" is a category.');
-        elseif mt == res_magic then
-            write_resource(t, value);
         else
             meta[key] = value;
         end;
@@ -101,39 +101,76 @@ local function register_resource(root, name, object)
     return register_resource(t, tail, object);
 end;
 
-local function dump_(key, value, fd)
-    if type(value) == 'table' then
-        fd:write(key, ' = {}\n');
-        for k, v in pairs(value) do
-            k = append_name(key, k);
-
-            local mt = getmetatable(v);
-            if mt ~= nil and mt._magic == cat_magic then
-                v = mt;
-            elseif mt == res_magic then
-                v = read_resource(v);
-            end;
-
-            if k ~= nil then
-                dump_(k, v, fd);
-            end;
-        end;
-        fd:write('\n');
-    else
-        if type(value) == 'string' then
-            value = string.format('%q', value);
-        elseif type(value) == 'number' then
-            value = string.format('%g', value);
-        elseif type(value) == 'boolean' then
-            if value then
-                value = "true";
-            else
-                value = "false";
-            end;
+function value_to_string(key, value)
+    if type(value) == 'string' then
+        return string.format('%q', value);
+    elseif type(value) == 'number' then
+        return string.format('%g', value);
+    elseif type(value) == 'boolean' then
+        if value then
+            return "true";
         else
-            error('Unsupported value type for ' .. key .. ': ' .. type(value));
+            return "false";
         end;
-        fd:write(key, ' = ', value, '\n');
+    else
+        error('Unsupported value type for ' .. key .. ': ' .. type(value));
+    end;
+end;
+
+local function dump_res(key, value, fd)
+    local first = true;
+    for k, v in pairs(value) do
+        if append_name(key, k) ~= nil then
+            if first ~= true then
+                fd:write(',');
+            end;
+            fd:write(' ');
+            first = false;
+
+            if type(k) == 'string' then
+                fd:write(k, ' = ');
+            end;
+
+            if type(v) == 'table' then
+                fd:write('{');
+                dump_res(k, v, fd);
+                fd:write('} ');
+            else
+                fd:write(value_to_string(k, v));
+            end;
+        end;
+    end;
+    if first ~= true then
+        fd:write(' ');
+    end;
+end;
+
+local function dump_(key, value, fd)
+    for k, v in pairs(value) do
+        k = append_name(key, k);
+
+        local mt = getmetatable(v);
+        if mt ~= nil and mt._magic == cat_magic then
+            v = mt;
+        elseif mt == res_magic then
+            v = read_resource(v);
+        end;
+
+        if k ~= nil then
+            if type(v) == 'table' then
+                fd:write(k, ' = {');
+                if mt == res_magic then
+                    dump_res(k, v, fd);
+                    fd:write('}\n');
+                else
+                    fd:write('}\n');
+                    dump_(k, v, fd);
+                    fd:write('\n');
+                end;
+            else
+                fd:write(k, ' = ', value_to_string(k, v), '\n');
+            end;
+        end;
     end;
 end;
 
