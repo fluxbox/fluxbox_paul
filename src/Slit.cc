@@ -164,7 +164,67 @@ private:
 unsigned int Slit::s_eventmask = SubstructureRedirectMask |  ButtonPressMask |
                                  EnterWindowMask | LeaveWindowMask | ExposureMask;
 
-Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
+void Slit::SlitClientsRes::setFromLua(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    l.checkstack(1);
+
+    // to avoid modifying the master copy until we are sure the new list is ok
+    SlitClients copy(*this);
+    // this will be the new list once we are done
+    SlitClients t;
+
+    if(l.type(-1) != lua::TTABLE) {
+        std::cerr << "Cannot convert to a client list from lua type "
+                  << l.type_name(l.type(-1)) << std::endl;
+        return;
+    }
+    for(size_t i = 1; l.rawgeti(-1, i), !l.isnil(-1); l.pop(), ++i) {
+        if(l.type(-1) != lua::TSTRING && l.type(-1) != lua::TNUMBER) {
+            std::cerr << "Cannot convert to a client name from lua type "
+                      << l.type_name(l.type(-1)) << std::endl;
+            continue;
+        }
+        const std::string &name = l.tostring(-1);
+        // look for a matching window
+        bool found = false;
+        for(SlitClients::iterator j = copy.begin(); j != copy.end(); ++j) {
+            if((*j)->matchName().logical() == name) {
+                t.push_back(*j);
+                copy.erase(j);
+                found = true;
+                break;
+            }
+        }
+        if(!found) {
+            // no matching window, create a placeholder
+            t.push_back( new SlitClient(name.c_str()) );
+        }
+    } l.pop();
+
+    // move remaining non-placeholder clients to the new list
+    while(!copy.empty()) {
+       if(copy.front()->window() != None)
+           t.push_back(copy.front());
+       copy.pop_front();
+    }
+    SlitClients::operator=(t);
+
+    l.pop();
+}
+
+void Slit::SlitClientsRes::pushToLua(lua::state &l) const {
+    l.checkstack(2);
+    l.createtable(size());
+    lua::stack_sentry s(l);
+
+    int j = 1;
+    for(const_iterator i = begin(); i != end(); ++i) {
+        l.pushstring((*i)->matchName().logical());
+        l.rawseti(-2, j++);
+    }
+}
+
+Slit::Slit(BScreen &scr, FbTk::Layer &layer)
     : m_hidden(false), m_visible(false),
       m_screen(scr),
       m_clientlist_menu(scr.menuTheme(),
@@ -188,7 +248,7 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
       m_slit_theme(new SlitTheme(scr.rootWindow().screenNumber())),
       m_strut(0),
       // resources
-      // lock in first resource
+      m_client_list(scr.resourceManager(), scr.name() + ".slit.clientList"),
       m_rc_kde_dockapp(scr.resourceManager(), true, scr.name() + ".slit.acceptKdeDockapps"),
       m_rc_auto_hide(scr.resourceManager(), false, scr.name() + ".slit.autoHide"),
       // TODO: this resource name must change
@@ -242,11 +302,6 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer, const char *filename)
     m_layermenu->setLabel(_FB_XTEXT(Slit, Layer, "Slit Layer", "Title of Slit Layer Menu"));
 
     moveToLayer(static_cast<int>(*m_rc_layernum));
-
-
-
-    // Get client list for sorting purposes
-    loadClientList(filename);
 
     setupMenu();
 }
@@ -800,7 +855,6 @@ void Slit::reposition() {
 
 
 void Slit::shutdown() {
-    saveClientList();
     while (!m_client_list.empty())
         removeClient(m_client_list.front(), true, true);
 }
@@ -824,6 +878,8 @@ void Slit::clientUp(SlitClient* client) {
             break;
         }
     }
+
+    saveClientList();
 }
 
 void Slit::clientDown(SlitClient* client) {
@@ -845,6 +901,8 @@ void Slit::clientDown(SlitClient* client) {
             break;
         }
     }
+
+    saveClientList();
 }
 
 void Slit::cycleClientsUp() {
@@ -857,6 +915,8 @@ void Slit::cycleClientsUp() {
     m_client_list.erase(it);
     m_client_list.push_back(client);
     reconfigure();
+
+    saveClientList();
 }
 
 void Slit::cycleClientsDown() {
@@ -868,6 +928,8 @@ void Slit::cycleClientsDown() {
     m_client_list.remove(client);
     m_client_list.push_front(client);
     reconfigure();
+
+    saveClientList();
 }
 
 void Slit::handleEvent(XEvent &event) {
@@ -998,40 +1060,6 @@ void Slit::toggleHidden() {
         frame.window.move(frame.x, frame.y);
 }
 
-void Slit::loadClientList(const char *filename) {
-    if (filename == 0 || filename[0] == '\0')
-        return;
-
-    // save filename so we can save client list later
-    m_filename = filename;
-    string real_filename= FbTk::StringUtil::expandFilename(filename);
-
-    struct stat buf;
-    if (stat(real_filename.c_str(), &buf) == 0) {
-        ifstream file(real_filename.c_str());
-        string name;
-        while (! file.eof()) {
-            name = "";
-            getline(file, name); // get the entire line
-            if (name.empty())
-                continue;
-
-            // remove whitespaces from start and end
-            FbTk::StringUtil::removeFirstWhitespace(name);
-
-            // the cleaned string could still be a comment, or blank
-            if ( name.empty() || name[0] == '#' || name[0] == '!' )
-                continue;
-
-            // trailing whitespace won't affect the above test
-            FbTk::StringUtil::removeTrailingWhitespace(name);
-
-            SlitClient *client = new SlitClient(name.c_str());
-            m_client_list.push_back(client);
-        }
-    }
-}
-
 void Slit::updateClientmenu() {
     if (screen().isShuttingdown())
         return;
@@ -1055,30 +1083,11 @@ void Slit::updateClientmenu() {
             m_clientlist_menu.insert(new SlitClientMenuItem(*this, *(*it), reconfig));
     }
 
-    m_clientlist_menu.insert(new FbTk::MenuSeparator());
-    FbTk::RefCount<FbTk::Command<void> > savecmd(new FbTk::SimpleCommand<Slit>(*this, &Slit::saveClientList));
-    m_clientlist_menu.insert(_FB_XTEXT(Slit,
-                                     SaveSlitList,
-                                     "Save SlitList", "Saves the current order in the slit"),
-                             savecmd);
-
     m_clientlist_menu.updateMenu();
 }
 
 void Slit::saveClientList() {
-
-    ofstream file(FbTk::StringUtil::expandFilename(m_filename).c_str());
-    SlitClients::iterator it = m_client_list.begin();
-    SlitClients::iterator it_end = m_client_list.end();
-    string prevName;
-    string name;
-    for (; it != it_end; ++it) {
-        name = (*it)->matchName().logical();
-        if (name != prevName)
-            file << name.c_str() << endl;
-
-        prevName = name;
-    }
+    Fluxbox::instance()->save_rc();
 }
 
 void Slit::setupMenu() {
