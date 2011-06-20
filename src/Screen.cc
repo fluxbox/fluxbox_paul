@@ -455,8 +455,7 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     changeWorkspaceID(first_desktop);
 
 #ifdef SLIT
-    m_slit.reset(new Slit(*this, *layerManager().getLayer(ResourceLayer::DESKTOP),
-                 fluxbox->getSlitlistFilename().c_str()));
+    m_slit.reset(new Slit(*this, *layerManager().getLayer(ResourceLayer::DESKTOP)));
 #endif // SLIT
 
     XFlush(disp);

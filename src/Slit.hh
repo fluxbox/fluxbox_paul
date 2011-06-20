@@ -68,7 +68,7 @@ public:
         RIGHTBOTTOM, RIGHTCENTER, RIGHTTOP
     };
 
-    Slit(BScreen &screen, FbTk::Layer &layer, const char *filename = 0);
+    Slit(BScreen &screen, FbTk::Layer &layer);
     virtual ~Slit();
 
     void show() { frame.window.show(); m_visible = true; }
@@ -137,7 +137,6 @@ private:
     void setupMenu();
 
     void removeClient(SlitClient *client, bool remap, bool destroy);
-    void loadClientList(const char *filename);
     void updateClientmenu();
     void clearStrut();
     void updateStrut();
@@ -148,13 +147,11 @@ private:
     BScreen &m_screen;
     FbTk::Timer m_timer;
 
-    SlitClients m_client_list;
     std::auto_ptr<LayerMenu> m_layermenu;
     FbMenu m_clientlist_menu, m_slitmenu;
 #ifdef XINERAMA
     XineramaHeadMenu<Slit> *m_xineramaheadmenu;
 #endif // XINERAMA
-    std::string m_filename;
 
     struct frame {
         frame(const FbTk::FbWindow &parent):
@@ -179,6 +176,28 @@ private:
     static unsigned int s_eventmask;
     Strut *m_strut;
 
+    class SlitClientsRes: public FbTk::Resource_base, public SlitClients {
+    public:
+        SlitClientsRes(FbTk::ResourceManager_base &rm, const std::string &name)
+            : FbTk::Resource_base(name, name), m_rm(rm) {
+            m_rm.addResource(*this);
+        }
+
+        ~SlitClientsRes() {
+            m_rm.removeResource(*this);
+        }
+
+        virtual void setDefaultValue() {}
+        virtual void setFromString(const char *) { assert(0); }
+        virtual std::string getString() const { assert(0); }
+        virtual void setFromLua(lua::state &l);
+        virtual void pushToLua(lua::state &l) const;
+
+    private:
+        FbTk::ResourceManager_base &m_rm;
+    };
+
+    SlitClientsRes m_client_list;
     FbTk::BoolResource m_rc_kde_dockapp, m_rc_auto_hide, m_rc_maximize_over;
     FbTk::Resource<Slit::Placement, FbTk::EnumTraits<Slit::Placement> > m_rc_placement;
     FbTk::IntResource m_rc_alpha, m_rc_on_head;

@@ -243,7 +243,6 @@ Fluxbox::Fluxbox(int argc, char **argv,
       m_rc_styleoverlayfile(m_resourcemanager, m_RC_PATH + "/overlay", "styleOverlay", "StyleOverlay"),
       m_rc_menufile(m_resourcemanager, m_RC_PATH + "/menu", "menuFile", "MenuFile"),
       m_rc_keyfile(m_resourcemanager, m_RC_PATH + "/keys", "keyFile", "KeyFile"),
-      m_rc_slitlistfile(m_resourcemanager, m_RC_PATH + "/slitlist", "slitlistFile", "SlitlistFile"),
       m_rc_appsfile(m_resourcemanager, m_RC_PATH + "/apps", "appsFile", "AppsFile"),
       m_rc_tabs_attach_area(m_resourcemanager, ATTACH_AREA_WINDOW, "tabsAttachArea", "TabsAttachArea"),
       m_rc_cache_life(m_resourcemanager, 5, "cacheLife", "CacheLife"),
@@ -1173,13 +1172,6 @@ void Fluxbox::load_rc() {
         m_rc_menufile.setDefaultValue();
 
     FbTk::Transparent::usePseudoTransparent(*m_rc_pseudotrans);
-
-    if (!m_rc_slitlistfile->empty()) {
-        *m_rc_slitlistfile = StringUtil::expandFilename(*m_rc_slitlistfile);
-    } else {
-        string filename = getDefaultDataFilename("slitlist");
-        m_rc_slitlistfile.setFromString(filename.c_str());
-    }
 
     *m_rc_colors_per_channel = FbTk::Util::clamp(*m_rc_colors_per_channel, 2, 6);
 
