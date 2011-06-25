@@ -1152,21 +1152,23 @@ void Fluxbox::load_rc() {
 
     string dbfile(getRcFilename());
 
-    m_l->loadfile(dbfile.c_str());
-    m_l->call(0, 0);
-
-    /* XXX
-    if (!dbfile.empty()) {
-        if (!m_resourcemanager.load(dbfile.c_str())) {
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<dbfile<<endl;
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with", "Retrying rc file loading with (the following file)")<<": "<<DEFAULT_INITFILE<<endl;
-            if (!m_resourcemanager.load(DEFAULT_INITFILE))
-                cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
+    try {
+        m_l->loadfile(dbfile.c_str());
+        m_l->call(0, 0);
+    }
+    catch(lua::exception &e) {
+        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<dbfile<<endl;
+        cerr<<"Fluxbox: "<<e.what()<<endl;
+        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with", "Retrying rc file loading with (the following file)")<<": "<<DEFAULT_INITFILE<<endl;
+        try {
+            m_l->loadfile(DEFAULT_INITFILE);
+            m_l->call(0, 0);
         }
-    } else {
-        if (!m_resourcemanager.load(DEFAULT_INITFILE))
+        catch(lua::exception &e) {
             cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
-    } */
+            cerr<<"Fluxbox: "<<e.what()<<endl;
+        }
+    }
 
     if (m_rc_menufile->empty())
         m_rc_menufile.setDefaultValue();
