@@ -173,6 +173,8 @@ public:
     /// get screen from number
     BScreen *findScreen(int num);
 
+    lua::state &lua() { return *m_l; }
+
     typedef std::list<BScreen *> ScreenList;
     const ScreenList screenList() const { return m_screen_list; }
 
