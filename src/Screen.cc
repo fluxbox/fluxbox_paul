@@ -1384,8 +1384,13 @@ void BScreen::reassociateWindow(FluxboxWindow *w, unsigned int wkspc_id,
 }
 
 void BScreen::initMenus() {
+    lua::state &l = Fluxbox::instance()->lua();
     m_workspacemenu.reset(MenuCreator::createMenuType("workspacemenu", screenNumber()));
-    m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
+    l.loadfile(FbTk::StringUtil::expandFilename(Fluxbox::instance()->getMenuFilename()).c_str());
+    l.call(0, 0);
+    l.getglobal("menu");
+    m_rootmenu = MenuCreator::createMenu(l, 0);
+//    m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
 }
 

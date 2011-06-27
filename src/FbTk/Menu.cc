@@ -219,7 +219,7 @@ Menu::~Menu() {
         s_focused = 0;
 }
 
-int Menu::insert(const FbString &label, RefCount<Command<void> > &cmd, int pos) {
+int Menu::insert(const FbString &label, const RefCount<Command<void> > &cmd, int pos) {
     return insert(new MenuItem(label, cmd, this), pos);
 }
 

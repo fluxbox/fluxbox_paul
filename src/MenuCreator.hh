@@ -26,6 +26,11 @@
 #include "FbTk/FbString.hh"
 
 #include <list>
+#include <memory>
+
+namespace lua {
+class state;
+}
 
 namespace FbTk {
 class AutoReloadHelper;
@@ -37,14 +42,16 @@ class FluxboxWindow;
 
 namespace MenuCreator {
 
+    std::auto_ptr<FbMenu>
+    createMenu(lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader = NULL);
     FbMenu *createMenu(const std::string &label, int screen_num);
     FbMenu *createMenuType(const std::string &label, int screen_num);
     bool createFromFile(const std::string &filename,
-                        FbTk::Menu &inject_into,
-                        FbTk::AutoReloadHelper *reloader = NULL,
-                        bool begin = true);
+                               FbTk::Menu &inject_into,
+                               FbTk::AutoReloadHelper *reloader = NULL,
+                               bool begin = true);
     bool createWindowMenuItem(const std::string &type, const std::string &label, 
                                      FbTk::Menu &inject_into);
-};
+}
 
 #endif // MENUCREATOR_HH
