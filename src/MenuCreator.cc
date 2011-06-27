@@ -433,7 +433,158 @@ bool getStart(FbMenuParser &parser, string &label, FbTk::StringConvertor &labelc
     return true;
 }
 
+string getField(lua::state &l, int pos, const char *field, FbTk::StringConvertor *conv = NULL) {
+    lua::stack_sentry s(l);
+    l.checkstack(1);
+    _FB_USES_NLS;
+
+    string val;
+    l.rawgetfield(pos, field); {
+        if(l.isstring(-1))
+            val = l.tostring(-1);
+        else if(! l.isnil(-1)) {
+            fprintf(stderr, _FB_CONSOLETEXT(Menu, FieldNotString,
+                        "Warning: Menu field %s is not a string", "One %s for field name.").c_str(),
+                    field);
+            fputs("\n", stderr);
+        }
+    } l.pop();
+    return conv ? conv->recode(val) : val;
+}
+
+std::auto_ptr<FbMenu>
+createMenu_(lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+            FbTk::AutoReloadHelper *reloader);
+
+void
+insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
+                FbTk::AutoReloadHelper *reloader) {
+    lua::stack_sentry s(l, -1);
+    l.checkstack(1);
+
+    if(l.type(-1) != lua::TTABLE)
+        throw std::runtime_error(_FB_CONSOLETEXT(Menu, MenuNotTable, "Warning: Menu is not a lua table", "Menu is not a lua table"));
+
+    // if menu specifies an encoding, create a convertor for it
+    std::auto_ptr<FbTk::StringConvertor> my_conv;
+
+    FbTk::StringConvertor *conv = &parent_conv;
+    const string &encoding = getField(l, -1, "encoding");
+    if(! encoding.empty()) {
+        my_conv.reset(new FbTk::StringConvertor(FbTk::StringConvertor::ToFbString));
+        conv = my_conv.get();
+        conv->setSource(encoding);
+    }
+
+    const string &str_label = getField(l, -1, "label", conv);
+    const string &str_key = getField(l, -1, "type");
+    const FbTk::CommandParser<void> &parser = FbTk::CommandParser<void>::instance();
+    BScreen *screen = Fluxbox::instance()->findScreen(menu.screenNumber());
+    size_t old_size = menu.numberOfItems();
+
+    // first items that don't need additional parameters
+    if(str_key == "separator")
+        menu.insert(new FbTk::MenuSeparator());
+    else if(str_key == "nop") {
+        int size = menu.insert(str_label);
+        menu.setItemEnabled(size-1, false);
+    } else if(str_key == "icons") {
+        FbTk::Menu *submenu = MenuCreator::createMenuType("iconmenu", menu.screenNumber());
+        if (submenu == 0)
+            return;
+        if (str_label.empty())
+            menu.insert(_FB_XTEXT(Menu, Icons, "Icons", "Iconic windows menu title"), submenu);
+        else
+            menu.insert(str_label, submenu);
+    } else if (str_key == "exit") { // exit
+        FbTk::RefCount<FbTk::Command<void> > exit_cmd(FbTk::CommandParser<void>::instance().parse("exit"));
+        if (str_label.empty())
+            menu.insert(_FB_XTEXT(Menu, Exit, "Exit", "Exit Command"), exit_cmd);
+        else
+            menu.insert(str_label, exit_cmd);
+    } else if (str_key == "config") {
+        menu.insert(str_label, &screen->configMenu());
+    } else if(str_key == "menu") {
+        l.pushvalue(-1);
+        menu.insert(str_label, createMenu_(l, menu.screenNumber(), *conv, reloader).release());
+    } else {
+        // items that have a parameter
+        const string &str_cmd = getField(l, -1, "param");
+
+        if(str_key == "command") {
+            menu.insert(str_label, FbTk::RefCount<FbTk::Command<void> >(
+                                            parser.parse(str_cmd)) );
+        } else if(str_key == "exec") {
+            menu.insert(str_label, FbTk::RefCount<FbTk::Command<void> >(
+                                            parser.parse("exec", str_cmd)) );
+        } else if(str_key == "style")
+            menu.insert(new StyleMenuItem(str_label, str_cmd));
+        else if (str_key == "stylesdir")
+            createStyleMenu(menu, str_label, reloader, str_cmd);
+        else if (str_key == "wallpapers") {
+            const string &program = getField(l, -1, "program");
+            createRootCmdMenu(menu, str_label, str_cmd, reloader,
+                    program.empty() ? realProgramName("fbsetbg") : program);
+        } else if (str_key == "workspaces") {
+/*            screen->workspaceMenu().setInternalMenu();
+            menu.insert(str_label, &screen->workspaceMenu());*/
+        }
+    }
+
+    const string &icon = getField(l, -1, "icon");
+    if(! icon.empty()) {
+        while(old_size < menu.numberOfItems())
+            menu.find(old_size++)->setIcon(icon, menu.screenNumber());
+    }
+}
+
+std::auto_ptr<FbMenu>
+createMenu_(lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+            FbTk::AutoReloadHelper *reloader) {
+
+    lua::stack_sentry s(l, -1);
+    l.checkstack(1);
+
+    std::auto_ptr<FbMenu> menu( MenuCreator::createMenu(getField(l, -1, "label", &conv),
+                                        screen_number) );
+
+    for(int i = 1; l.rawgeti(-1, i), !l.isnil(-1); ++i) {
+        try {
+            insertMenuItem(l, *menu, conv, reloader);
+        }
+        catch(std::runtime_error &e) {
+            cerr << e.what() << endl;
+        }
+    } l.pop();
+
+    l.pop();
+    return menu;
+}
+
 } // end of anonymous namespace
+
+std::auto_ptr<FbMenu>
+MenuCreator::createMenu(lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader) {
+    lua::stack_sentry s(l, -1);
+    l.checkstack(1);
+
+    if(l.type(-1) != lua::TTABLE) {
+        cerr << _FB_CONSOLETEXT(Menu, MenuNotTable, "Warning: Menu is not a lua table",
+                        "Menu is not a lua table") << endl;
+        return std::auto_ptr<FbMenu>();
+    }
+
+    std::auto_ptr<FbTk::StringConvertor> conv(new FbTk::StringConvertor(FbTk::StringConvertor::ToFbString));
+
+    // if menu specifies an encoding, create a convertor for it
+    l.rawgetfield(-1, "encoding"); {
+        if(l.isstring(-1))
+            conv->setSource(l.tostring(-1));
+    } l.pop();
+
+    return createMenu_(l, screen_number, *conv, reloader);
+}
+
 
 FbMenu *MenuCreator::createMenu(const string &label, int screen_number) {
     BScreen *screen = Fluxbox::instance()->findScreen(screen_number);

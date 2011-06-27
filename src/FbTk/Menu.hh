@@ -61,7 +61,7 @@ public:
     */
     //@{
     /// add a menu item with a label and a command
-    int insert(const FbString &label, RefCount<Command<void> > &cmd, int pos=-1);
+    int insert(const FbString &label, const RefCount<Command<void> > &cmd, int pos=-1);
     /// add empty menu item
     int insert(const FbString &label, int pos=-1);
     /// add submenu

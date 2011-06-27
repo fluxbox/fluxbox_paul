@@ -69,7 +69,7 @@ public:
           m_toggle_item(false)
     { }
     /// create a menu item with a specific command to be executed on click
-    MenuItem(const BiDiString &label, RefCount<Command<void> > &cmd, Menu *menu = 0)
+    MenuItem(const BiDiString &label, const RefCount<Command<void> > &cmd, Menu *menu = 0)
         : m_label(label),
           m_menu(menu),
           m_submenu(0),
@@ -91,7 +91,7 @@ public:
     { }
     virtual ~MenuItem() { }
 
-    void setCommand(RefCount<Command<void> > &cmd) { m_command = cmd; }
+    void setCommand(const RefCount<Command<void> > &cmd) { m_command = cmd; }
     virtual void setSelected(bool selected) { m_selected = selected; }
     virtual void setEnabled(bool enabled) { m_enabled = enabled; }
     virtual void setLabel(const BiDiString &label) { m_label = label; }
