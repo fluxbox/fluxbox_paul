@@ -301,8 +301,8 @@ string getField(lua::state &l, int pos, const char *field, FbTk::StringConvertor
     return conv ? conv->recode(val) : val;
 }
 
-std::auto_ptr<FbMenu>
-createMenu_(lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+void
+createMenu_(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::StringConvertor &conv,
             FbTk::AutoReloadHelper *reloader);
 
 void
@@ -355,8 +355,10 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
     } else if (str_key == "config") {
         menu.insert(str_label, &screen->configMenu());
     } else if(str_key == "menu") {
+        std::auto_ptr<FbMenu> t(MenuCreator::createMenu("", screen_number));
         l.pushvalue(-1);
-        menu.insert(str_label, createMenu_(l, screen_number, *conv, reloader).release());
+        createMenu_(*t, l, screen_number, *conv, reloader);
+        menu.insert(str_label, t.release());
     } else {
         // items that have a parameter
         const string &str_cmd = getField(l, -1, "param");
@@ -394,19 +396,18 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
     }
 }
 
-std::auto_ptr<FbMenu>
-createMenu_(lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+void
+createMenu_(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::StringConvertor &conv,
             FbTk::AutoReloadHelper *reloader) {
 
     lua::stack_sentry s(l, -1);
     l.checkstack(1);
 
-    std::auto_ptr<FbMenu> menu( MenuCreator::createMenu(getField(l, -1, "label", &conv),
-                                        screen_number) );
+    inject_into.setLabel(getField(l, -1, "label", &conv));
 
     for(int i = 1; l.rawgeti(-1, i), !l.isnil(-1); ++i) {
         try {
-            insertMenuItem(l, *menu, conv, reloader);
+            insertMenuItem(l, inject_into, conv, reloader);
         }
         catch(std::runtime_error &e) {
             cerr << e.what() << endl;
@@ -414,31 +415,28 @@ createMenu_(lua::state &l, int screen_number, FbTk::StringConvertor &conv,
     } l.pop();
 
     l.pop();
-    return menu;
 }
 
 } // end of anonymous namespace
 
-std::auto_ptr<FbMenu>
-MenuCreator::createMenu(lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader) {
+void
+MenuCreator::createMenu(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader) {
     lua::stack_sentry s(l, -1);
-    l.checkstack(1);
 
     if(l.type(-1) != lua::TTABLE) {
         cerr << _FB_CONSOLETEXT(Menu, MenuNotTable, "Warning: Menu is not a lua table",
                         "Menu is not a lua table") << endl;
-        return std::auto_ptr<FbMenu>();
+        return;
     }
 
     std::auto_ptr<FbTk::StringConvertor> conv(new FbTk::StringConvertor(FbTk::StringConvertor::ToFbString));
 
     // if menu specifies an encoding, create a convertor for it
-    l.rawgetfield(-1, "encoding"); {
-        if(l.isstring(-1))
-            conv->setSource(l.tostring(-1));
-    } l.pop();
+    const std::string &enc = getField(l, -1, "encoding");
+    if(!enc.empty())
+        conv->setSource(enc);
 
-    return createMenu_(l, screen_number, *conv, reloader);
+    createMenu_(inject_into, l, screen_number, *conv, reloader);
 }
 
 

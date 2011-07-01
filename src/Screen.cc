@@ -259,7 +259,7 @@ BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
     click_raises(rm, true, scrname+".clickRaises"),
     default_deco(rm, "NORMAL", scrname+".defaultDeco"),
     tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement"),
-    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu"), scrname+".windowMenu"),
+    windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu2"), scrname+".windowMenu"),
     typing_delay(rm, 0, scrname+".noFocusWhileTypingDelay"),
     workspaces(rm, 4, scrname+".workspaces"),
     edge_snap_threshold(rm, 10, scrname+".edgeSnapThreshold"),
@@ -1384,26 +1384,25 @@ void BScreen::reassociateWindow(FluxboxWindow *w, unsigned int wkspc_id,
 }
 
 void BScreen::initMenus() {
-    lua::state &l = Fluxbox::instance()->lua();
     m_workspacemenu.reset(MenuCreator::createMenuType("workspacemenu", screenNumber()));
-    l.loadfile(FbTk::StringUtil::expandFilename(Fluxbox::instance()->getMenuFilename()).c_str());
-    l.call(0, 0);
-    l.getglobal("menu");
-    m_rootmenu = MenuCreator::createMenu(l, 0);
-//    m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
+
+    m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
 }
 
 
 void BScreen::rereadMenu() {
 
-    m_rootmenu->removeAll();
-    m_rootmenu->setLabel(FbTk::BiDiString(""));
-
     Fluxbox * const fb = Fluxbox::instance();
-    if (!fb->getMenuFilename().empty())
-        MenuCreator::createFromFile(fb->getMenuFilename(), *m_rootmenu,
-                                    m_rootmenu->reloadHelper());
+    lua::state &l = fb->lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
+
+    // XXX try/catch
+    m_rootmenu->removeAll();
+    l.loadfile(FbTk::StringUtil::expandFilename(fb->getMenuFilename()).c_str());
+    l.call(0, 1);
+    MenuCreator::createMenu(*m_rootmenu, l, screenNumber(), m_rootmenu->reloadHelper());
 
     if (m_rootmenu->numberOfItems() == 0) {
         _FB_USES_NLS;
@@ -1430,12 +1429,16 @@ const std::string BScreen::windowMenuFilename() const {
 }
 
 void BScreen::rereadWindowMenu() {
+    lua::state &l = Fluxbox::instance()->lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
 
+
+    // XXX try/catch
     m_windowmenu->removeAll();
-    if (!windowMenuFilename().empty())
-        MenuCreator::createFromFile(windowMenuFilename(), *m_windowmenu,
-                                    m_windowmenu->reloadHelper());
-
+    l.loadfile(FbTk::StringUtil::expandFilename(windowMenuFilename()).c_str());
+    l.call(0, 1);
+    MenuCreator::createMenu(*m_windowmenu, l, screenNumber(), m_windowmenu->reloadHelper());
 }
 
 void BScreen::addConfigMenu(const FbTk::FbString &label, FbTk::Menu &menu) {
