@@ -138,13 +138,16 @@ void endFile() {
 }
 
 
-void createStyleMenu(FbTk::Menu &parent, const string &label,
+std::auto_ptr<FbMenu> createStyleMenu(int screen_number, const string &label,
                      AutoReloadHelper *reloader, const string &directory) {
+
+    std::auto_ptr<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
+
     // perform shell style ~ home directory expansion
     string stylesdir(FbTk::StringUtil::expandFilename(directory));
 
     if (!FbTk::FileUtil::isDirectory(stylesdir.c_str()))
-        return;
+        return menu;
 
     if (reloader)
         reloader->addFile(stylesdir);
@@ -169,22 +172,24 @@ void createStyleMenu(FbTk::Menu &parent, const string &label,
              (style[style.length() - 1] != '~')) ||
             FbTk::FileUtil::isRegularFile((style + "/theme.cfg").c_str()) ||
             FbTk::FileUtil::isRegularFile((style + "/style.cfg").c_str()))
-            parent.insert(new StyleMenuItem(filelist[file_index], style));
+            menu->insert(new StyleMenuItem(filelist[file_index], style));
     }
     // update menu graphics
-    parent.updateMenu();
-
+    menu->updateMenu();
+    return menu;
 }
 
-void createRootCmdMenu(FbTk::Menu &parent, const string &label,
+std::auto_ptr<FbMenu> createRootCmdMenu(int screen_number, const string &label,
                        const string &directory, AutoReloadHelper *reloader,
                        const string &cmd) {
+
+    std::auto_ptr<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
 
     // perform shell style ~ home directory expansion
     string rootcmddir(FbTk::StringUtil::expandFilename(directory));
 
     if (!FbTk::FileUtil::isDirectory(rootcmddir.c_str()))
-        return;
+        return menu;
 
     if (reloader)
         reloader->addFile(rootcmddir);
@@ -208,11 +213,11 @@ void createRootCmdMenu(FbTk::Menu &parent, const string &label,
         if ((FbTk::FileUtil::isRegularFile(rootcmd.c_str()) &&
              (filelist[file_index][0] != '.') &&
              (rootcmd[rootcmd.length() - 1] != '~')))
-            parent.insert(new RootCmdMenuItem(filelist[file_index], rootcmd, cmd));
+            menu->insert(new RootCmdMenuItem(filelist[file_index], rootcmd, cmd));
     }
     // update menu graphics
-    parent.updateMenu();
-
+    menu->updateMenu();
+    return menu;
 }
 
 
@@ -249,11 +254,6 @@ public:
 
 };
 
-void translateMenuItem(FbTk::Parser &parse, ParseItem &item,
-                       FbTk::StringConvertor &labelconvertor,
-                       AutoReloadHelper *reloader);
-
-
 void parseMenu(FbTk::Parser &pars, FbTk::Menu &menu,
                FbTk::StringConvertor &label_convertor,
                AutoReloadHelper *reloader) {
@@ -262,158 +262,7 @@ void parseMenu(FbTk::Parser &pars, FbTk::Menu &menu,
         pitem.load(pars, label_convertor);
         if (pitem.key() == "end")
             return;
-        translateMenuItem(pars, pitem, label_convertor, reloader);
-    }
-}
-
-void translateMenuItem(FbTk::Parser &parse, ParseItem &pitem,
-                       FbTk::StringConvertor &labelconvertor,
-                       AutoReloadHelper *reloader) {
-    if (pitem.menu() == 0)
-        throw string("translateMenuItem: We must have a menu in ParseItem!");
-
-    FbTk::Menu &menu = *pitem.menu();
-    const string &str_key = pitem.key();
-    const string &str_cmd = pitem.command();
-    const string &str_label = pitem.label();
-
-    const int screen_number = menu.screenNumber();
-    _FB_USES_NLS;
-
-    if (str_key == "end") {
-        return;
-    } else if (str_key == "nop") {
-        int menuSize = menu.insert(str_label);
-        menu.setItemEnabled(menuSize-1, false);
-    } else if (str_key == "icons") {
-        FbTk::Menu *submenu = MenuCreator::createMenuType("iconmenu", menu.screenNumber());
-        if (submenu == 0)
-            return;
-        if (str_label.empty())
-            menu.insert(_FB_XTEXT(Menu, Icons, "Icons", "Iconic windows menu title"));
-        else
-            menu.insert(str_label, submenu);
-    } else if (str_key == "exit") { // exit
-        FbTk::RefCount<FbTk::Command<void> > exit_cmd(FbTk::CommandParser<void>::instance().parse("exit"));
-        if (str_label.empty())
-            menu.insert(_FB_XTEXT(Menu, Exit, "Exit", "Exit Command"), exit_cmd);
-        else
-            menu.insert(str_label, exit_cmd);
-    } else if (str_key == "exec") {
-        // execute and hide menu
-        FbTk::RefCount<FbTk::Command<void> > exec_cmd(FbTk::CommandParser<void>::instance().parse("exec " + str_cmd));
-        menu.insert(str_label, exec_cmd);
-    } else if (str_key == "macrocmd") {
-        FbTk::RefCount<FbTk::Command<void> > macro_cmd(FbTk::CommandParser<void>::instance().parse("macrocmd " + str_cmd));
-        menu.insert(str_label, macro_cmd);
-    } else if (str_key == "style") {	// style
-        menu.insert(new StyleMenuItem(str_label, str_cmd));
-    } else if (str_key == "config") {
-        BScreen *screen = Fluxbox::instance()->findScreen(screen_number);
-        if (screen != 0)
-            menu.insert(str_label, &screen->configMenu());
-    } // end of config
-    else if (str_key == "include") { // include
-
-        // this will make sure we dont get stuck in a loop
-        static size_t safe_counter = 0;
-        if (safe_counter > 10)
-            return;
-
-        safe_counter++;
-
-        string newfile = FbTk::StringUtil::expandFilename(str_label);
-        if (FbTk::FileUtil::isDirectory(newfile.c_str())) {
-            // inject every file in this directory into the current menu
-            FbTk::Directory dir(newfile.c_str());
-
-            vector<string> filelist(dir.entries());
-            for (size_t file_index = 0; file_index < dir.entries(); ++file_index)
-                filelist[file_index] = dir.readFilename();
-            sort(filelist.begin(), filelist.end(), less<string>());
-
-            for (size_t file_index = 0; file_index < dir.entries(); file_index++) {
-                string thisfile(newfile + '/' + filelist[file_index]);
-
-                if (FbTk::FileUtil::isRegularFile(thisfile.c_str()) &&
-                        (filelist[file_index][0] != '.') &&
-                        (thisfile[thisfile.length() - 1] != '~')) {
-                    MenuCreator::createFromFile(thisfile, menu, reloader, false);
-                }
-            }
-
-        } else {
-            // inject this file into the current menu
-            MenuCreator::createFromFile(newfile, menu, reloader, false);
-        }
-
-        safe_counter--;
-
-    } // end of include
-    else if (str_key == "submenu") {
-
-        FbTk::Menu *submenu = MenuCreator::createMenu("", screen_number);
-        if (submenu == 0)
-            return;
-
-        if (!str_cmd.empty())
-            submenu->setLabel(str_cmd);
-        else
-            submenu->setLabel(str_label);
-
-        parseMenu(parse, *submenu, labelconvertor, reloader);
-        submenu->updateMenu();
-        menu.insert(str_label, submenu);
-
-    } // end of submenu
-    else if (str_key == "stylesdir" || str_key == "stylesmenu") {
-        createStyleMenu(menu, str_label, reloader,
-                        str_key == "stylesmenu" ? str_cmd : str_label);
-    } // end of stylesdir
-    else if (str_key == "themesdir" || str_key == "themesmenu") {
-        createStyleMenu(menu, str_label, reloader,
-                        str_key == "themesmenu" ? str_cmd : str_label);
-    } // end of themesdir
-    else if (str_key == "wallpapers" || str_key == "wallpapermenu" ||
-             str_key == "rootcommands") {
-         createRootCmdMenu(menu, str_label, str_label, reloader,
-                          str_cmd == "" ? realProgramName("fbsetbg") : str_cmd);
-    } // end of wallpapers
-    else if (str_key == "workspaces") {
-        BScreen *screen = Fluxbox::instance()->findScreen(screen_number);
-        if (screen != 0) {
-            screen->workspaceMenu().setInternalMenu();
-            menu.insert(str_label, &screen->workspaceMenu());
-        }
-    } else if (str_key == "separator") {
-        menu.insert(new FbTk::MenuSeparator());
-    } else if (str_key == "encoding") {
-        startEncoding(str_cmd);
-    } else if (str_key == "endencoding") {
-        endEncoding();
-    } else if (!MenuCreator::createWindowMenuItem(str_key, str_label, menu)) {
-        // if we didn't find any special menu item we try with command parser
-        // we need to attach command to arguments so command parser can parse it
-        string line = str_key + " " + str_cmd;
-        FbTk::RefCount<FbTk::Command<void> > command(FbTk::CommandParser<void>::instance().parse(line));
-        if (command != 0) {
-            // special NLS default labels
-            if (str_label.empty()) {
-                if (str_key == "reconfig" || str_key == "reconfigure") {
-                    menu.insert(_FB_XTEXT(Menu, Reconfigure, "Reload Config", "Reload all the configs"), command);
-                    return;
-                } else if (str_key == "restart") {
-                    menu.insert(_FB_XTEXT(Menu, Restart, "Restart", "Restart Command"), command);
-                    return;
-                }
-            }
-            menu.insert(str_label, command);
-        }
-    }
-    if (menu.numberOfItems() != 0) {
-        FbTk::MenuItem *item = menu.find(menu.numberOfItems() - 1);
-        if (item != 0 && !pitem.icon().empty())
-            item->setIcon(pitem.icon(), menu.screenNumber());
+//        translateMenuItem(pars, pitem, label_convertor, reloader);
     }
 }
 
@@ -479,7 +328,8 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
     const string &str_label = getField(l, -1, "label", conv);
     const string &str_key = getField(l, -1, "type");
     const FbTk::CommandParser<void> &parser = FbTk::CommandParser<void>::instance();
-    BScreen *screen = Fluxbox::instance()->findScreen(menu.screenNumber());
+    int screen_number = menu.screenNumber();
+    BScreen *screen = Fluxbox::instance()->findScreen(screen_number);
     size_t old_size = menu.numberOfItems();
 
     // first items that don't need additional parameters
@@ -489,7 +339,7 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
         int size = menu.insert(str_label);
         menu.setItemEnabled(size-1, false);
     } else if(str_key == "icons") {
-        FbTk::Menu *submenu = MenuCreator::createMenuType("iconmenu", menu.screenNumber());
+        FbTk::Menu *submenu = MenuCreator::createMenuType("iconmenu", screen_number);
         if (submenu == 0)
             return;
         if (str_label.empty())
@@ -506,7 +356,7 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
         menu.insert(str_label, &screen->configMenu());
     } else if(str_key == "menu") {
         l.pushvalue(-1);
-        menu.insert(str_label, createMenu_(l, menu.screenNumber(), *conv, reloader).release());
+        menu.insert(str_label, createMenu_(l, screen_number, *conv, reloader).release());
     } else {
         // items that have a parameter
         const string &str_cmd = getField(l, -1, "param");
@@ -520,14 +370,20 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
         } else if(str_key == "style")
             menu.insert(new StyleMenuItem(str_label, str_cmd));
         else if (str_key == "stylesdir")
-            createStyleMenu(menu, str_label, reloader, str_cmd);
+            menu.insert(str_label,
+                    createStyleMenu(screen_number, str_label, reloader, str_cmd).release());
         else if (str_key == "wallpapers") {
-            const string &program = getField(l, -1, "program");
-            createRootCmdMenu(menu, str_label, str_cmd, reloader,
-                    program.empty() ? realProgramName("fbsetbg") : program);
+            string program = getField(l, -1, "program");
+            if(program.empty())
+                program = realProgramName("fbsetbg");
+            menu.insert(str_label, createRootCmdMenu(screen_number, str_label, str_cmd,
+                                                        reloader, program).release() );
         } else if (str_key == "workspaces") {
-/*            screen->workspaceMenu().setInternalMenu();
-            menu.insert(str_label, &screen->workspaceMenu());*/
+            screen->workspaceMenu().setInternalMenu();
+            menu.insert(str_label, &screen->workspaceMenu());
+        } else {
+            // finally, try window-related commands
+            MenuCreator::createWindowMenuItem(str_key, str_label, menu);
         }
     }
 
