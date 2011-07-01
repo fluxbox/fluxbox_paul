@@ -41,9 +41,9 @@ class FbMenu;
 class FluxboxWindow;
 
 namespace MenuCreator {
-
-    std::auto_ptr<FbMenu>
-    createMenu(lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader = NULL);
+    void
+    createMenu(FbMenu &inject_into, lua::state &l, int screen_number,
+            FbTk::AutoReloadHelper *reloader = NULL);
     FbMenu *createMenu(const std::string &label, int screen_num);
     FbMenu *createMenuType(const std::string &label, int screen_num);
     bool createFromFile(const std::string &filename,
