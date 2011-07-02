@@ -31,6 +31,7 @@
 #include "MenuCreator.hh"
 
 #include "FbTk/I18n.hh"
+#include "FbTk/Luamm.hh"
 #include "FbTk/Theme.hh"
 #include "FbTk/Menu.hh"
 #include "FbTk/CommandParser.hh"
@@ -552,6 +553,73 @@ void DeiconifyCmd::execute() {
         }
         break;
     };
+}
+
+REGISTER_UNTRUSTED_COMMAND_WITH_ARGS(lua, LuaCmd, void);
+
+namespace {
+    const char LuaCmds[] = "FbCommands::LuaCmd";
+}
+
+LuaCmd::LuaCmd(const std::string &chunk) {
+    lua::state &l = Fluxbox::instance()->lua();
+    l.checkstack(1);
+    l.loadstring(chunk);
+    init(l);
+}
+
+LuaCmd::LuaCmd(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    if(l.isstring(-1)) {
+        const std::string &str = l.tostring(-1);
+        l.pop();
+        l.loadstring(str);
+    }
+    init(l);
+}
+
+void LuaCmd::init(lua::state &l) {
+    lua::stack_sentry s(l, -1);
+    l.checkstack(2);
+
+    l.rawgetfield(lua::REGISTRYINDEX, LuaCmds); {
+        if(l.isnil(-1)) {
+            l.pop();
+            l.newtable();
+
+            l.pushvalue(-1);
+            l.rawsetfield(lua::REGISTRYINDEX, LuaCmds);
+        }
+
+        l.pushvalue(-2);
+        m_ref = l.ref(-2);
+    } l.pop();
+
+    l.pop();
+}
+
+LuaCmd::~LuaCmd() {
+    lua::state &l = Fluxbox::instance()->lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
+
+    l.rawgetfield(lua::REGISTRYINDEX, LuaCmds); {
+        l.unref(-1, m_ref);
+    } l.pop();
+}
+
+void LuaCmd::execute() {
+    lua::state &l = Fluxbox::instance()->lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
+
+    l.rawgetfield(lua::REGISTRYINDEX, LuaCmds); {
+        assert(l.istable(-1));
+
+        l.rawgeti(-1, m_ref); {
+            assert(! l.isnil(-1));
+        } l.call(0, 0);
+    } l.pop();
 }
 
 } // end namespace FbCommands
