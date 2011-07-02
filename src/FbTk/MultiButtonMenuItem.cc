@@ -33,7 +33,8 @@ MultiButtonMenuItem::MultiButtonMenuItem(int buttons, const FbTk::BiDiString &la
     init(buttons);
 }
 
-MultiButtonMenuItem::MultiButtonMenuItem(int buttons, const FbTk::BiDiString &label, Menu *submenu):
+MultiButtonMenuItem::MultiButtonMenuItem(int buttons, const FbTk::BiDiString &label,
+        const RefCount<Menu> &submenu):
     MenuItem(label, submenu),
     m_button_exe(0),
     m_buttons(buttons) {

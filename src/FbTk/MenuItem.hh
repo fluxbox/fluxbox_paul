@@ -22,6 +22,7 @@
 #ifndef FBTK_MENUITEM_HH
 #define FBTK_MENUITEM_HH
 
+#include "Menu.hh"
 #include "RefCount.hh"
 #include "Command.hh"
 #include "PixmapWithMask.hh"
@@ -32,7 +33,6 @@
 
 namespace FbTk {
 
-class Menu;
 class MenuTheme;
 class FbDrawable;
 template <class T> class ThemeProxy;
@@ -80,7 +80,7 @@ public:
           m_toggle_item(false)
     { }
 
-    MenuItem(const BiDiString &label, Menu *submenu, Menu *host_menu = 0)
+    MenuItem(const BiDiString &label, const RefCount<Menu> &submenu, Menu *host_menu = 0)
         : m_label(label),
           m_menu(host_menu),
           m_submenu(submenu),
@@ -98,7 +98,7 @@ public:
     virtual void setToggleItem(bool val) { m_toggle_item = val; }
     void setCloseOnClick(bool val) { m_close_on_click = val; }
     void setIcon(const std::string &filename, int screen_num);
-    virtual Menu *submenu() { return m_submenu; }
+    virtual const RefCount<Menu>& submenu() { return m_submenu; }
     /**
         @name accessors
     */
@@ -107,7 +107,7 @@ public:
     virtual const PixmapWithMask *icon() const {
         return m_icon.get() ? m_icon->pixmap.get() : 0;
     }
-    virtual const Menu *submenu() const { return m_submenu; }
+    virtual RefCount<const Menu> submenu() const { return m_submenu; }
     virtual bool isEnabled() const { return m_enabled; }
     virtual bool isSelected() const { return m_selected; }
     virtual bool isToggleItem() const { return m_toggle_item; }
@@ -150,7 +150,7 @@ public:
 private:
     BiDiString m_label; ///< label of this item
     Menu *m_menu; ///< the menu we live in
-    Menu *m_submenu; ///< a submenu, 0 if we don't have one
+    RefCount<Menu> m_submenu; ///< a submenu, 0 if we don't have one
     RefCount<Command<void> > m_command; ///< command to be executed
     bool m_enabled, m_selected;
     bool m_close_on_click, m_toggle_item;

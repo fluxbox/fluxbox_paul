@@ -25,6 +25,7 @@
 #ifndef SCREEN_HH
 #define SCREEN_HH
 
+#include "FbMenu.hh"
 #include "FbWinFrame.hh"
 #include "FbRootWindow.hh"
 #include "RootTheme.hh"
@@ -56,7 +57,6 @@
 #include <map>
 
 class ClientPattern;
-class FbMenu;
 class Focusable;
 class FluxboxWindow;
 class WinClient;
@@ -87,7 +87,7 @@ public:
 
     typedef std::vector<Workspace *> Workspaces;
     typedef std::vector<std::string> WorkspaceNames;
-    typedef std::list<std::pair<FbTk::FbString, FbTk::Menu *> > ExtraMenus;
+    typedef std::list<std::pair<FbTk::FbString, FbTk::RefCount<FbTk::Menu> > > ExtraMenus;
 
     BScreen(FbTk::ResourceManager_base &rm,
             const std::string &screenname,
@@ -114,8 +114,8 @@ public:
     // menus
     const FbMenu &rootMenu() const { return *m_rootmenu.get(); }
     FbMenu &rootMenu() { return *m_rootmenu.get(); }
-    const FbMenu &configMenu() const { return *m_configmenu.get(); }
-    FbMenu &configMenu() { return *m_configmenu.get(); }
+    FbTk::RefCount<const FbMenu> configMenu() const { return m_configmenu; }
+    const FbTk::RefCount<FbMenu> &configMenu() { return m_configmenu; }
     const FbMenu &windowMenu() const { return *m_windowmenu.get(); }
     FbMenu &windowMenu() { return *m_windowmenu.get(); }
     ExtraMenus &extraWindowMenus() { return m_extramenus; }
@@ -151,9 +151,9 @@ public:
     Workspace *currentWorkspace() { return m_current_workspace; }
     const Workspace *currentWorkspace() const { return m_current_workspace; }
     /// @return the workspace menu
-    const FbMenu &workspaceMenu() const { return *m_workspacemenu.get(); }
+    FbTk::RefCount<const FbMenu> workspaceMenu() const { return m_workspacemenu; }
     /// @return the workspace menu
-    FbMenu &workspaceMenu() { return *m_workspacemenu.get(); }
+    const FbTk::RefCount<FbMenu> &workspaceMenu() { return m_workspacemenu; }
     /// @return focus control handler
     const FocusControl &focusControl() const { return *m_focus_control; }
     /// @return focus control handler
@@ -247,10 +247,8 @@ public:
 
     /**
      * For extras to add menus.
-     * These menus will be marked internal,
-     * and deleted when the window dies (as opposed to Screen
      */
-    void addExtraWindowMenu(const FbTk::FbString &label, FbTk::Menu *menu);
+    void addExtraWindowMenu(const FbTk::FbString &label, const FbTk::RefCount<FbTk::Menu> &menu);
 
     int getEdgeSnapThreshold() const { return *resource.edge_snap_threshold; }
 
@@ -444,8 +442,8 @@ public:
     // for extras to add menus. These menus must be marked
     // internal for their safety, and __the extension__ must
     // delete and remove the menu itself (opposite to Window)
-    void addConfigMenu(const FbTk::FbString &label, FbTk::Menu &menu);
-    void removeConfigMenu(FbTk::Menu &menu);
+    void addConfigMenu(const FbTk::FbString &label, const FbTk::RefCount<FbTk::Menu> &menu);
+    void removeConfigMenu(const FbTk::RefCount<FbTk::Menu> &menu);
 
 
     /// Adds a resource to managed resource list
@@ -495,11 +493,11 @@ private:
     bool root_colormap_installed, managed;
 
     std::auto_ptr<FbTk::ImageControl> m_image_control;
-    std::auto_ptr<FbMenu> m_configmenu, m_rootmenu, m_workspacemenu, m_windowmenu;
+    FbTk::RefCount<FbMenu> m_configmenu, m_rootmenu, m_workspacemenu, m_windowmenu;
 
     ExtraMenus m_extramenus;
 
-    typedef std::list<std::pair<FbTk::FbString, FbTk::Menu *> > Configmenus;
+    typedef std::list<std::pair<FbTk::FbString, FbTk::RefCount<FbTk::Menu> > > Configmenus;
 
 
     Configmenus m_configmenu_list;

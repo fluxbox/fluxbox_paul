@@ -246,12 +246,12 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     m_rc_client_padding(screen.resourceManager(), 10,
                    screen.name() + ".iconbar.iconTextPadding"),
     m_rc_use_pixmap(screen.resourceManager(), true, screen.name() + ".iconbar.usePixmap"),
-    m_menu(screen.menuTheme(), screen.imageControl(),
-           *screen.layerManager().getLayer(ResourceLayer::MENU)),
+    m_menu(new FbMenu(screen.menuTheme(), screen.imageControl(),
+           *screen.layerManager().getLayer(ResourceLayer::MENU)) ),
     m_alpha(255) {
 
     // setup mode menu
-    setupModeMenu(m_menu, *this);
+    setupModeMenu(*m_menu, *this);
     _FB_USES_NLS;
     using namespace FbTk;
     // setup use pixmap item to reconfig iconbar and save resource on click
@@ -261,15 +261,13 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     save_and_reconfig->add(reconfig);
     save_and_reconfig->add(save);
     RefCount<Command<void> > s_and_reconfig(save_and_reconfig);
-    m_menu.insert(new FbTk::BoolMenuItem(_FB_XTEXT(Toolbar, ShowIcons,
+    m_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Toolbar, ShowIcons,
                     "Show Pictures", "chooses if little icons are shown next to title in the iconbar"),
                            m_rc_use_pixmap, s_and_reconfig));
-    m_menu.updateMenu();
-    // must be internal menu, otherwise toolbar main menu tries to delete it.
-    m_menu.setInternalMenu();
+    m_menu->updateMenu();
 
     // add iconbar menu to toolbar menu
-    menu.insert(m_menu.label().logical(), &m_menu);
+    menu.insert(m_menu->label().logical(), FbTk::RefCount<FbTk::Menu>(m_menu));
 
     // setup signals
     m_tracker.join(theme.reconfigSig(), FbTk::MemFun(*this, &IconbarTool::themeReconfigured));
@@ -313,7 +311,7 @@ void IconbarTool::hide() {
 void IconbarTool::setAlignment(FbTk::Container::Alignment align) {
     *m_rc_alignment = align;
     update(ALIGN, NULL);
-    m_menu.reconfigure();
+    m_menu->reconfigure();
 }
 
 void IconbarTool::setMode(string mode) {
@@ -353,7 +351,7 @@ void IconbarTool::setMode(string mode) {
 
     renderTheme();
 
-    m_menu.reconfigure();
+    m_menu->reconfigure();
 }
 
 unsigned int IconbarTool::width() const {

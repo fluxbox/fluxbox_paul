@@ -47,7 +47,7 @@ public:
         setToggleItem(true);
     }
 
-    RadioMenuItem(const FbString &label, Menu *submenu, Menu *host_menu = 0):
+    RadioMenuItem(const FbString &label, const RefCount<Menu> &submenu, Menu *host_menu = 0):
         MenuItem(label, submenu, host_menu) {
         setToggleItem(true);
     }

@@ -126,8 +126,7 @@ Menu::Menu(FbTk::ThemeProxy<MenuTheme> &tm, ImageControl &imgctrl):
 
     m_title_vis = true;
 
-    m_internal_menu =
-        m_moving =
+    m_moving =
         m_closing =
         m_torn =
         m_visible = false;
@@ -227,7 +226,7 @@ int Menu::insert(const FbString &label, int pos) {
     return insert(new MenuItem(label, *this), pos);
 }
 
-int Menu::insert(const FbString &label, Menu *submenu, int pos) {
+int Menu::insert(const FbString &label, const RefCount<Menu> &submenu, int pos) {
     return insert(new MenuItem(label, submenu, this), pos);
 }
 
@@ -273,19 +272,6 @@ int Menu::remove(unsigned int index) {
         // avoid O(n^2) algorithm with removeAll()
         if (index != menuitems.size())
             fixMenuItemIndices();
-
-        if (item->submenu() != 0) {
-            Menu *tmp = item->submenu();
-            // if menu is internal we should just hide it instead
-            // if destroying it
-            if (! tmp->m_internal_menu) {
-                delete tmp;
-            }
-            // We can't internal_hide here, as the child may be deleted!
-//            } else
-//                tmp->internal_hide();
-        }
-
 
         delete item;
     }
@@ -374,8 +360,8 @@ void Menu::enterSubmenu() {
     if (!validIndex(m_active_index))
         return;
 
-    Menu *submenu = menuitems[m_active_index]->submenu();
-    if (submenu == 0)
+    RefCount<Menu> submenu = menuitems[m_active_index]->submenu();
+    if (! submenu)
         return;
 
     if (submenu->menuitems.empty())
@@ -759,7 +745,7 @@ void Menu::drawSubmenu(unsigned int index) {
             clearItem(index);
 
         if (! item->submenu()->isVisible() && item->submenu()->numberOfItems() > 0) {
-            shown = item->submenu();
+            shown = item->submenu().get();
             item->showSubmenu();
             item->submenu()->raise();
         }

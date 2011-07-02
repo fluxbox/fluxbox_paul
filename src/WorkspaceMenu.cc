@@ -56,8 +56,7 @@ const unsigned int NR_STATIC_ITEMS = 6;
 void add_workspaces(WorkspaceMenu& menu, BScreen& screen) {
     for (size_t i = 0; i < screen.numberOfWorkspaces(); ++i) {
         Workspace* w = screen.getWorkspace(i);
-        w->menu().setInternalMenu();
-        FbTk::MultiButtonMenuItem* submenu = new FbTk::MultiButtonMenuItem(5, FbTk::BiDiString(w->name()), &w->menu());
+        FbTk::MultiButtonMenuItem* submenu = new FbTk::MultiButtonMenuItem(5, FbTk::BiDiString(w->name()), w->menu());
         FbTk::RefCount<FbTk::Command<void> > jump_cmd(new JumpToWorkspaceCmd(w->workspaceID()));
         submenu->setCommand(3, jump_cmd);
         menu.insert(submenu, i + IDX_AFTER_ICONS);
@@ -112,7 +111,7 @@ void WorkspaceMenu::init(BScreen &screen) {
 
     setLabel(_FB_XTEXT(Workspace, MenuTitle, "Workspaces", "Title of main workspace menu"));
     insert(_FB_XTEXT(Menu, Icons, "Icons", "Iconic windows menu title"),
-           MenuCreator::createMenuType("iconmenu", screen.screenNumber()));
+           FbTk::RefCount<FbTk::Menu>(MenuCreator::createMenuType("iconmenu", screen.screenNumber())) );
     insert(new FbTk::MenuSeparator());
 
     ::add_workspaces(*this, screen);

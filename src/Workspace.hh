@@ -65,8 +65,8 @@ public:
     BScreen &screen() { return m_screen; }
     const BScreen &screen() const { return m_screen; }
 
-    FbTk::Menu &menu() { return m_clientmenu; }
-    const FbTk::Menu &menu() const { return m_clientmenu; }
+    FbTk::RefCount<FbTk::Menu> menu() { return m_clientmenu; }
+    FbTk::RefCount<const FbTk::Menu> menu() const { return m_clientmenu; }
     ///    name of this workspace
     const FbTk::FbString &name() const { return m_name; }
     /**
@@ -86,7 +86,7 @@ private:
 
     Windows m_windowlist;
     FbTk::Signal<> m_clientlist_sig;
-    ClientMenu m_clientmenu;
+    FbTk::RefCount<ClientMenu> m_clientmenu;
 
     FbTk::FbString m_name;  ///< name of this workspace
     unsigned int m_id;    ///< id, obsolete, this should be in BScreen

@@ -116,7 +116,7 @@ private:
     FbTk::IntResource m_rc_client_width; ///< size of client button in LEFT/RIGHT mode
     FbTk::UIntResource m_rc_client_padding; ///< padding of the text
     FbTk::BoolResource m_rc_use_pixmap; ///< if iconbar should use win pixmap or not
-    FbMenu m_menu;
+    FbTk::RefCount<FbMenu> m_menu;
     int m_alpha;
 };
 

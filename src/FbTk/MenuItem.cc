@@ -27,7 +27,6 @@
 #include "Image.hh"
 #include "App.hh"
 #include "StringUtil.hh"
-#include "Menu.hh"
 #include <X11/keysym.h>
 
 namespace FbTk {

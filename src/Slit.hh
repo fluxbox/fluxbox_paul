@@ -117,7 +117,7 @@ public:
     Placement placement() const { return *m_rc_placement; }
     int getOnHead() const { return *m_rc_on_head; }
     void saveOnHead(int head);
-    FbTk::Menu &menu() { return m_slitmenu; }
+    FbTk::Menu &menu() { return *m_slitmenu; }
 
     const FbTk::FbWindow &window() const { return frame.window; }
 
@@ -147,10 +147,10 @@ private:
     BScreen &m_screen;
     FbTk::Timer m_timer;
 
-    std::auto_ptr<LayerMenu> m_layermenu;
-    FbMenu m_clientlist_menu, m_slitmenu;
+    FbTk::RefCount<LayerMenu> m_layermenu;
+    FbTk::RefCount<FbMenu> m_clientlist_menu, m_slitmenu;
 #ifdef XINERAMA
-    XineramaHeadMenu<Slit> *m_xineramaheadmenu;
+    FbTk::RefCount<XineramaHeadMenu<Slit> > m_xineramaheadmenu;
 #endif // XINERAMA
 
     struct frame {
