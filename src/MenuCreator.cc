@@ -66,78 +66,6 @@ using FbTk::AutoReloadHelper;
 
 namespace {
 
-FbTk::StringConvertor s_stringconvertor(FbTk::StringConvertor::ToFbString);
-
-list<string> s_encoding_stack;
-list<size_t> s_stacksize_stack;
-
-/**
- * Push the encoding onto the stack, and make it active.
- */
-void startEncoding(const string &encoding) {
-    // we push it regardless of whether it's valid, since we
-    // need to stay balanced with the endEncodings.
-    s_encoding_stack.push_back(encoding);
-
-    // this won't change if it doesn't succeed
-    s_stringconvertor.setSource(encoding);
-}
-
-/**
- * Pop the encoding from the stack, unless we are at our stacksize limit.
- * Restore the previous (valid) encoding.
- */
-void endEncoding() {
-    size_t min_size = s_stacksize_stack.back();
-    if (s_encoding_stack.size() <= min_size) {
-        _FB_USES_NLS;
-        cerr<<_FB_CONSOLETEXT(Menu, ErrorEndEncoding, "Warning: unbalanced [encoding] tags", "User menu file had unbalanced [encoding] tags")<<endl;
-        return;
-    }
-
-    s_encoding_stack.pop_back();
-    s_stringconvertor.reset();
-
-    list<string>::reverse_iterator it = s_encoding_stack.rbegin();
-    list<string>::reverse_iterator it_end = s_encoding_stack.rend();
-    while (it != it_end && !s_stringconvertor.setSource(*it))
-        ++it;
-
-    if (it == it_end)
-        s_stringconvertor.setSource("");
-}
-
-
-/* push our encoding-stacksize onto the stack */
-void startFile() {
-    if (s_encoding_stack.empty())
-        s_stringconvertor.setSource("");
-    s_stacksize_stack.push_back(s_encoding_stack.size());
-}
-
-/**
- * Pop necessary encodings from the stack
- * (and endEncoding the final one) to our matching encoding-stacksize.
- */
-void endFile() {
-    size_t target_size = s_stacksize_stack.back();
-    size_t curr_size = s_encoding_stack.size();
-
-    if (target_size != curr_size) {
-        _FB_USES_NLS;
-        cerr<<_FB_CONSOLETEXT(Menu, ErrorEndEncoding, "Warning: unbalanced [encoding] tags", "User menu file had unbalanced [encoding] tags")<<endl;
-    }
-
-    for (; curr_size > (target_size+1); --curr_size)
-        s_encoding_stack.pop_back();
-
-    if (curr_size == (target_size+1))
-        endEncoding();
-
-    s_stacksize_stack.pop_back();
-}
-
-
 std::auto_ptr<FbMenu> createStyleMenu(int screen_number, const string &label,
                      AutoReloadHelper *reloader, const string &directory) {
 
@@ -609,5 +537,3 @@ bool MenuCreator::createWindowMenuItem(const string &type,
 
     return true;
 }
-
-
