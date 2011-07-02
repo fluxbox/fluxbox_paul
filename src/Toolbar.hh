@@ -104,13 +104,13 @@ public:
 
     int layerNumber() const { return const_cast<FbTk::LayerItem &>(m_layeritem).getLayerNum(); }
 
-    const FbTk::Menu &menu() const { return m_toolbarmenu; }
-    FbTk::Menu &menu() { return m_toolbarmenu; }
-    FbTk::Menu &placementMenu() { return m_placementmenu; }
-    const FbTk::Menu &placementMenu() const { return m_placementmenu; }
+    FbTk::RefCount<const FbTk::Menu> menu() const { return m_toolbarmenu; }
+    FbTk::RefCount<FbTk::Menu> menu() { return m_toolbarmenu; }
+    FbTk::RefCount<FbTk::Menu> placementMenu() { return m_placementmenu; }
+    FbTk::RefCount<const FbTk::Menu> placementMenu() const { return m_placementmenu; }
 
-    FbTk::Menu &layerMenu() { return m_layermenu; }
-    const FbTk::Menu &layerMenu() const { return m_layermenu; }
+    FbTk::RefCount<FbTk::Menu> layerMenu() { return m_layermenu; }
+    FbTk::RefCount<const FbTk::Menu> layerMenu() const { return m_layermenu; }
 
     /// are we hidden?
     bool isHidden() const { return m_hidden; }
@@ -165,10 +165,10 @@ private:
     FbTk::Timer m_hide_timer; ///< timer to for auto hide toolbar
 
     FbTk::LayerItem m_layeritem; ///< layer item, must be declared before layermenu
-    LayerMenu m_layermenu;
-    FbMenu m_placementmenu, m_toolbarmenu;
+    FbTk::RefCount<LayerMenu> m_layermenu;
+    FbTk::RefCount<FbMenu> m_placementmenu, m_toolbarmenu;
 #ifdef XINERAMA
-    XineramaHeadMenu<Toolbar> *m_xineramaheadmenu;
+    FbTk::RefCount<XineramaHeadMenu<Toolbar> > m_xineramaheadmenu;
 #endif // XINERAMA
 
 

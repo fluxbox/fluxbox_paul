@@ -42,7 +42,6 @@
 #include "FbTk/RadioMenuItem.hh"
 
 // menus
-#include "FbMenu.hh"
 #include "LayerMenu.hh"
 
 #include "MenuCreator.hh"
@@ -427,7 +426,6 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     m_current_workspace = m_workspaces_list.front();
 
     m_windowmenu.reset(createMenu(""));
-    m_windowmenu->setInternalMenu();
     m_windowmenu->setReloadHelper(new FbTk::AutoReloadHelper());
     m_windowmenu->reloadHelper()->setReloadCmd(FbTk::RefCount<FbTk::Command<void> >(new FbTk::SimpleCommand<BScreen>(*this, &BScreen::rereadWindowMenu)));
 
@@ -438,7 +436,6 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     m_configmenu.reset(createMenu(_FB_XTEXT(Menu, Configuration,
                                   "Configuration", "Title of configuration menu")));
     setupConfigmenu(*m_configmenu.get());
-    m_configmenu->setInternalMenu();
 
     // check which desktop we should start on
     unsigned int first_desktop = 0;
@@ -485,34 +482,7 @@ BScreen::~BScreen() {
     // we need to destroy it before we destroy workspaces
     m_workspacemenu.reset(0);
 
-    if (m_extramenus.size()) {
-        // check whether extramenus are included in windowmenu
-        // if not, we clean them ourselves
-        bool extramenus_in_windowmenu = false;
-        for (size_t i = 0, n = m_windowmenu->numberOfItems(); i < n; i++)
-            if (m_windowmenu->find(i)->submenu() == m_extramenus.begin()->second) {
-                extramenus_in_windowmenu = true;
-                break;
-            }
-
-        ExtraMenus::iterator mit = m_extramenus.begin();
-        ExtraMenus::iterator mit_end = m_extramenus.end();
-        for (; mit != mit_end; ++mit) {
-            // we set them to NOT internal so that they will be deleted when the
-            // menu is cleaned up. We can't delete them here because they are
-            // still in the menu
-            // (They need to be internal for most of the time so that if we
-            // rebuild the menu, then they won't be removed.
-            if (! extramenus_in_windowmenu) {
-                // not attached to our windowmenu
-                // so we clean it up
-                delete mit->second;
-            } else {
-                // let the parent clean it up
-                mit->second->setInternalMenu(false);
-            }
-        }
-    }
+    m_extramenus.clear();
 
     removeWorkspaceNames();
     using namespace FbTk::STLUtil;
@@ -540,9 +510,9 @@ BScreen::~BScreen() {
     m_slit.reset(0);
     
 
-    delete m_rootmenu.release();
-    delete m_workspacemenu.release();
-    delete m_windowmenu.release();
+    m_rootmenu.reset(0);
+    m_workspacemenu.reset(0);
+    m_windowmenu.reset(0);
     
     // TODO fluxgen: check if this is the right place
     for (size_t i = 0; i < m_head_areas.size(); i++)
@@ -835,8 +805,8 @@ FbMenu *BScreen::createToggleMenu(const string &label) {
     return menu;
 }
 
-void BScreen::addExtraWindowMenu(const FbTk::FbString &label, FbTk::Menu *menu) {
-    menu->setInternalMenu();
+void
+BScreen::addExtraWindowMenu(const FbTk::FbString &label, const FbTk::RefCount<FbTk::Menu> &menu) {
     menu->disableTitle();
     m_extramenus.push_back(make_pair(label, menu));
     rereadWindowMenu();
@@ -1384,7 +1354,7 @@ void BScreen::reassociateWindow(FluxboxWindow *w, unsigned int wkspc_id,
 }
 
 void BScreen::initMenus() {
-    m_workspacemenu.reset(MenuCreator::createMenuType("workspacemenu", screenNumber()));
+    m_workspacemenu = MenuCreator::createMenuType("workspacemenu", screenNumber());
 
     m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
@@ -1410,7 +1380,6 @@ void BScreen::rereadMenu() {
         FbTk::RefCount<FbTk::Command<void> > restart_fb(FbTk::CommandParser<void>::instance().parse("restart"));
         FbTk::RefCount<FbTk::Command<void> > exit_fb(FbTk::CommandParser<void>::instance().parse("exit"));
         FbTk::RefCount<FbTk::Command<void> > execute_xterm(FbTk::CommandParser<void>::instance().parse("exec xterm"));
-        m_rootmenu->setInternalMenu();
         m_rootmenu->insert("xterm", execute_xterm);
         m_rootmenu->insert(_FB_XTEXT(Menu, Reconfigure, "Reconfigure",
                                      "Reload Configuration command")),
@@ -1441,16 +1410,16 @@ void BScreen::rereadWindowMenu() {
     MenuCreator::createMenu(*m_windowmenu, l, m_windowmenu->reloadHelper());
 }
 
-void BScreen::addConfigMenu(const FbTk::FbString &label, FbTk::Menu &menu) {
-    m_configmenu_list.push_back(make_pair(label, &menu));
+void BScreen::addConfigMenu(const FbTk::FbString &label, const FbTk::RefCount<FbTk::Menu> &menu) {
+    m_configmenu_list.push_back(make_pair(label, menu));
     if (m_configmenu.get())
         setupConfigmenu(*m_configmenu.get());
 }
 
-void BScreen::removeConfigMenu(FbTk::Menu &menu) {
+void BScreen::removeConfigMenu(const FbTk::RefCount<FbTk::Menu> &menu) {
     Configmenus::iterator erase_it = find_if(m_configmenu_list.begin(),
                                              m_configmenu_list.end(),
-                                             FbTk::Compose(bind2nd(equal_to<FbTk::Menu *>(), &menu),
+                                             FbTk::Compose(bind2nd(equal_to<FbTk::RefCount<FbTk::Menu> >(), menu),
                                                            FbTk::Select2nd<Configmenus::value_type>()));
     if (erase_it != m_configmenu_list.end())
         m_configmenu_list.erase(erase_it);
@@ -1492,7 +1461,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     FbTk::FbString focusmenu_label = _FB_XTEXT(Configmenu, FocusModel,
                                           "Focus Model",
                                           "Method used to give focus to windows");
-    FbTk::Menu *focus_menu = createMenu(focusmenu_label);
+    FbTk::RefCount<FbTk::Menu> focus_menu( createMenu(focusmenu_label) );
 
 #define _BOOLITEM(m,a, b, c, d, e, f) (m).insert(new FbTk::BoolMenuItem(_FB_XTEXT(a, b, c, d), e, f))
 
@@ -1549,7 +1518,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     FbTk::FbString maxmenu_label = _FB_XTEXT(Configmenu, MaxMenu,
             "Maximize Options", "heading for maximization options");
-    FbTk::Menu *maxmenu = createMenu(maxmenu_label);
+    FbTk::RefCount<FbTk::Menu> maxmenu( createMenu(maxmenu_label) );
 
     _BOOLITEM(*maxmenu, Configmenu, FullMax,
               "Full Maximization", "Maximise over slit, toolbar, etc",
@@ -1575,9 +1544,9 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     FbTk::FbString tabmenu_label = _FB_XTEXT(Configmenu, TabMenu,
                                         "Tab Options",
                                         "heading for tab-related options");
-    FbTk::Menu *tab_menu = createMenu(tabmenu_label);
+    FbTk::RefCount<FbTk::Menu> tab_menu( createMenu(tabmenu_label) );
     FbTk::FbString tabplacement_label = _FB_XTEXT(Menu, Placement, "Placement", "Title of Placement menu");
-    FbTk::Menu *tabplacement_menu = createToggleMenu(tabplacement_label);
+    FbTk::RefCount<FbTk::Menu> tabplacement_menu( createToggleMenu(tabplacement_label) );
 
     tab_menu->insert(tabplacement_label, tabplacement_menu);
 
@@ -1645,7 +1614,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
         FbTk::FbString alphamenu_label = _FB_XTEXT(Configmenu, Transparency,
                                           "Transparency",
                                            "Menu containing various transparency options");
-        FbTk::Menu *alpha_menu = createMenu(alphamenu_label);
+        FbTk::RefCount<FbTk::Menu> alpha_menu( createMenu(alphamenu_label) );
 
         if (FbTk::Transparent::haveComposite(true)) {
             static FbTk::SimpleAccessor<bool> s_pseudo(Fluxbox::instance()->getPseudoTrans());

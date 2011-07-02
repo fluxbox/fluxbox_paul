@@ -66,10 +66,10 @@ using FbTk::AutoReloadHelper;
 
 namespace {
 
-std::auto_ptr<FbMenu> createStyleMenu(int screen_number, const string &label,
+FbTk::RefCount<FbTk::Menu> createStyleMenu(int screen_number, const string &label,
                      AutoReloadHelper *reloader, const string &directory) {
 
-    std::auto_ptr<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
+    FbTk::RefCount<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
 
     // perform shell style ~ home directory expansion
     string stylesdir(FbTk::StringUtil::expandFilename(directory));
@@ -107,11 +107,11 @@ std::auto_ptr<FbMenu> createStyleMenu(int screen_number, const string &label,
     return menu;
 }
 
-std::auto_ptr<FbMenu> createRootCmdMenu(int screen_number, const string &label,
+FbTk::RefCount<FbTk::Menu> createRootCmdMenu(int screen_number, const string &label,
                        const string &directory, AutoReloadHelper *reloader,
                        const string &cmd) {
 
-    std::auto_ptr<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
+    FbTk::RefCount<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
 
     // perform shell style ~ home directory expansion
     string rootcmddir(FbTk::StringUtil::expandFilename(directory));
@@ -267,8 +267,8 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
         int size = menu.insert(str_label);
         menu.setItemEnabled(size-1, false);
     } else if(str_key == "icons") {
-        FbTk::Menu *submenu = MenuCreator::createMenuType("iconmenu", screen_number);
-        if (submenu == 0)
+        FbTk::RefCount<FbTk::Menu> submenu = MenuCreator::createMenuType("iconmenu", screen_number);
+        if (! submenu)
             return;
         if (str_label.empty())
             menu.insert(_FB_XTEXT(Menu, Icons, "Icons", "Iconic windows menu title"), submenu);
@@ -281,12 +281,12 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
         else
             menu.insert(str_label, exit_cmd);
     } else if (str_key == "config") {
-        menu.insert(str_label, &screen->configMenu());
+        menu.insert(str_label, FbTk::RefCount<FbTk::Menu>(screen->configMenu()) );
     } else if(str_key == "menu") {
-        std::auto_ptr<FbMenu> t(MenuCreator::createMenu("", screen_number));
+        FbTk::RefCount<FbTk::Menu> t(MenuCreator::createMenu("", screen_number));
         l.pushvalue(-1);
         createMenu_(*t, l, *conv, reloader);
-        menu.insert(str_label, t.release());
+        menu.insert(str_label, t);
     } else {
         // items that have a parameter
         const string &str_cmd = getField(l, -1, "param");
@@ -301,16 +301,15 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
             menu.insert(new StyleMenuItem(str_label, str_cmd));
         else if (str_key == "stylesdir")
             menu.insert(str_label,
-                    createStyleMenu(screen_number, str_label, reloader, str_cmd).release());
+                    createStyleMenu(screen_number, str_label, reloader, str_cmd));
         else if (str_key == "wallpapers") {
             string program = getField(l, -1, "program");
             if(program.empty())
                 program = realProgramName("fbsetbg");
             menu.insert(str_label, createRootCmdMenu(screen_number, str_label, str_cmd,
-                                                        reloader, program).release() );
+                                                        reloader, program) );
         } else if (str_key == "workspaces") {
-            screen->workspaceMenu().setInternalMenu();
-            menu.insert(str_label, &screen->workspaceMenu());
+            menu.insert(str_label, FbTk::RefCount<FbTk::Menu>(screen->workspaceMenu()) );
         } else {
             // finally, try window-related commands
             MenuCreator::createWindowMenuItem(str_key, str_label, menu);
@@ -396,17 +395,17 @@ void MenuCreator::createFromFile(const string &filename,
     createMenu(inject_into, l, reloader);
 }
 
-FbMenu *MenuCreator::createMenuType(const string &type, int screen_num) {
+FbTk::RefCount<FbMenu> MenuCreator::createMenuType(const string &type, int screen_num) {
+    FbTk::RefCount<FbMenu> menu;
     BScreen *screen = Fluxbox::instance()->findScreen(screen_num);
-    if (screen == 0)
-        return 0;
-    if (type == "iconmenu")
-        return new ClientMenu(*screen, screen->iconList(),
-                              true); // listen to icon list changes
-    else if (type == "workspacemenu")
-        return new WorkspaceMenu(*screen);
 
-    return 0;
+    if (type == "iconmenu")
+        menu.reset(new ClientMenu(*screen, screen->iconList(),
+                              true)); // listen to icon list changes
+    else if (type == "workspacemenu")
+         menu.reset(new WorkspaceMenu(*screen));
+
+    return menu;
 }
 
 bool MenuCreator::createWindowMenuItem(const string &type,
@@ -494,10 +493,9 @@ bool MenuCreator::createWindowMenuItem(const string &type,
             if (screen == 0)
                 return false;
 
-            FbTk::Menu *submenu =
-                new AlphaMenu(screen->menuTheme(),
+            FbTk::RefCount<FbTk::Menu> submenu( new AlphaMenu(screen->menuTheme(),
                               screen->imageControl(),
-                              *screen->layerManager().getLayer(ResourceLayer::MENU));
+                              *screen->layerManager().getLayer(ResourceLayer::MENU)) );
             submenu->disableTitle();
             menu.insert(label.empty() ? _FB_XTEXT(Configmenu, Transparency, "Transparency",
                                                   "Menu containing various transparency options"): label,
@@ -515,17 +513,17 @@ bool MenuCreator::createWindowMenuItem(const string &type,
 
     } else if (type == "sendto") {
         menu.insert(label.empty() ? _FB_XTEXT(Windowmenu, SendTo, "Send To...", "Send to menu item name"):
-                    label, new SendToMenu(*Fluxbox::instance()->findScreen(menu.screenNumber())));
+                    label, FbTk::RefCount<FbTk::Menu>(new SendToMenu(*Fluxbox::instance()->findScreen(menu.screenNumber()))) );
     } else if (type == "layer") {
         BScreen *screen = Fluxbox::instance()->findScreen(menu.screenNumber());
         if (screen == 0)
             return false;
 
-        FbTk::Menu *submenu = new LayerMenu(screen->menuTheme(),
+        FbTk::RefCount<FbTk::Menu> submenu( new LayerMenu(screen->menuTheme(),
                                             screen->imageControl(),
                                             *screen->layerManager().getLayer(ResourceLayer::MENU),
                                             &context,
-                                            false);
+                                            false) );
         submenu->disableTitle();
         menu.insert(label.empty()?_FB_XTEXT(Windowmenu, Layer, "Layer ...", "Layer menu"):label, submenu);
 

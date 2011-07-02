@@ -65,16 +65,14 @@ using std::string;
 
 Workspace::Workspace(BScreen &scrn, const string &name, unsigned int id):
     m_screen(scrn),
-    m_clientmenu(scrn, m_windowlist, false),
+    m_clientmenu(new ClientMenu(scrn, m_windowlist, false) ),
     m_name(name),
     m_id(id) {
 
-    m_clientlist_sig.connect(FbTk::MemFun(m_clientmenu,
+    m_clientlist_sig.connect(FbTk::MemFun(*m_clientmenu,
                                           &ClientMenu::refreshMenu));
 
-    menu().setInternalMenu();
     setName(name);
-
 
 }
 
@@ -145,7 +143,7 @@ void Workspace::removeAll(unsigned int dest) {
 
 
 void Workspace::reconfigure() {
-    menu().reconfigure();
+    menu()->reconfigure();
 
     Windows::iterator it = m_windowlist.begin();
     Windows::iterator it_end = m_windowlist.end();
@@ -176,8 +174,8 @@ void Workspace::setName(const string &name) {
 
     screen().updateWorkspaceName(m_id);
 
-    menu().setLabel(FbTk::BiDiString(m_name));
-    menu().updateMenu();
+    menu()->setLabel(FbTk::BiDiString(m_name));
+    menu()->updateMenu();
 }
 
 /**

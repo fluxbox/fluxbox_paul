@@ -24,6 +24,7 @@
 #define MENUCREATOR_HH
 
 #include "FbTk/FbString.hh"
+#include "FbTk/RefCount.hh"
 
 #include <list>
 #include <memory>
@@ -44,7 +45,7 @@ namespace MenuCreator {
     void
     createMenu(FbTk::Menu &inject_into, lua::state &l, FbTk::AutoReloadHelper *reloader = NULL);
     FbMenu *createMenu(const std::string &label, int screen_num);
-    FbMenu *createMenuType(const std::string &label, int screen_num);
+    FbTk::RefCount<FbMenu> createMenuType(const std::string &label, int screen_num);
     void createFromFile(const std::string &filename,
                                FbTk::Menu &inject_into,
                                FbTk::AutoReloadHelper *reloader = NULL);

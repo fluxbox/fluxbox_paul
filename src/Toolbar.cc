@@ -118,7 +118,7 @@ public:
     void click(int button, int time, unsigned int mods) {
         m_toolbar.setPlacement(m_place);
         m_toolbar.reconfigure();
-        m_toolbar.placementMenu().reconfigure();
+        m_toolbar.placementMenu()->reconfigure();
         Fluxbox::instance()->save_rc();
     }
 private:
@@ -158,17 +158,17 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
     m_window_pm(0),
     m_screen(scrn),
     m_layeritem(frame.window, layer),
-    m_layermenu(scrn.menuTheme(),
+    m_layermenu(new LayerMenu(scrn.menuTheme(),
                 scrn.imageControl(),
                 *scrn.layerManager().getLayer(ResourceLayer::MENU),
                 this,
-                true),
-    m_placementmenu(scrn.menuTheme(),
+                true)),
+    m_placementmenu(new FbMenu(scrn.menuTheme(),
                     scrn.imageControl(),
-                    *scrn.layerManager().getLayer(ResourceLayer::MENU)),
-    m_toolbarmenu(scrn.menuTheme(),
+                    *scrn.layerManager().getLayer(ResourceLayer::MENU))),
+    m_toolbarmenu(new FbMenu(scrn.menuTheme(),
                   scrn.imageControl(),
-                  *scrn.layerManager().getLayer(ResourceLayer::MENU)),
+                  *scrn.layerManager().getLayer(ResourceLayer::MENU))),
 #ifdef XINERAMA
     m_xineramaheadmenu(0),
 #endif // XINERAMA
@@ -205,12 +205,9 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
 
     moveToLayer(static_cast<int>(*m_rc_layernum));
 
-    m_layermenu.setLabel(_FB_XTEXT(Toolbar, Layer, "Toolbar Layer", "Title of toolbar layer menu"));
-    m_placementmenu.setLabel(_FB_XTEXT(Toolbar, Placement, "Toolbar Placement", "Title of toolbar placement menu"));
+    m_layermenu->setLabel(_FB_XTEXT(Toolbar, Layer, "Toolbar Layer", "Title of toolbar layer menu"));
+    m_placementmenu->setLabel(_FB_XTEXT(Toolbar, Placement, "Toolbar Placement", "Title of toolbar placement menu"));
 
-    m_layermenu.setInternalMenu();
-    m_placementmenu.setInternalMenu();
-    m_toolbarmenu.setInternalMenu();
     setupMenus();
     // add menu to screen
     screen().addConfigMenu(_FB_XTEXT(Toolbar, Toolbar, "Toolbar", "title of toolbar menu item"), menu());
@@ -251,7 +248,7 @@ Toolbar::~Toolbar() {
     // from the tools
     screen().removeConfigMenu(menu());
 
-    menu().removeAll();
+    menu()->removeAll();
 
     deleteItems();
     clearStrut();
@@ -370,7 +367,7 @@ void Toolbar::reconfigure() {
         // destroy tools and rebuild them
         deleteItems();
         // they will be readded later
-        menu().removeAll();
+        menu()->removeAll();
         setupMenus(true); // rebuild menu but skip rebuild of placement menu
 
         m_tools = tools; // copy values
@@ -393,7 +390,7 @@ void Toolbar::reconfigure() {
         }
 
     } else { // just update the menu
-        menu().reconfigure();
+        menu()->reconfigure();
     }
 
     frame.bevel_w = theme()->bevelWidth();
@@ -485,7 +482,7 @@ void Toolbar::buttonPressEvent(XButtonEvent &be) {
 
     screen()
         .placementStrategy()
-        .placeAndShowMenu(menu(), be.x_root, be.y_root, false);
+        .placeAndShowMenu(*menu(), be.x_root, be.y_root, false);
 }
 
 void Toolbar::enterNotifyEvent(XCrossingEvent &ce) {
@@ -528,7 +525,7 @@ void Toolbar::leaveNotifyEvent(XCrossingEvent &event) {
     if (isHidden()) {
         if (m_hide_timer.isTiming())
             m_hide_timer.stop();
-    } else if (! menu().isVisible() && ! m_hide_timer.isTiming())
+    } else if (! menu()->isVisible() && ! m_hide_timer.isTiming())
         m_hide_timer.start();
 
 }
@@ -742,7 +739,7 @@ void Toolbar::setupMenus(bool skip_new_placement) {
     typedef RefCount<Command<void> > RefCommand;
     typedef SimpleCommand<Toolbar> ToolbarCommand;
 
-    menu().setLabel(_FB_XTEXT(Toolbar, Toolbar,
+    menu()->setLabel(_FB_XTEXT(Toolbar, Toolbar,
                               "Toolbar", "Title of Toolbar menu"));
 
     RefCommand reconfig_toolbar(new ToolbarCommand(*this, &Toolbar::reconfigure));
@@ -758,11 +755,11 @@ void Toolbar::setupMenus(bool skip_new_placement) {
     visible_macro->add(reconfig_toolbar);
     visible_macro->add(save_resources);
     RefCommand toggle_visible_cmd(visible_macro);
-    menu().insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, Visible,
+    menu()->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, Visible,
                                              "Visible", "Whether this item is visible"),
                                    m_rc_visible, toggle_visible_cmd));
 
-    menu().insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, AutoHide,
+    menu()->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, AutoHide,
                                              "Auto hide", "Toggle auto hide of toolbar"),
                                    m_rc_auto_hide,
                                    reconfig_toolbar_and_save_resource));
@@ -772,29 +769,27 @@ void Toolbar::setupMenus(bool skip_new_placement) {
                                      "Toolbar width percent",
                                      "Percentage of screen width taken by toolbar"),
                            m_rc_width_percent,
-                           0, 100, menu()); // min/max value
+                           0, 100, *menu()); // min/max value
 
 
     toolbar_menuitem->setCommand(reconfig_toolbar_and_save_resource);
-    menu().insert(toolbar_menuitem);
+    menu()->insert(toolbar_menuitem);
 
-    menu().insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, MaximizeOver,
+    menu()->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, MaximizeOver,
                                              "Maximize Over",
                                              "Maximize over this thing when maximizing"),
                                    m_rc_maximize_over,
                                    reconfig_toolbar_and_save_resource));
-    menu().insert(_FB_XTEXT(Menu, Layer, "Layer...", "Title of Layer menu"), &layerMenu());
+    menu()->insert(_FB_XTEXT(Menu, Layer, "Layer...", "Title of Layer menu"), layerMenu());
 #ifdef XINERAMA
     if (screen().hasXinerama()) {
-        menu().insert(_FB_XTEXT(Menu, OnHead, "On Head...", "Title of On Head menu"),
-                      m_xineramaheadmenu =
-                      new XineramaHeadMenu<Toolbar>(screen().menuTheme(),
-                                                    screen(),
-                                                    screen().imageControl(),
-                                                    *screen().layerManager().getLayer(::ResourceLayer::MENU),
-                                                    *this,
-                                                    _FB_XTEXT(Toolbar, OnHead, "Toolbar on Head",
-                                                              "Title of toolbar on head menu")));
+        m_xineramaheadmenu.reset( new XineramaHeadMenu<Toolbar>(screen().menuTheme(),
+                    screen(), screen().imageControl(),
+                    *screen().layerManager().getLayer(::ResourceLayer::MENU), *this,
+                    _FB_XTEXT(Toolbar, OnHead, "Toolbar on Head",
+                        "Title of toolbar on head menu")));
+        menu()->insert(_FB_XTEXT(Menu, OnHead, "On Head...", "Title of On Head menu"),
+                FbTk::RefCount<FbTk::Menu>(m_xineramaheadmenu) );
     }
 #endif // XINERAMA
 
@@ -824,28 +819,28 @@ void Toolbar::setupMenus(bool skip_new_placement) {
             { _FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), Toolbar::BOTTOMRIGHT}
         };
 
-        placementMenu().setMinimumColumns(3);
+        placementMenu()->setMinimumColumns(3);
         // create items in sub menu
         for (size_t i=0; i< sizeof(place_menu)/sizeof(PlacementP); ++i) {
             const PlacementP& p = place_menu[i];
             if (p.label == "") {
-                placementMenu().insert(p.label);
-                placementMenu().setItemEnabled(i, false);
+                placementMenu()->insert(p.label);
+                placementMenu()->setItemEnabled(i, false);
             } else
-                placementMenu().insert(new PlaceToolbarMenuItem(p.label, *this,
+                placementMenu()->insert(new PlaceToolbarMenuItem(p.label, *this,
                                                                 p.placement));
         }
     }
 
-    menu().insert(_FB_XTEXT(Menu, Placement, "Placement", "Title of Placement menu"), &placementMenu());
-    placementMenu().updateMenu();
+    menu()->insert(_FB_XTEXT(Menu, Placement, "Placement", "Title of Placement menu"), placementMenu());
+    placementMenu()->updateMenu();
 
 
     // this saves resources and clears the slit window to update alpha value
     FbTk::MenuItem *alpha_menuitem =
         new FbTk::IntMenuItem(_FB_XTEXT(Common, Alpha, "Alpha", "Transparency level"),
                            m_rc_alpha,
-                           0, 255, menu());
+                           0, 255, *menu());
     // setup command for alpha value
     MacroCommand *alpha_macrocmd = new MacroCommand();
     RefCount<Command<void> > alpha_cmd(new SimpleCommand<Toolbar>(*this, &Toolbar::updateAlpha));
@@ -854,8 +849,8 @@ void Toolbar::setupMenus(bool skip_new_placement) {
     RefCount<Command<void> > set_alpha_cmd(alpha_macrocmd);
     alpha_menuitem->setCommand(set_alpha_cmd);
 
-    menu().insert(alpha_menuitem);
-    menu().updateMenu();
+    menu()->insert(alpha_menuitem);
+    menu()->updateMenu();
 }
 
 void Toolbar::saveOnHead(int head) {

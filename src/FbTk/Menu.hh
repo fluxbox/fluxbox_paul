@@ -65,14 +65,13 @@ public:
     /// add empty menu item
     int insert(const FbString &label, int pos=-1);
     /// add submenu
-    int insert(const FbString &label, Menu *submenu, int pos= -1);
+    int insert(const FbString &label, const RefCount<Menu> &submenu, int pos= -1);
     /// add menu item
     int insert(MenuItem *item, int pos=-1);
     /// remove an item
     int remove(unsigned int item);
     /// remove all items
     void removeAll();
-    void setInternalMenu(bool val = true) { m_internal_menu = val; }
     void setAlignment(Alignment a) { m_alignment = a; }
 
     /// raise this window
@@ -213,7 +212,6 @@ private:
     bool m_closing; ///< if we're right clicking on the menu title
     bool m_visible; ///< menu visibility
     bool m_torn; ///< torn from parent
-    bool m_internal_menu; ///< whether we should destroy this menu or if it's managed somewhere else
     bool m_title_vis; ///< title visibility
 
     int m_which_sub;

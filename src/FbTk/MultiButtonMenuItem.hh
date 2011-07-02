@@ -31,7 +31,7 @@ namespace FbTk {
 class MultiButtonMenuItem: public FbTk::MenuItem {
 public:
     MultiButtonMenuItem(int buttons, const FbTk::BiDiString& label);  
-    MultiButtonMenuItem(int buttons, const FbTk::BiDiString& label, Menu *submenu);
+    MultiButtonMenuItem(int buttons, const FbTk::BiDiString& label, const RefCount<Menu> &submenu);
     virtual ~MultiButtonMenuItem();
     /// sets command to specified button
     void setCommand(int button, FbTk::RefCount<FbTk::Command<void> > &cmd);

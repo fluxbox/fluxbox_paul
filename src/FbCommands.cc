@@ -372,7 +372,7 @@ void ShowWorkspaceMenuCmd::execute() {
     if (screen == 0)
         return;
 
-    ::showMenu(*screen, screen->workspaceMenu());
+    ::showMenu(*screen, *screen->workspaceMenu());
 }
 
 REGISTER_COMMAND_WITH_ARGS(setworkspacename, FbCommands::SetWorkspaceNameCmd, void);
