@@ -271,6 +271,7 @@ namespace lua {
         void loadfile(const char *filename) throw(lua::syntax_error, lua::file_error, std::bad_alloc);
         void loadstring(const char *s, const char *chunkname = NULL) throw(lua::syntax_error, std::bad_alloc) { loadstring(s, strlen(s), chunkname); }
         void loadstring(const char *s, size_t len, const char *chunkname = NULL) throw(lua::syntax_error, std::bad_alloc);
+        void loadstring(const std::string &s, const char *chunkname = NULL) throw(lua::syntax_error, std::bad_alloc) { loadstring(s.c_str(), s.length(), chunkname); }
         bool next(int index);
         // register is a reserved word :/
         template<typename Functor>
