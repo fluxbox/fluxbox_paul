@@ -42,14 +42,12 @@ class FluxboxWindow;
 
 namespace MenuCreator {
     void
-    createMenu(FbMenu &inject_into, lua::state &l, int screen_number,
-            FbTk::AutoReloadHelper *reloader = NULL);
+    createMenu(FbTk::Menu &inject_into, lua::state &l, FbTk::AutoReloadHelper *reloader = NULL);
     FbMenu *createMenu(const std::string &label, int screen_num);
     FbMenu *createMenuType(const std::string &label, int screen_num);
-    bool createFromFile(const std::string &filename,
+    void createFromFile(const std::string &filename,
                                FbTk::Menu &inject_into,
-                               FbTk::AutoReloadHelper *reloader = NULL,
-                               bool begin = true);
+                               FbTk::AutoReloadHelper *reloader = NULL);
     bool createWindowMenuItem(const std::string &type, const std::string &label, 
                                      FbTk::Menu &inject_into);
 }

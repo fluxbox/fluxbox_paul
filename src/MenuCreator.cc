@@ -302,11 +302,11 @@ string getField(lua::state &l, int pos, const char *field, FbTk::StringConvertor
 }
 
 void
-createMenu_(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+createMenu_(FbTk::Menu &inject_into, lua::state &l, FbTk::StringConvertor &conv,
             FbTk::AutoReloadHelper *reloader);
 
 void
-insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
+insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_conv,
                 FbTk::AutoReloadHelper *reloader) {
     lua::stack_sentry s(l, -1);
     l.checkstack(1);
@@ -357,7 +357,7 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
     } else if(str_key == "menu") {
         std::auto_ptr<FbMenu> t(MenuCreator::createMenu("", screen_number));
         l.pushvalue(-1);
-        createMenu_(*t, l, screen_number, *conv, reloader);
+        createMenu_(*t, l, *conv, reloader);
         menu.insert(str_label, t.release());
     } else {
         // items that have a parameter
@@ -397,7 +397,7 @@ insertMenuItem(lua::state &l, FbMenu &menu, FbTk::StringConvertor &parent_conv,
 }
 
 void
-createMenu_(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::StringConvertor &conv,
+createMenu_(FbTk::Menu &inject_into, lua::state &l, FbTk::StringConvertor &conv,
             FbTk::AutoReloadHelper *reloader) {
 
     lua::stack_sentry s(l, -1);
@@ -420,7 +420,7 @@ createMenu_(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::StringC
 } // end of anonymous namespace
 
 void
-MenuCreator::createMenu(FbMenu &inject_into, lua::state &l, int screen_number, FbTk::AutoReloadHelper *reloader) {
+MenuCreator::createMenu(FbTk::Menu &inject_into, lua::state &l, FbTk::AutoReloadHelper *reloader) {
     lua::stack_sentry s(l, -1);
 
     if(l.type(-1) != lua::TTABLE) {
@@ -436,7 +436,7 @@ MenuCreator::createMenu(FbMenu &inject_into, lua::state &l, int screen_number, F
     if(!enc.empty())
         conv->setSource(enc);
 
-    createMenu_(inject_into, l, screen_number, *conv, reloader);
+    createMenu_(inject_into, l, *conv, reloader);
 }
 
 
@@ -454,33 +454,18 @@ FbMenu *MenuCreator::createMenu(const string &label, int screen_number) {
     return menu;
 }
 
-bool MenuCreator::createFromFile(const string &filename,
+void MenuCreator::createFromFile(const string &filename,
                                  FbTk::Menu &inject_into,
-                                 AutoReloadHelper *reloader, bool begin) {
+                                 AutoReloadHelper *reloader) {
     string real_filename = FbTk::StringUtil::expandFilename(filename);
 
-    FbMenuParser parser(real_filename);
-    if (!parser.isLoaded())
-        return false;
+    lua::state &l = Fluxbox::instance()->lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
 
-    startFile();
-    if (begin) {
-        string label;
-        if (!getStart(parser, label, s_stringconvertor)) {
-            endFile();
-            return false;
-        }
-        inject_into.setLabel(label);
-    }
-
-    // save menu filename, so we can check if it changes
-    if (reloader)
-        reloader->addFile(real_filename);
-
-    parseMenu(parser, inject_into, s_stringconvertor, reloader);
-    endFile();
-
-    return true;
+    l.loadfile(real_filename.c_str());
+    l.call(0, 1);
+    createMenu(inject_into, l, reloader);
 }
 
 FbMenu *MenuCreator::createMenuType(const string &type, int screen_num) {

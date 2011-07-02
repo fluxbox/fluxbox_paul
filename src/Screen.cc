@@ -1402,7 +1402,7 @@ void BScreen::rereadMenu() {
     m_rootmenu->removeAll();
     l.loadfile(FbTk::StringUtil::expandFilename(fb->getMenuFilename()).c_str());
     l.call(0, 1);
-    MenuCreator::createMenu(*m_rootmenu, l, screenNumber(), m_rootmenu->reloadHelper());
+    MenuCreator::createMenu(*m_rootmenu, l, m_rootmenu->reloadHelper());
 
     if (m_rootmenu->numberOfItems() == 0) {
         _FB_USES_NLS;
@@ -1438,7 +1438,7 @@ void BScreen::rereadWindowMenu() {
     m_windowmenu->removeAll();
     l.loadfile(FbTk::StringUtil::expandFilename(windowMenuFilename()).c_str());
     l.call(0, 1);
-    MenuCreator::createMenu(*m_windowmenu, l, screenNumber(), m_windowmenu->reloadHelper());
+    MenuCreator::createMenu(*m_windowmenu, l, m_windowmenu->reloadHelper());
 }
 
 void BScreen::addConfigMenu(const FbTk::FbString &label, FbTk::Menu &menu) {

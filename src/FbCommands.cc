@@ -30,6 +30,7 @@
 #include "Keys.hh"
 #include "MenuCreator.hh"
 
+#include "FbTk/I18n.hh"
 #include "FbTk/Theme.hh"
 #include "FbTk/Menu.hh"
 #include "FbTk/CommandParser.hh"
@@ -338,9 +339,20 @@ void ShowCustomMenuCmd::execute() {
 }
 
 void ShowCustomMenuCmd::reload() {
+    _FB_USES_NLS;
+
     m_menu->removeAll();
-    m_menu->setLabel(FbTk::BiDiString(""));
-    MenuCreator::createFromFile(custom_menu_file, *m_menu.get(), m_menu->reloadHelper());
+    try {
+        MenuCreator::createFromFile(custom_menu_file, *m_menu, m_menu->reloadHelper());
+    }
+    catch(std::runtime_error &e) {
+        fprintf(stderr, _FB_CONSOLETEXT(FbCommands, CantLoadMenu,
+                    "Failed to load menu file '%s': %s",
+                    "Error message when loading of custom menu fails. "
+                    "One %s for filename, one for exception text.").c_str(),
+                custom_menu_file.c_str(), e.what());
+        fputs("\n", stderr);
+    }
 }
 
 REGISTER_COMMAND(rootmenu, FbCommands::ShowRootMenuCmd, void);
