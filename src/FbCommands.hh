@@ -32,6 +32,10 @@
 #include "ClientPattern.hh"
 #include "FocusableList.hh"
 
+namespace lua {
+class state;
+}
+
 namespace FbCommands {
 
 /// executes a system command
@@ -216,6 +220,24 @@ public:
 private:
     Mode m_mode;
     Destination m_dest;
+};
+
+/// Command that runs a lua function
+class LuaCmd: public FbTk::Command<void> {
+public:
+    /// parses the string as a lua chunk
+    LuaCmd(const std::string &chunk);
+
+    /// expect the function to be on the lua stack (as a function or a string)
+    LuaCmd(lua::state &l);
+
+    ~LuaCmd();
+
+    void execute();
+private:
+    int m_ref;
+
+    void init(lua::state &l);
 };
 
 } // end namespace FbCommands
