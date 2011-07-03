@@ -32,6 +32,7 @@
 #include "WindowMenuAccessor.hh"
 
 #include "ClientMenu.hh"
+#include "FbCommands.hh"
 #include "WorkspaceMenu.hh"
 #include "LayerMenu.hh"
 #include "SendToMenu.hh"
@@ -285,6 +286,9 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
             menu.insert(str_label, exit_cmd);
     } else if (str_key == "config") {
         menu.insert(str_label, RefMenu(screen->configMenu()) );
+    } else if (str_key == "lua") {
+        l.rawgetfield(-1, "param");
+        menu.insert(str_label, RefCmd(new FbCommands::LuaCmd(l)) );
     } else if(str_key == "menu") {
         RefMenu t(MenuCreator::createMenu("", screen_number));
         l.pushvalue(-1);
