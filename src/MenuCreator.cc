@@ -268,9 +268,12 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
                                                         reloader, program) );
         } else if (str_key == "workspaces") {
             menu.insert(str_label, RefMenu(screen->workspaceMenu()) );
-        } else {
-            // finally, try window-related commands
-            MenuCreator::createWindowMenuItem(str_key, str_label, menu);
+        // finally, try window-related commands
+        } else if(! MenuCreator::createWindowMenuItem(str_key, str_label, menu)) {
+            // everything failed, we give up
+            int size = menu.insert(_FB_XTEXT(Menu, UnknownType, "Unknown menu type: ",
+                        "The text will be followed by the actual type") + str_key);
+            menu.setItemEnabled(size-1, false);
         }
     }
 
