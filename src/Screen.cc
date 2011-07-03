@@ -1381,13 +1381,17 @@ void BScreen::rereadMenu() {
 
     if (m_rootmenu->numberOfItems() == 0) {
         _FB_USES_NLS;
+        typedef FbTk::RefCount<FbTk::Command<void> > RefCmd;
+        const FbTk::CommandParser<void> &parser = FbTk::CommandParser<void>::instance();
+
         m_rootmenu->setLabel(_FB_XTEXT(Menu, DefaultRootMenu, "Fluxbox default menu", "Title of fallback root menu"));
-        FbTk::RefCount<FbTk::Command<void> > restart_fb(FbTk::CommandParser<void>::instance().parse("restart"));
-        FbTk::RefCount<FbTk::Command<void> > exit_fb(FbTk::CommandParser<void>::instance().parse("exit"));
-        FbTk::RefCount<FbTk::Command<void> > execute_xterm(FbTk::CommandParser<void>::instance().parse("exec xterm"));
+        RefCmd execute_xterm(parser.parse("exec", "xterm"));
+        RefCmd reconfigure_fb(parser.parse("reconfigure"));
+        RefCmd restart_fb(parser.parse("restart"));
+        RefCmd exit_fb(parser.parse("exit"));
         m_rootmenu->insert("xterm", execute_xterm);
         m_rootmenu->insert(_FB_XTEXT(Menu, Reconfigure, "Reconfigure",
-                                     "Reload Configuration command")),
+                                     "Reload Configuration command"), reconfigure_fb);
         m_rootmenu->insert(_FB_XTEXT(Menu, Restart, "Restart", "Restart command"),
                            restart_fb);
         m_rootmenu->insert(_FB_XTEXT(Menu, Exit, "Exit", "Exit command"),
