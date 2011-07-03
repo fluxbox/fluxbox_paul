@@ -39,7 +39,6 @@
 #include "AlphaMenu.hh"
 #include "Layer.hh"
 
-#include "FbMenuParser.hh"
 #include "StyleMenuItem.hh"
 #include "RootCmdMenuItem.hh"
 
@@ -153,24 +152,6 @@ RefMenu createRootCmdMenu(int screen_number, const string &label,
 }
 
 
-class ParseItem {
-public:
-    explicit ParseItem(FbTk::Menu *menu):m_menu(menu) {}
-
-    void load(FbTk::Parser &p, FbTk::StringConvertor &m_labelconvertor) {
-        p>>m_key>>m_label>>m_cmd>>m_icon;
-        m_label.second = m_labelconvertor.recode(m_label.second);
-    }
-    const string &icon() const { return m_icon.second; }
-    const string &command() const { return m_cmd.second; }
-    const string &label() const { return m_label.second; }
-    const string &key() const { return m_key.second; }
-    FbTk::Menu *menu() { return m_menu; }
-private:
-    FbTk::Parser::Item m_key, m_label, m_cmd, m_icon;
-    FbTk::Menu *m_menu;
-};
-
 class MenuContext: public LayerObject {
 public:
     void moveToLayer(int layer_number) {
@@ -185,34 +166,6 @@ public:
     }
 
 };
-
-void parseMenu(FbTk::Parser &pars, FbTk::Menu &menu,
-               FbTk::StringConvertor &label_convertor,
-               AutoReloadHelper *reloader) {
-    ParseItem pitem(&menu);
-    while (!pars.eof()) {
-        pitem.load(pars, label_convertor);
-        if (pitem.key() == "end")
-            return;
-//        translateMenuItem(pars, pitem, label_convertor, reloader);
-    }
-}
-
-bool getStart(FbMenuParser &parser, string &label, FbTk::StringConvertor &labelconvertor) {
-    ParseItem pitem(0);
-    while (!parser.eof()) {
-        // get first begin line
-        pitem.load(parser, labelconvertor);
-        if (pitem.key() == "begin") {
-            break;
-        }
-    }
-    if (parser.eof())
-        return false;
-
-    label = pitem.label();
-    return true;
-}
 
 string getField(lua::state &l, int pos, const char *field, FbTk::StringConvertor *conv = NULL) {
     lua::stack_sentry s(l);
