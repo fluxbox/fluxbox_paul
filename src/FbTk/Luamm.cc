@@ -59,6 +59,7 @@ namespace lua {
             lua_rawset(l, index);
         }
 
+        template<typename Functor>
         int closure_trampoline(lua_State *l)
         {
             lua_checkstack(l, 2);
@@ -68,7 +69,7 @@ namespace lua {
             lua_pop(l, 1);
 
             try {
-                Slot *fn = static_cast<Slot *>( L->touserdata(lua_upvalueindex(1)) );
+                Functor *fn = reinterpret_cast<Functor *>( L->touserdata(lua_upvalueindex(1)) );
                 assert(fn);
                 return (*fn)(L);
             }
@@ -390,7 +391,14 @@ namespace lua {
         setmetatable(-2);
 
         insert(-n-1);
-        lua_pushcclosure(cobj, &closure_trampoline, n+1);
+        lua_pushcclosure(cobj, &closure_trampoline<Slot>, n+1);
+    }
+
+    void state::pushclosure(int (*fn)(state *), int n)
+    {
+        pushlightuserdata(reinterpret_cast<void *>(fn));
+        insert(-n-1);
+        lua_pushcclosure(cobj, &closure_trampoline<int (state *)>, n+1);
     }
 
     void state::rawgetfield(int index, const char *k) throw(std::bad_alloc)

@@ -237,9 +237,10 @@ namespace lua {
         void newtable() { lua_newtable(cobj); }
         void *newuserdata(size_t size) { return lua_newuserdata(cobj, size); }
         // Functor can be anything that FbTk::Slot can handle, everything else remains
-        // identical
+        // identical. We also provide a specialized, lightweight version for simple functors
         template<typename Functor>
         void pushclosure(const Functor &fn, int n);
+        void pushclosure(int (*fn)(state *), int n);
         template<typename Functor>
         void pushfunction(const Functor &fn) { pushclosure(fn, 0); }
         void pushstring(const char *s) { lua_pushstring(cobj, s); }
