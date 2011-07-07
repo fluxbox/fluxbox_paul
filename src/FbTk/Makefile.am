@@ -67,6 +67,7 @@ libFbTk_a_SOURCES = App.hh App.cc Color.cc Color.hh Command.hh \
 	Slot.hh Signal.hh MemFun.hh SelectArg.hh \
 	Util.hh \
 	Luamm.cc Luamm.hh LResource.cc LResource.hh LResourceHelper-lua.cc \
+	LuaUtil.cc LuaUtil.hh \
 	${xpm_SOURCE} \
 	${xft_SOURCE} \
 	${xmb_SOURCE} \
