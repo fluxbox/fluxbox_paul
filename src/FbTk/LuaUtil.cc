@@ -25,7 +25,12 @@
 
 #include "LuaUtil.hh"
 
+namespace FbTk {
+
 namespace {
+    const char newindexDenyWriteName[] = "FbTk::Lua::newindexDenyWrite";
+    const char newindexDenyModifyName[] = "FbTk::Lua::newindexDenyModify";
+
     int newindexDenyWrite(lua::state *l) {
         if(l->isstring(-2))
             throw std::runtime_error("Cannot modify field '" + l->tostring(-2) + "'.");
@@ -53,9 +58,20 @@ namespace {
 
         return 0;
     }
-}
 
-namespace FbTk {
+    void registerNewindexes(Lua &l) {
+        l.checkstack(1);
+        lua::stack_sentry s(l);
+
+        l.pushfunction(&newindexDenyWrite);
+        l.rawsetfield(lua::REGISTRYINDEX, newindexDenyWriteName);
+
+        l.pushfunction(&newindexDenyModify);
+        l.rawsetfield(lua::REGISTRYINDEX, newindexDenyModifyName);
+    }
+
+    Lua::RegisterInitFunction register_newindexes(&registerNewindexes);
+} // anonymous namespace
 
 Lua::InitFunctions Lua::s_init_functions;
 
@@ -81,7 +97,8 @@ void Lua::makeReadOnly(int index, bool only_existing_fields) {
             }
         } rawsetfield(-2, "__index");
 
-        pushfunction(only_existing_fields ? &newindexDenyModify : &newindexDenyWrite);
+        rawgetfield(lua::REGISTRYINDEX,
+                only_existing_fields ? newindexDenyModifyName : newindexDenyWriteName);
         rawsetfield(-2, "__newindex");
 
         pushboolean(false);
