@@ -31,7 +31,7 @@
 #include "MenuCreator.hh"
 
 #include "FbTk/I18n.hh"
-#include "FbTk/Luamm.hh"
+#include "FbTk/LuaUtil.hh"
 #include "FbTk/Theme.hh"
 #include "FbTk/Menu.hh"
 #include "FbTk/CommandParser.hh"
@@ -559,6 +559,15 @@ REGISTER_UNTRUSTED_COMMAND_WITH_ARGS(lua, LuaCmd, void);
 
 namespace {
     const char LuaCmds[] = "FbCommands::LuaCmd";
+
+    void initLuaCmds(FbTk::Lua &l) {
+        l.checkstack(1);
+
+        l.newtable();
+        l.rawsetfield(lua::REGISTRYINDEX, LuaCmds);
+    }
+
+    FbTk::Lua::RegisterInitFunction register_init_lua_cmds(&initLuaCmds);
 }
 
 LuaCmd::LuaCmd(const std::string &chunk) {
@@ -583,14 +592,6 @@ void LuaCmd::init(lua::state &l) {
     l.checkstack(2);
 
     l.rawgetfield(lua::REGISTRYINDEX, LuaCmds); {
-        if(l.isnil(-1)) {
-            l.pop();
-            l.newtable();
-
-            l.pushvalue(-1);
-            l.rawsetfield(lua::REGISTRYINDEX, LuaCmds);
-        }
-
         l.pushvalue(-2);
         m_ref = l.ref(-2);
     } l.pop();

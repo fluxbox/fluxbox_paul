@@ -173,7 +173,7 @@ public:
     /// get screen from number
     BScreen *findScreen(int num);
 
-    lua::state &lua() { return *m_l; }
+    FbTk::Lua& lua() { return *m_l; }
 
     typedef std::list<BScreen *> ScreenList;
     const ScreenList screenList() const { return m_screen_list; }
@@ -226,7 +226,7 @@ private:
     /// Called when a window layer changes
     void windowLayerChanged(FluxboxWindow &win);
 
-    std::auto_ptr<lua::state> m_l;
+    std::auto_ptr<FbTk::Lua> m_l;
     std::auto_ptr<FbAtoms> m_fbatoms;
 
     FbTk::LResourceManager m_resourcemanager;

@@ -24,8 +24,8 @@
 
 #include "LResource.hh"
 
+#include "LuaUtil.hh"
 #include "Resource.hh"
-#include "Luamm.hh"
 
 extern const char LResourceHelper[];
 extern const unsigned int LResourceHelper_size;
@@ -61,30 +61,32 @@ namespace {
 
         return 0;
     }
-}
 
-void LResourceManager::initState(lua::state &l) {
-    l.checkstack(6);
-    lua::stack_sentry s(l);
+    void initState(Lua &l) {
+        l.checkstack(6);
+        lua::stack_sentry s(l);
 
-    l.loadstring(LResourceHelper, LResourceHelper_size);
-    l.pushfunction(&readResource);
-    l.pushfunction(&writeResource);
-    l.newtable(); {
+        l.loadstring(LResourceHelper, LResourceHelper_size);
+        l.pushfunction(&readResource);
+        l.pushfunction(&writeResource);
         l.newtable(); {
-            l.pushvalue(-2);
-            l.setfield(-2, "__metatable");
-        } l.setfield(lua::REGISTRYINDEX, resource_metatable);
+            l.newtable(); {
+                l.pushvalue(-2);
+                l.setfield(-2, "__metatable");
+            } l.setfield(lua::REGISTRYINDEX, resource_metatable);
+        }
+        l.call(3, 3);
+        l.setfield(lua::REGISTRYINDEX, dump_resources);
+        l.setfield(lua::REGISTRYINDEX, register_resource);
+        l.setfield(lua::REGISTRYINDEX, make_root);
     }
-    l.call(3, 3);
-    l.setfield(lua::REGISTRYINDEX, dump_resources);
-    l.setfield(lua::REGISTRYINDEX, register_resource);
-    l.setfield(lua::REGISTRYINDEX, make_root);
-}
+
+    Lua::RegisterInitFunction register_init_state(&initState);
+
+} // anonymous namespace
 
 void LResourceManager::convert(ResourceManager &old, const std::string &new_file) {
-    lua::state l;
-    initState(l);
+    Lua l;
 
     LResourceManager new_rm(old.root(), l);
     for(ResourceList::const_iterator i = old.begin(); i != old.end(); ++i) {
@@ -98,17 +100,12 @@ void LResourceManager::convert(ResourceManager &old, const std::string &new_file
     new_rm.save(new_file.c_str(), NULL);
 }
 
-LResourceManager::LResourceManager(const std::string &root, lua::state &l)
+LResourceManager::LResourceManager(const std::string &root, Lua &l)
                         : ResourceManager_base(root), m_l(&l) {
     l.checkstack(2);
     lua::stack_sentry s(l);
 
     l.getfield(lua::REGISTRYINDEX, make_root);
-    if(l.isnil(-1)) {
-        l.pop();
-        initState(l);
-        l.getfield(lua::REGISTRYINDEX, make_root);
-    }
     l.pushstring(root);
     l.call(1, 0);
 }

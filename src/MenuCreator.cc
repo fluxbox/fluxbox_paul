@@ -43,6 +43,7 @@
 #include "RootCmdMenuItem.hh"
 
 #include "FbTk/I18n.hh"
+#include "FbTk/LuaUtil.hh"
 #include "FbTk/MultiButtonMenuItem.hh"
 #include "FbTk/BoolMenuItem.hh"
 #include "FbTk/RefCount.hh"

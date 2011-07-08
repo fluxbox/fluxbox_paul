@@ -43,6 +43,7 @@
 #include "FbTk/FileUtil.hh"
 #include "FbTk/ImageControl.hh"
 #include "FbTk/EventManager.hh"
+#include "FbTk/LuaUtil.hh"
 #include "FbTk/StringUtil.hh"
 #include "FbTk/Util.hh"
 #include "FbTk/LResource.hh"
@@ -227,7 +228,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
                  const std::string& dpy_name,
                  const std::string& rc_path, const std::string& rc_filename, bool xsync)
     : FbTk::App(dpy_name.c_str()),
-      m_l(new lua::state()),
+      m_l(new Lua),
       m_fbatoms(FbAtoms::instance()),
       m_resourcemanager("session", *m_l),
 
