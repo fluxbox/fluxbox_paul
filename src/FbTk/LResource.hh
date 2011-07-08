@@ -29,25 +29,22 @@
 
 #include "Resource.hh"
 
-namespace lua {
-    class state;
-}
-
 namespace FbTk {
+
+class Lua;
 
 class LResourceManager: public ResourceManager_base {
 public:
-    static void initState(lua::state &l);
     static void convert(ResourceManager &old, const std::string &new_file);
 
-    LResourceManager(const std::string &root, lua::state &l);
+    LResourceManager(const std::string &root, Lua &l);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
 
 private:
 
-    lua::state *m_l;
+    Lua *m_l;
 };
 
 } // end namespace FbTk

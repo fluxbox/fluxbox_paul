@@ -73,7 +73,7 @@
 #include "FbTk/STLUtil.hh"
 #include "FbTk/KeyUtil.hh"
 #include "FbTk/Util.hh"
-#include "FbTk/Luamm.hh"
+#include "FbTk/LuaUtil.hh"
 
 //use GNU extensions
 #ifndef _GNU_SOURCE
