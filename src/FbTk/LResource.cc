@@ -105,9 +105,13 @@ LResourceManager::LResourceManager(const std::string &root, Lua &l)
     l.checkstack(2);
     lua::stack_sentry s(l);
 
+    l.pushstring(root);
+
     l.getfield(lua::REGISTRYINDEX, make_root);
     l.pushstring(root);
-    l.call(1, 0);
+    l.call(1, 1);
+
+    l.readOnlySet(lua::GLOBALSINDEX);
 }
 
 bool LResourceManager::save(const char *filename, const char *) {

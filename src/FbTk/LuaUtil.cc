@@ -40,7 +40,7 @@ namespace {
 
     int newindexDenyModify(lua::state *l) {
         bool ok = false;
-        l->getmetatable(-1); {
+        l->getmetatable(-3); {
             l->rawgetfield(-1, "__index"); {
                 l->pushvalue(-4); l->rawget(-2); {
                     if(l->isnil(-1))
@@ -49,33 +49,30 @@ namespace {
             } l->pop();
         } l->pop();
 
-        if(ok) {
-            l->pushvalue(-2);
-            l->pushvalue(-4);
+        if(ok)
             l->rawset(-3);
-        } else 
+        else 
             newindexDenyWrite(l);
 
         return 0;
     }
 
-    void registerNewindexes(Lua &l) {
-        l.checkstack(1);
-        lua::stack_sentry s(l);
-
-        l.pushfunction(&newindexDenyWrite);
-        l.rawsetfield(lua::REGISTRYINDEX, newindexDenyWriteName);
-
-        l.pushfunction(&newindexDenyModify);
-        l.rawsetfield(lua::REGISTRYINDEX, newindexDenyModifyName);
-    }
-
-    Lua::RegisterInitFunction register_newindexes(&registerNewindexes);
 } // anonymous namespace
 
 Lua::InitFunctions Lua::s_init_functions;
 
 Lua::Lua() {
+    checkstack(1);
+    lua::stack_sentry s(*this);
+
+    pushfunction(&newindexDenyWrite);
+    rawsetfield(lua::REGISTRYINDEX, newindexDenyWriteName);
+
+    pushfunction(&newindexDenyModify);
+    rawsetfield(lua::REGISTRYINDEX, newindexDenyModifyName);
+
+    makeReadOnly(lua::GLOBALSINDEX, true);
+
     InitFunctions::const_iterator it_end = s_init_functions.end();
     for(InitFunctions::const_iterator it = s_init_functions.begin(); it != it_end; ++it)
         (**it)(*this);

@@ -190,7 +190,7 @@ local function make_root(name)
         __newindex = newindex, __index = index,
         _magic = cat_magic, _fullname = name, _state = 0
     };
-    getfenv()[name] = setmetatable({}, t);
+    return setmetatable({}, t);
 end;
 
 return make_root, register_resource, dump;
