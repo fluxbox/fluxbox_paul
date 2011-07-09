@@ -303,6 +303,8 @@ createMenu_(FbTk::Menu &inject_into, lua::state &l, FbTk::StringConvertor &conv,
         }
     } l.pop();
 
+    inject_into.updateMenu();
+
     l.pop();
 }
 
