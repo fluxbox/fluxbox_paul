@@ -28,10 +28,11 @@
 #include <string>
 #include <list>
 #include <iostream>
-
 #include <exception>
 #include <typeinfo>
+
 #include "ResTraits.hh"
+#include "Signal.hh"
 #include "XrmDatabaseHelper.hh"
 
 namespace FbTk {
@@ -206,11 +207,15 @@ public:
         m_rm.removeResource(*this); // remove this from resource handler
     }
 
-    void setDefaultValue() {  m_value = m_defaultval; }
+    void setDefaultValue() {
+        m_value = m_defaultval;
+        m_modified_sig.emit(m_value);
+    }
     /// sets resource from string, specialized, must be implemented
     void setFromString(const char *strval) {
         try {
             m_value = Traits::fromString(strval);
+            m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {
             std::cerr << name() << ": " << e.what() << std::endl;
@@ -225,6 +230,7 @@ public:
     virtual void setFromLua(lua::state &l) {
         try {
             m_value = Traits::fromLua(l);
+            m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {
             std::cerr << name() << ": " << e.what() << std::endl;
@@ -239,9 +245,13 @@ public:
     const T& operator*() const { return m_value; }
     T *operator->() { return &m_value; }
     const T *operator->() const { return &m_value; }
+
+    Signal<const T &>& modifiedSig() { return m_modified_sig; }
+
 private:
     T m_value, m_defaultval;
     ResourceManager_base &m_rm;
+    Signal<const T &> m_modified_sig;
 };
 
 
