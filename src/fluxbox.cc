@@ -326,6 +326,8 @@ Fluxbox::Fluxbox(int argc, char **argv,
     XRRQueryExtension(disp, &m_randr_event_type, &randr_error_base);
 #endif // HAVE_RANDR
 
+    join(m_rc_pseudotrans.modifiedSig(), &FbTk::Transparent::usePseudoTransparent);
+
     load_rc();
 
     grab();
@@ -1234,9 +1236,6 @@ void Fluxbox::reconfigure() {
 
 
 void Fluxbox::real_reconfigure() {
-
-    FbTk::Transparent::usePseudoTransparent(*m_rc_pseudotrans);
-
     STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
     m_key->reconfigure();
     STLUtil::forAll(m_atomhandler, mem_fun(&AtomHandler::reconfigure));
