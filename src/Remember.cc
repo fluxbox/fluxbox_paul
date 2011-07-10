@@ -653,7 +653,9 @@ Remember::Remember():
     enableUpdate();
 
     m_reloader->setReloadCmd(FbTk::RefCount<FbTk::Command<void> >(new FbTk::SimpleCommand<Remember>(*this, &Remember::reload)));
-    reconfigure();
+    m_reloader->setMainFile(*Fluxbox::instance()->getAppsResource());
+    join(Fluxbox::instance()->getAppsResource().modifiedSig(),
+            FbTk::MemFun(*m_reloader, &FbTk::AutoReloadHelper::setMainFile));
 }
 
 Remember::~Remember() {
@@ -720,19 +722,12 @@ Application * Remember::add(WinClient &winclient) {
     return app;
 }
 
-
-
-
-void Remember::reconfigure() {
-    m_reloader->setMainFile(Fluxbox::instance()->getAppsFilename());
-}
-
 void Remember::checkReload() {
     m_reloader->checkReload();
 }
 
 void Remember::reload() {
-    string apps_string = FbTk::StringUtil::expandFilename(Fluxbox::instance()->getAppsFilename());
+    const string &apps_string = FbTk::StringUtil::expandFilename(*Fluxbox::instance()->getAppsResource());
 
 
     fbdbg<<"("<<__FUNCTION__<<"): Loading apps file ["<<apps_string<<"]"<<endl;
@@ -878,7 +873,7 @@ void Remember::reload() {
 
 void Remember::save() {
 
-    string apps_string = FbTk::StringUtil::expandFilename(Fluxbox::instance()->getAppsFilename());
+    const string &apps_string = FbTk::StringUtil::expandFilename(*Fluxbox::instance()->getAppsResource());
 
     fbdbg<<"("<<__FUNCTION__<<"): Saving apps file ["<<apps_string<<"]"<<endl;
 
@@ -1062,7 +1057,7 @@ void Remember::save() {
     }
     apps_file.close();
     // update timestamp to avoid unnecessary reload
-    m_reloader->addFile(Fluxbox::instance()->getAppsFilename());
+    m_reloader->addFile(*Fluxbox::instance()->getAppsResource());
 }
 
 bool Remember::isRemembered(WinClient &winclient, Attribute attrib) {

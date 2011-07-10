@@ -121,8 +121,8 @@ public:
     const std::string &getStyleOverlayFilename() const { return *m_rc_styleoverlayfile; }
 
     const std::string &getMenuFilename() const { return *m_rc_menufile; }
-    const std::string &getAppsFilename() const { return *m_rc_appsfile; }
     const std::string &getKeysFilename() const { return *m_rc_keyfile; }
+    FbTk::StringResource &getAppsResource() { return m_rc_appsfile; }
     int colorsPerChannel() const { return *m_rc_colors_per_channel; }
     int getTabsPadding() const { return *m_rc_tabs_padding; }
 

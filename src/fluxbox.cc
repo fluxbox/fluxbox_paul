@@ -1238,7 +1238,6 @@ void Fluxbox::reconfigure() {
 void Fluxbox::real_reconfigure() {
     STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
     m_key->reconfigure();
-    STLUtil::forAll(m_atomhandler, mem_fun(&AtomHandler::reconfigure));
 }
 
 BScreen *Fluxbox::findScreen(int id) {
