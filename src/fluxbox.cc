@@ -354,7 +354,6 @@ Fluxbox::Fluxbox(int argc, char **argv,
     // Create keybindings handler and load keys file
     // Note: this needs to be done before creating screens
     m_key.reset(new Keys);
-    m_key->reconfigure();
 
     vector<int> screens;
     int i;
@@ -1193,7 +1192,6 @@ void Fluxbox::reconfigure() {
 
 void Fluxbox::real_reconfigure() {
     STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
-    m_key->reconfigure();
 }
 
 BScreen *Fluxbox::findScreen(int id) {

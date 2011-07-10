@@ -188,7 +188,11 @@ Keys::Keys():
     m_reloader(new FbTk::AutoReloadHelper()),
     m_keylist(0),
     next_key(0), saved_keymode(0) {
+
     m_reloader->setReloadCmd(FbTk::RefCount<FbTk::Command<void> >(new FbTk::SimpleCommand<Keys>(*this, &Keys::reload)));
+    m_reloader->setMainFile(*Fluxbox::instance()->getKeysResource());
+    join(Fluxbox::instance()->getKeysResource().modifiedSig(),
+            MemFun(*m_reloader, &FbTk::AutoReloadHelper::setMainFile));
 }
 
 Keys::~Keys() {
@@ -282,8 +286,9 @@ void Keys::grabWindow(Window win) {
 void Keys::reload() {
     // an intentionally empty file will still have one root mapping
     bool firstload = m_map.empty();
+    const std::string filename = FbTk::StringUtil::expandFilename(*Fluxbox::instance()->getKeysResource());
 
-    if (m_filename.empty()) {
+    if (filename.empty()) {
         if (firstload)
             loadDefaults();
         return;
@@ -291,12 +296,12 @@ void Keys::reload() {
 
     FbTk::App::instance()->sync(false);
 
-    if (! FbTk::FileUtil::isRegularFile(m_filename.c_str())) {
+    if (! FbTk::FileUtil::isRegularFile(filename.c_str())) {
         return;
     }
 
     // open the file
-    ifstream infile(m_filename.c_str());
+    ifstream infile(filename.c_str());
     if (!infile) {
         if (firstload)
             loadDefaults();
@@ -605,16 +610,6 @@ void Keys::unregisterWindow(Window win) {
     FbTk::KeyUtil::ungrabButtons(win);
     m_handler_map.erase(win);
     m_window_map.erase(win);
-}
-
-/**
- deletes the tree and load configuration
- returns true on success else false
-*/
-void Keys::reconfigure() {
-    m_filename = FbTk::StringUtil::expandFilename(Fluxbox::instance()->getKeysFilename());
-    m_reloader->setMainFile(m_filename);
-    m_reloader->checkReload();
 }
 
 void Keys::regrab() {
