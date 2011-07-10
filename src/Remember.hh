@@ -26,6 +26,7 @@
 #ifndef REMEMBER_HH
 #define REMEMBER_HH
 
+#include "FbTk/Signal.hh"
 #include "AtomHandler.hh"
 #include "ClientPattern.hh"
 
@@ -50,7 +51,7 @@ class AutoReloadHelper;
  * of modular plugin. Doing this should help give an idea of what
  * sort of interface abilities we'll need...
  */
-class Remember : public AtomHandler {
+class Remember : public AtomHandler, private FbTk::SignalTracker {
 public:
     /**
      * holds which attributes to remember
@@ -107,7 +108,6 @@ public:
     Application* add(WinClient &winclient);
     FluxboxWindow* findGroup(Application *, BScreen &screen);
 
-    void reconfigure();
     void checkReload();
     void reload();
     void save();
