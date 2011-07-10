@@ -24,6 +24,7 @@
 
 #include "FbTk/NotCopyable.hh"
 #include "FbTk/RefCount.hh"
+#include "FbTk/Signal.hh"
 
 #include <X11/Xlib.h>
 #include <string>
@@ -36,7 +37,7 @@ namespace FbTk {
     class AutoReloadHelper;
 }
 
-class Keys:private FbTk::NotCopyable  {
+class Keys: private FbTk::NotCopyable, private FbTk::SignalTracker  {
 public:
 
     // contexts for events
@@ -80,7 +81,6 @@ public:
     /// grab keys again when keymap changes
     void regrab();
 
-    const std::string& filename() const { return m_filename; }
     /**
        Load configuration from file
     */
@@ -88,7 +88,6 @@ public:
     /**
        Reload configuration if keys file has changed
     */
-    void reconfigure();
     void keyMode(const std::string& keyMode);
 
     bool inKeychain() const { return saved_keymode != 0; }
@@ -114,7 +113,6 @@ private:
 
 
     // member variables
-    std::string m_filename;
     FbTk::AutoReloadHelper* m_reloader;
     RefKey m_keylist;
     keyspace_t m_map;

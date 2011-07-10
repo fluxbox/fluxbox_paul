@@ -460,7 +460,7 @@ BindKeyCmd::BindKeyCmd(const string &keybind):m_keybind(keybind) { }
 void BindKeyCmd::execute() {
     if (Fluxbox::instance()->keys() != 0) {
         if (Fluxbox::instance()->keys()->addBinding(m_keybind)) {
-            ofstream ofile(Fluxbox::instance()->keys()->filename().c_str(), ios::app);
+            ofstream ofile(Fluxbox::instance()->getKeysResource()->c_str(), ios::app);
             if (!ofile)
                 return;
             ofile<<m_keybind<<endl;
