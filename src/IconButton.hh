@@ -64,6 +64,8 @@ public:
 
     bool setOrientation(FbTk::Orientation orient);
 
+    FbTk::SignalTracker &signalTracker() { return m_signals; }
+
 protected:
     void drawText(int x, int y, FbTk::FbDrawable *drawable_override);
 private:
