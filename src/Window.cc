@@ -3674,7 +3674,9 @@ void FluxboxWindow::associateClient(WinClient &client) {
             frame().theme().unfocusedTheme()->iconbarTheme(), client);
     frame().createTab(*btn);
 
-    btn->setTextPadding(Fluxbox::instance()->getTabsPadding());
+    btn->signalTracker().join(Fluxbox::instance()->getTabsPaddingResource().modifiedSig(),
+            FbTk::MemFun(static_cast<FbTk::TextButton &>(*btn), &FbTk::TextButton::setTextPadding));
+    btn->setTextPadding(*Fluxbox::instance()->getTabsPaddingResource());
     btn->setPixmap(screen().getTabsUsePixmap());
 
     m_labelbuttons[&client] = btn;
