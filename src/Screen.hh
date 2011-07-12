@@ -508,10 +508,8 @@ private:
     struct ScreenResource {
         ScreenResource(FbTk::ResourceManager_base &rm, const std::string &scrname);
 
-        static const char workspace_names_delim[];
         FbTk::Resource<
-                std::vector<std::string>,
-                FbTk::VectorTraits<FbTk::StringTraits, workspace_names_delim>
+                std::vector<std::string>, FbTk::VectorTraits<FbTk::StringTraits>
         > workspace_names;
 
         FbTk::BoolResource opaque_move, full_max,
