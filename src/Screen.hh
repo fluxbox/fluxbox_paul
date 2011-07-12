@@ -537,8 +537,9 @@ private:
         FbTk::StringResource windowmenufile;
         FbTk::UIntResource typing_delay;
         FbTk::IntResource workspaces, edge_snap_threshold, focused_alpha,
-            unfocused_alpha, menu_alpha, menu_delay,
-            tab_width, tooltip_delay;
+            unfocused_alpha, menu_alpha;
+        FbTk::RangedIntResource menu_delay;
+        FbTk::IntResource  tab_width, tooltip_delay;
         FbTk::BoolResource allow_remote_actions;
         FbTk::BoolResource clientmenu_use_pixmap;
         FbTk::BoolResource tabs_use_pixmap;
