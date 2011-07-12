@@ -160,14 +160,17 @@ struct EnumTraits {
     }
 };
 
-template<typename Traits, const char *delim>
+template<typename Traits>
 struct VectorTraits {
     typedef std::vector<typename Traits::Type> Type;
-    static std::string toString(const Type &x) {
+
+    VectorTraits(const std::string &delim) : m_delim(delim) {}
+
+    std::string toString(const Type &x) const {
         std::string retval;
         for(size_t i = 0; i < x.size(); ++i) {
-            retval.append(Traits::toString(x[i]));
-            retval.append(" ");
+            retval += Traits::toString(x[i]);
+            retval += m_delim[0];
         }
 
         return retval;
@@ -184,9 +187,9 @@ struct VectorTraits {
         }
     }
 
-    static Type fromString(const std::string &x) {
+    Type fromString(const std::string &x) const {
         std::vector<std::string> val;
-        StringUtil::stringtok(val, x, delim);
+        StringUtil::stringtok(val, x, m_delim.c_str());
         Type retval;
 
         for(size_t i = 0; i < val.size(); i++) {
@@ -218,6 +221,9 @@ struct VectorTraits {
         throw ConversionError( std::string("Cannot convert to vector from lua type ")
                                 + l.type_name(l.type(-1)) );
     }
+
+private:
+    std::string m_delim;
 };
 
 } // end namespace FbTk

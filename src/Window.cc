@@ -251,11 +251,8 @@ private:
     int m_mode;
 };
 
-extern const char win_buttons_delim[] = " \t\n";
-typedef FbTk::Resource<
-                vector<WinButton::Type>,
-                FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type>, win_buttons_delim>
-> WinButtonsResource;
+typedef FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type> > WinButtonsTraits;
+typedef FbTk::Resource<vector<WinButton::Type>, WinButtonsTraits> WinButtonsResource;
 
 }
 
@@ -3477,7 +3474,7 @@ void FluxboxWindow::setupWindow() {
         titlebar_side[i] =
             new WinButtonsResource(rm,
                                    WinButtonsResource::Type(begin, end),
-                                   titlebar_name[i]);
+                                   titlebar_name[i], WinButtonsTraits(" \t\n"));
 
 
         screen().addManagedResource(titlebar_side[i]);

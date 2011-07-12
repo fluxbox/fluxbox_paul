@@ -242,11 +242,10 @@ const EnumTraits<FbWinFrame::TabPlacement>::Pair EnumTraits<FbWinFrame::TabPlace
 } // end namespace FbTk
 
 
-const char BScreen::ScreenResource::workspace_names_delim[] = ",";
-
 BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
                                         const string &scrname):
-    workspace_names(rm, std::vector<std::string>(), scrname + ".workspaceNames"),
+    workspace_names(rm, std::vector<std::string>(), scrname + ".workspaceNames",
+            FbTk::VectorTraits<FbTk::StringTraits>(",") ),
     opaque_move(rm, true, scrname + ".opaqueMove"),
     full_max(rm, false, scrname+".fullMaximization"),
     max_ignore_inc(rm, true, scrname+".maxIgnoreIncrement"),

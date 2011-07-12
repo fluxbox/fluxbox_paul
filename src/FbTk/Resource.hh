@@ -188,19 +188,21 @@ private:
  * If there is no traits class for your type, you have to implement one.
  */
 template <typename T, typename Traits>
-class Resource:public Resource_base, public Accessor<T> {
+class Resource:public Resource_base, public Accessor<T>, private Traits {
 public:
     typedef T Type;
 
-    Resource(ResourceManager_base &rm, T val, const std::string &name, const std::string &altname):
-        Resource_base(name, altname), m_value(val), m_defaultval(val), m_rm(rm) {
+    Resource(ResourceManager_base &rm, T val, const std::string &name,
+            const std::string &altname, const Traits &traits = Traits() ):
+        Resource_base(name, altname), Traits(traits), m_value(val), m_defaultval(val), m_rm(rm) {
         m_rm.addResource(*this); // add this to resource handler
     }
 
     // LResourceManager does not use altname, so we provide a constructor which initializes
     // altname to name
-    Resource(ResourceManager_base &rm, T val, const std::string &name):
-        Resource_base(name, name), m_value(val), m_defaultval(val), m_rm(rm) {
+    Resource(ResourceManager_base &rm, T val, const std::string &name,
+            const Traits &traits = Traits() ):
+        Resource_base(name, name), Traits(traits), m_value(val), m_defaultval(val), m_rm(rm) {
         m_rm.addResource(*this); // add this to resource handler
     }
     virtual ~Resource() {
