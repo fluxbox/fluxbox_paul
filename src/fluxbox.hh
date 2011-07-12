@@ -114,7 +114,7 @@ public:
 
 
     bool getIgnoreBorder() const { return *m_rc_ignoreborder; }
-    bool &getPseudoTrans() { return *m_rc_pseudotrans; }
+    FbTk::BoolResource &getPseudoTransResource() { return m_rc_pseudotrans; }
 
     Fluxbox::TabsAttachArea getTabsAttachArea() const { return *m_rc_tabs_attach_area; }
     const std::string &getStyleFilename() const { return *m_rc_stylefile; }
@@ -238,8 +238,8 @@ private:
 
     FbTk::BoolResource m_rc_ignoreborder;
     FbTk::BoolResource m_rc_pseudotrans;
-    FbTk::IntResource m_rc_colors_per_channel,
-        m_rc_double_click_interval,
+    FbTk::RangedIntResource m_rc_colors_per_channel;
+    FbTk::IntResource m_rc_double_click_interval,
         m_rc_tabs_padding;
     FbTk::StringResource m_rc_stylefile,
         m_rc_styleoverlayfile,

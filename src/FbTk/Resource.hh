@@ -281,6 +281,9 @@ typedef Resource<int, IntTraits<int> > IntResource;
 typedef Resource<unsigned int, IntTraits<unsigned int> > UIntResource;
 typedef Resource<std::string, StringTraits> StringResource;
 
+typedef RangeTraits<IntTraits<int> > RangedIntTraits;
+typedef Resource<int, RangedIntTraits> RangedIntResource;
+
 } // end namespace FbTk
 
 #endif // FBTK_RESOURCE_HH

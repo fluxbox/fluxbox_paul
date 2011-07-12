@@ -204,11 +204,6 @@ private:
     FbWinFrame::TabPlacement m_place;
 };
 
-void clampMenuDelay(int& delay) {
-    delay = FbTk::Util::clamp(delay, 0, 5000);
-}
-
-
 struct TabPlacementString {
     FbWinFrame::TabPlacement placement;
     const char* str;
@@ -264,7 +259,7 @@ BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
     focused_alpha(rm, 255, scrname+".window.focus.alpha"),
     unfocused_alpha(rm, 255, scrname+".window.unfocus.alpha"),
     menu_alpha(rm, 255, scrname+".menu.alpha"),
-    menu_delay(rm, 200, scrname + ".menuDelay"),
+    menu_delay(rm, 200, scrname + ".menuDelay", FbTk::RangedIntTraits(0, 5000)),
     tab_width(rm, 64, scrname + ".tab.width"),
     tooltip_delay(rm, 500, scrname + ".tooltipDelay"),
     allow_remote_actions(rm, false, scrname+".allowRemoteActions"),
@@ -402,8 +397,6 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     focusedWinFrameTheme()->setAlpha(*resource.focused_alpha);
     unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
     m_menutheme->setAlpha(*resource.menu_alpha);
-
-    clampMenuDelay(*resource.menu_delay);
 
     m_menutheme->setDelay(*resource.menu_delay);
 
@@ -817,8 +810,6 @@ void BScreen::reconfigure() {
     focusedWinFrameTheme()->setAlpha(*resource.focused_alpha);
     unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
     m_menutheme->setAlpha(*resource.menu_alpha);
-
-    clampMenuDelay(*resource.menu_delay);
 
     m_menutheme->setDelay(*resource.menu_delay);
 
@@ -1629,11 +1620,10 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
         FbTk::RefCount<FbTk::Menu> alpha_menu( createMenu(alphamenu_label) );
 
         if (FbTk::Transparent::haveComposite(true)) {
-            static FbTk::SimpleAccessor<bool> s_pseudo(Fluxbox::instance()->getPseudoTrans());
             alpha_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Configmenu, ForcePseudoTrans,
                                "Force Pseudo-Transparency",
                                "When composite is available, still use old pseudo-transparency"),
-                    s_pseudo, save_and_reconfigure));
+                    Fluxbox::instance()->getPseudoTransResource(), save_and_reconfigure));
         }
 
         // in order to save system resources, don't save or reconfigure alpha

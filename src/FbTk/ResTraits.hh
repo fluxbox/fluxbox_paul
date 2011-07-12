@@ -28,6 +28,7 @@
 #include "FbString.hh"
 #include "Luamm.hh"
 #include "StringUtil.hh"
+#include "Util.hh"
 
 namespace FbTk {
 
@@ -224,6 +225,41 @@ struct VectorTraits {
 
 private:
     std::string m_delim;
+};
+
+template<typename Traits>
+class RangeTraits: private Traits {
+public:
+    typedef typename Traits::Type Type;
+
+    RangeTraits(const Type &min, const Type &max, const Traits &traits = Traits())
+        : Traits(traits), m_min(min), m_max(max)
+    { assert(m_min <= m_max); }
+
+    std::string toString(const Type &x) const {
+        assert(x >= m_min);
+        assert(x <= m_max);
+
+        return Traits::toString(x);
+    }
+
+    void toLua(const Type &x, lua::state &l) const {
+        assert(x >= m_min);
+        assert(x <= m_max);
+
+        Traits::toLua(x, l);
+    }
+
+    Type fromString(const std::string &x) const {
+        return FbTk::Util::clamp(Traits::fromString(x), m_min, m_max);
+    }
+
+    Type fromLua(lua::state &l) const {
+        return FbTk::Util::clamp(Traits::fromLua(l), m_min, m_max);
+    }
+
+private:
+    Type m_min, m_max;
 };
 
 } // end namespace FbTk

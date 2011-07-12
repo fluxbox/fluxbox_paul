@@ -234,21 +234,20 @@ Fluxbox::Fluxbox(int argc, char **argv,
 
       m_RC_PATH(rc_path),
       m_RC_INIT_FILE("init"),
-      m_rc_ignoreborder(m_resourcemanager, false, "ignoreBorder", "IgnoreBorder"),
-      m_rc_pseudotrans(m_resourcemanager, false, "forcePseudoTransparency", "forcePseudoTransparency"),
-      m_rc_colors_per_channel(m_resourcemanager, 4,
-                              "colorsPerChannel", "ColorsPerChannel"),
-      m_rc_double_click_interval(m_resourcemanager, 250, "doubleClickInterval", "DoubleClickInterval"),
-      m_rc_tabs_padding(m_resourcemanager, 0, "tabPadding", "TabPadding"),
-      m_rc_stylefile(m_resourcemanager, DEFAULTSTYLE, "styleFile", "StyleFile"),
-      m_rc_styleoverlayfile(m_resourcemanager, m_RC_PATH + "/overlay", "styleOverlay", "StyleOverlay"),
-      m_rc_menufile(m_resourcemanager, m_RC_PATH + "/menu2", "menuFile", "MenuFile"),
-      m_rc_keyfile(m_resourcemanager, m_RC_PATH + "/keys", "keyFile", "KeyFile"),
-      m_rc_appsfile(m_resourcemanager, m_RC_PATH + "/apps", "appsFile", "AppsFile"),
-      m_rc_tabs_attach_area(m_resourcemanager, ATTACH_AREA_WINDOW, "tabsAttachArea", "TabsAttachArea"),
-      m_rc_cache_life(m_resourcemanager, 5, "cacheLife", "CacheLife"),
-      m_rc_cache_max(m_resourcemanager, 200, "cacheMax", "CacheMax"),
-      m_rc_auto_raise_delay(m_resourcemanager, 250, "autoRaiseDelay", "AutoRaiseDelay"),
+      m_rc_ignoreborder(m_resourcemanager, false, "ignoreBorder"),
+      m_rc_pseudotrans(m_resourcemanager, false, "forcePseudoTransparency"),
+      m_rc_colors_per_channel(m_resourcemanager, 4, "colorsPerChannel", RangedIntTraits(2, 6)),
+      m_rc_double_click_interval(m_resourcemanager, 250, "doubleClickInterval"),
+      m_rc_tabs_padding(m_resourcemanager, 0, "tabPadding"),
+      m_rc_stylefile(m_resourcemanager, DEFAULTSTYLE, "styleFile"),
+      m_rc_styleoverlayfile(m_resourcemanager, m_RC_PATH + "/overlay", "styleOverlay"),
+      m_rc_menufile(m_resourcemanager, m_RC_PATH + "/menu2", "menuFile"),
+      m_rc_keyfile(m_resourcemanager, m_RC_PATH + "/keys", "keyFile"),
+      m_rc_appsfile(m_resourcemanager, m_RC_PATH + "/apps", "appsFile"),
+      m_rc_tabs_attach_area(m_resourcemanager, ATTACH_AREA_WINDOW, "tabsAttachArea"),
+      m_rc_cache_life(m_resourcemanager, 5, "cacheLife"),
+      m_rc_cache_max(m_resourcemanager, 200, "cacheMax"),
+      m_rc_auto_raise_delay(m_resourcemanager, 250, "autoRaiseDelay"),
       m_masked_window(0),
       m_mousescreen(0),
       m_keyscreen(0),
@@ -1174,10 +1173,6 @@ void Fluxbox::load_rc() {
 
     if (m_rc_menufile->empty())
         m_rc_menufile.setDefaultValue();
-
-    FbTk::Transparent::usePseudoTransparent(*m_rc_pseudotrans);
-
-    *m_rc_colors_per_channel = FbTk::Util::clamp(*m_rc_colors_per_channel, 2, 6);
 
     if (m_rc_stylefile->empty())
         *m_rc_stylefile = DEFAULTSTYLE;
