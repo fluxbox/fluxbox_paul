@@ -842,11 +842,6 @@ void BScreen::reconfigure() {
     // notify objects that the screen is reconfigured
     m_reconfigure_sig.emit(*this);
 
-    // Reload style
-    FbTk::ThemeManager::instance().load(fluxbox->getStyleFilename(),
-                                        fluxbox->getStyleOverlayFilename(),
-                                        m_root_theme->screenNum());
-
     reconfigureTabs();
 }
 

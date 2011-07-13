@@ -43,6 +43,7 @@ RootCmdMenuItem::RootCmdMenuItem(const FbTk::FbString &label,
 
 
 bool RootCmdMenuItem::isSelected() const {
-    return Fluxbox::instance()->getStyleFilename() == m_filename;
+    // XXX how do we find out which is the current background?
+    return false;
 }
 

@@ -117,7 +117,7 @@ public:
     FbTk::BoolResource &getPseudoTransResource() { return m_rc_pseudotrans; }
 
     Fluxbox::TabsAttachArea getTabsAttachArea() const { return *m_rc_tabs_attach_area; }
-    const std::string &getStyleFilename() const { return *m_rc_stylefile; }
+    FbTk::StringResource &getStyleResource() { return m_rc_stylefile; }
     const std::string &getStyleOverlayFilename() const { return *m_rc_styleoverlayfile; }
 
     const std::string &getMenuFilename() const { return *m_rc_menufile; }
@@ -138,7 +138,6 @@ public:
 
     void shutdown();
     void load_rc(BScreen &scr);
-    void saveStyleFilename(const char *val) { m_rc_stylefile = (val == 0 ? "" : val); }
     void saveWindowSearch(Window win, WinClient *winclient);
     // some windows relate to the group, not the client, so we record separately
     // searchWindow on these windows will give the active client in the group
@@ -225,6 +224,8 @@ private:
     void windowStateChanged(FluxboxWindow &win);
     /// Called when a window layer changes
     void windowLayerChanged(FluxboxWindow &win);
+    /// Called when a style (or it's overlay) changes
+    void styleChanged();
 
     std::auto_ptr<FbTk::Lua> m_l;
     std::auto_ptr<FbAtoms> m_fbatoms;

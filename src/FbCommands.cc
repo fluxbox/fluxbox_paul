@@ -246,8 +246,8 @@ void ReconfigureFluxboxCmd::execute() {
 REGISTER_COMMAND(reloadstyle, FbCommands::ReloadStyleCmd, void);
 
 void ReloadStyleCmd::execute() {
-    SetStyleCmd cmd(Fluxbox::instance()->getStyleFilename());
-    cmd.execute();
+    // setting the value will trigger a reload
+    *Fluxbox::instance()->getStyleResource() = *Fluxbox::instance()->getStyleResource();
 }
 
 REGISTER_COMMAND_WITH_ARGS(setstyle, FbCommands::SetStyleCmd, void);
@@ -257,11 +257,7 @@ SetStyleCmd::SetStyleCmd(const string &filename):m_filename(filename) {
 }
 
 void SetStyleCmd::execute() {
-    if (FbTk::ThemeManager::instance().load(m_filename,
-        Fluxbox::instance()->getStyleOverlayFilename())) {
-        Fluxbox::instance()->saveStyleFilename(m_filename.c_str());
-        Fluxbox::instance()->save_rc();
-    }
+    *Fluxbox::instance()->getStyleResource() = m_filename;
 }
 
 REGISTER_COMMAND_WITH_ARGS(keymode, FbCommands::KeyModeCmd, void);
