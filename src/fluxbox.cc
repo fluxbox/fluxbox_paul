@@ -327,6 +327,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
 
     join(m_rc_pseudotrans.modifiedSig(), &FbTk::Transparent::usePseudoTransparent);
     join(m_rc_stylefile.modifiedSig(), MemFunIgnoreArgs(*this, &Fluxbox::styleChanged));
+    join(m_rc_styleoverlayfile.modifiedSig(), MemFunIgnoreArgs(*this, &Fluxbox::styleChanged));
 
     load_rc();
 
