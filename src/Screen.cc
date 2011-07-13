@@ -822,7 +822,7 @@ void BScreen::reconfigure() {
 
     // and update their names
     for(size_t i = 0; i < std::min(m_workspaces_list.size(), resource.workspace_names->size()); ++i)
-        m_workspaces_list[i]->setName( (*resource.workspace_names)[i] );
+        m_workspaces_list[i]->setName( resource.workspace_names.get()[i] );
 
     // update menu filenames
     m_rootmenu->reloadHelper()->setMainFile(fluxbox->getMenuFilename());
@@ -862,7 +862,8 @@ void BScreen::reconfigureTabs() {
 void BScreen::updateWorkspaceName(unsigned int w) {
     Workspace *space = getWorkspace(w);
     if (space) {
-        (*resource.workspace_names)[w] = space->name();
+        resource.workspace_names.get()[w] = space->name();
+        // XXX use resource.workspace_names.modifiedSig() instead
         m_workspacenames_sig.emit(*this);
         Fluxbox::instance()->save_rc();
     }
