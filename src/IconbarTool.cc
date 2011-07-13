@@ -242,7 +242,7 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
               screen.name() + ".iconbar.mode"),
     m_rc_alignment(screen.resourceManager(), FbTk::Container::RELATIVE,
                    screen.name() + ".iconbar.alignment"),
-    m_rc_client_width(screen.resourceManager(), 128, screen.name() + ".iconbar.iconWidth"),
+    m_rc_client_width(screen.resourceManager(), 128, screen.name() + ".iconbar.iconWidth", FbTk::RangedIntTraits(10, 400)),
     m_rc_client_padding(screen.resourceManager(), 10,
                    screen.name() + ".iconbar.iconTextPadding"),
     m_rc_use_pixmap(screen.resourceManager(), true, screen.name() + ".iconbar.usePixmap"),
@@ -380,7 +380,6 @@ void IconbarTool::update(UpdateReason reason, Focusable *win) {
 
     m_icon_container.setAlignment(*m_rc_alignment);
 
-    *m_rc_client_width = FbTk::Util::clamp(*m_rc_client_width, 10, 400);
     m_icon_container.setMaxSizePerClient(*m_rc_client_width);
 
     // lock graphic update

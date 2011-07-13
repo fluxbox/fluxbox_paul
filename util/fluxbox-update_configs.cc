@@ -167,8 +167,8 @@ void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager& rm,
     FbTk::BoolResource rc_reverse(rm, false,
             "screen0.reversewheeling",
             "Screen0.ReverseWheeling");
-    if (strcasecmp((*rc_wheeling).c_str(), "On") == 0 ||
-            (strcasecmp((*rc_wheeling).c_str(), "Screen") == 0 && *rc_screen)) {
+    if (strcasecmp(rc_wheeling->c_str(), "On") == 0 ||
+            (strcasecmp(rc_wheeling->c_str(), "Screen") == 0 && *rc_screen)) {
         keep_changes = true;
         if (*rc_reverse) { // if you ask me, this should have been default
             new_keyfile += "OnToolbar Mouse4 :PrevWorkspace\n";
@@ -202,13 +202,13 @@ void update_move_modkey_to_keys_file(FbTk::ResourceManager& rm,
             "modKey",
             "ModKey");
 
-    new_keyfile += "OnWindow " + *rc_modkey +
+    new_keyfile += "OnWindow " + rc_modkey.get() +
         " Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}\n";
-    new_keyfile += "OnWindow " + *rc_modkey +
+    new_keyfile += "OnWindow " + rc_modkey.get() +
         " Mouse3 :MacroCmd {Raise} {Focus} {StartResizing ";
-    if (strcasecmp((*rc_mode).c_str(), "Quadrant") == 0) {
+    if (strcasecmp(rc_mode->c_str(), "Quadrant") == 0) {
         new_keyfile += "NearestCorner}\n";
-    } else if (strcasecmp((*rc_mode).c_str(), "Center") == 0) {
+    } else if (strcasecmp(rc_mode->c_str(), "Center") == 0) {
         new_keyfile += "Center}\n";
     } else {
         new_keyfile += "BottomRight}\n";
@@ -262,7 +262,7 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager& rm,
 
     FbTk::BoolResource rc_reverse(rm, false,"screen0.reversewheeling", "Screen0.ReverseWheeling");
     FbTk::StringResource  scroll_action(rm, "", "screen0.windowScrollAction", "Screen0.WindowScrollAction");
-    if (strcasecmp((*scroll_action).c_str(), "shade") == 0) {
+    if (strcasecmp(scroll_action->c_str(), "shade") == 0) {
         if (*rc_reverse) {
             new_keyfile += "OnTitlebar Mouse5 :ShadeOn\n";
             new_keyfile += "OnTitlebar Mouse4 :ShadeOff\n";
@@ -270,7 +270,7 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager& rm,
             new_keyfile += "OnTitlebar Mouse4 :ShadeOn\n";
             new_keyfile += "OnTitlebar Mouse5 :ShadeOff\n";
         }
-    } else if (strcasecmp((*scroll_action).c_str(), "nexttab") == 0) {
+    } else if (strcasecmp(scroll_action->c_str(), "nexttab") == 0) {
         if (*rc_reverse) {
             new_keyfile += "OnTitlebar Mouse5 :PrevTab\n";
             new_keyfile += "OnTitlebar Mouse4 :NextTab\n";
@@ -329,14 +329,14 @@ void update_change_format_of_split_placement_menu(FbTk::ResourceManager& rm,
                 "screen0.slit.direction",
                 "Screen0.Slit.Direction");
 
-    if (strcasecmp((**direction).c_str(), "vertical") == 0) {
-        if (strcasecmp((**placement).c_str(), "BottomRight") == 0)
+    if (strcasecmp((*direction)->c_str(), "vertical") == 0) {
+        if (strcasecmp((*placement)->c_str(), "BottomRight") == 0)
             *placement = "RightBottom";
-        else if (strcasecmp((**placement).c_str(), "BottomLeft") == 0)
+        else if (strcasecmp((*placement)->c_str(), "BottomLeft") == 0)
             *placement = "LeftBottom";
-        else if (strcasecmp((**placement).c_str(), "TopRight") == 0)
+        else if (strcasecmp((*placement)->c_str(), "TopRight") == 0)
             *placement = "RightTop";
-        else if (strcasecmp((**placement).c_str(), "TopLeft") == 0)
+        else if (strcasecmp((*placement)->c_str(), "TopLeft") == 0)
             *placement = "LeftTop";
     }
 }

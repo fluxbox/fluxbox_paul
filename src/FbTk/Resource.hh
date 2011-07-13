@@ -224,7 +224,11 @@ public:
             setDefaultValue();
         }
     }
-    Accessor<T> &operator =(const T& newvalue) { m_value = newvalue; return *this;}
+    Accessor<T> &operator =(const T& newvalue) {
+        m_value = newvalue;
+        m_modified_sig.emit(m_value);
+        return *this;
+    }
     /// specialized, must be implemented
     /// @return string value of resource
     std::string getString() const { return Traits::toString(m_value); }
@@ -243,7 +247,7 @@ public:
 
     operator T() const { return m_value; }
     T& get() { return m_value; }
-    T& operator*() { return m_value; }
+    Accessor<T>& operator*() { return *this; }
     const T& operator*() const { return m_value; }
     T *operator->() { return &m_value; }
     const T *operator->() const { return &m_value; }

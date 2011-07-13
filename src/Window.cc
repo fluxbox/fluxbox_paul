@@ -3506,7 +3506,7 @@ void FluxboxWindow::updateButtons() {
             need_update = true;
         else {
             for (size_t j=0; j < new_size && !need_update; j++) {
-                if ((*(*titlebar_side[i]))[j] != m_titlebar_buttons[i][j])
+                if ((*titlebar_side[i]).get()[j] != m_titlebar_buttons[i][j])
                     need_update = true;
             }
         }
