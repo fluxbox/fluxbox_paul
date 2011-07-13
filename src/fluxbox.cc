@@ -326,6 +326,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
 #endif // HAVE_RANDR
 
     join(m_rc_pseudotrans.modifiedSig(), &FbTk::Transparent::usePseudoTransparent);
+    join(m_rc_stylefile.modifiedSig(), MemFunIgnoreArgs(*this, &Fluxbox::styleChanged));
 
     load_rc();
 
@@ -346,9 +347,6 @@ Fluxbox::Fluxbox(int argc, char **argv,
     m_fluxbox_pid = XInternAtom(disp, "_BLACKBOX_PID", False);
 #endif // HAVE_GETPID
 
-
-    // setup theme manager to have our style file ready to be scanned
-    FbTk::ThemeManager::instance().load(getStyleFilename(), getStyleOverlayFilename());
 
     // Create keybindings handler and load keys file
     // Note: this needs to be done before creating screens
@@ -999,6 +997,10 @@ void Fluxbox::windowStateChanged(FluxboxWindow &win) {
 void Fluxbox::windowLayerChanged(FluxboxWindow &win) {
     STLUtil::forAllIf(m_atomhandler, mem_fun(&AtomHandler::update),
         CallMemFunWithRefArg<AtomHandler, FluxboxWindow&, void>(&AtomHandler::updateLayer, win));
+}
+
+void Fluxbox::styleChanged() {
+    FbTk::ThemeManager::instance().load(*getStyleResource(), getStyleOverlayFilename());
 }
 
 void Fluxbox::attachSignals(FluxboxWindow &win) {

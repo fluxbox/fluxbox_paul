@@ -42,6 +42,6 @@ StyleMenuItem::StyleMenuItem(const FbTk::FbString &label, const std::string &fil
 
 
 bool StyleMenuItem::isSelected() const {
-    return Fluxbox::instance()->getStyleFilename() == m_filename;
+    return Fluxbox::instance()->getStyleResource().get() == m_filename;
 }
 
