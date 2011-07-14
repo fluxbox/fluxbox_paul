@@ -387,9 +387,11 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     // setup image cache engine
     m_image_control.reset(new FbTk::ImageControl(scrn,
                                                  fluxbox->colorsPerChannel(),
-                                                 fluxbox->getCacheLife(), fluxbox->getCacheMax()));
+                                                 *fluxbox->getCacheLifeResource(), fluxbox->getCacheMax()));
     imageControl().installRootColormap();
     root_colormap_installed = true;
+    m_tracker.join(fluxbox->getCacheLifeResource().modifiedSig(),
+            MemFun(imageControl(), &FbTk::ImageControl::setCacheTimeout));
 
     m_root_theme.reset(new RootTheme(imageControl()));
     m_root_theme->reconfigTheme();
