@@ -68,7 +68,13 @@ public:
 
 private:
     typedef Slot<void, Lua &> InitFunction;
-    typedef std::vector<InitFunction *> InitFunctions;
+    struct AutoVector: public std::vector<InitFunction *> {
+        ~AutoVector() {
+            for(iterator it = begin(); it != end(); ++it)
+                delete *it;
+        }
+    };
+    typedef AutoVector InitFunctions;
 
     static InitFunctions s_init_functions;
 };
