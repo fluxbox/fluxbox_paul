@@ -805,8 +805,6 @@ BScreen::addExtraWindowMenu(const FbTk::FbString &label, const FbTk::RefCount<Fb
 }
 
 void BScreen::reconfigure() {
-    Fluxbox *fluxbox = Fluxbox::instance();
-
     focusedWinFrameTheme()->setAlpha(*resource.focused_alpha);
     unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
     m_menutheme->setAlpha(*resource.menu_alpha);
@@ -825,7 +823,6 @@ void BScreen::reconfigure() {
         m_workspaces_list[i]->setName( resource.workspace_names.get()[i] );
 
     // update menu filenames
-    m_rootmenu->reloadHelper()->setMainFile(fluxbox->getMenuFilename());
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
 
     // reconfigure workspaces
@@ -1342,7 +1339,10 @@ void BScreen::reassociateWindow(FluxboxWindow *w, unsigned int wkspc_id,
 void BScreen::initMenus() {
     m_workspacemenu = MenuCreator::createMenuType("workspacemenu", screenNumber());
 
-    m_rootmenu->reloadHelper()->setMainFile(Fluxbox::instance()->getMenuFilename());
+    m_tracker.join(Fluxbox::instance()->getMenuResource().modifiedSig(),
+            MemFun(*m_rootmenu->reloadHelper(), &FbTk::AutoReloadHelper::setMainFile));
+    m_rootmenu->reloadHelper()->setMainFile(*Fluxbox::instance()->getMenuResource());
+
     m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
 }
 
@@ -1356,7 +1356,7 @@ void BScreen::rereadMenu() {
 
     m_rootmenu->removeAll();
     try {
-        l.loadfile(FbTk::StringUtil::expandFilename(fb->getMenuFilename()).c_str());
+        l.loadfile(FbTk::StringUtil::expandFilename(*fb->getMenuResource()).c_str());
         l.call(0, 1);
         MenuCreator::createMenu(*m_rootmenu, l, m_rootmenu->reloadHelper());
     }

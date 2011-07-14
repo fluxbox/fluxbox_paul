@@ -120,7 +120,7 @@ public:
     FbTk::StringResource &getStyleResource() { return m_rc_stylefile; }
     const std::string &getStyleOverlayFilename() const { return *m_rc_styleoverlayfile; }
 
-    const std::string &getMenuFilename() const { return *m_rc_menufile; }
+    FbTk::StringResource &getMenuResource() { return m_rc_menufile; }
     FbTk::StringResource &getAppsResource() { return m_rc_appsfile; }
     FbTk::StringResource &getKeysResource() { return m_rc_keyfile; }
     int colorsPerChannel() const { return *m_rc_colors_per_channel; }
