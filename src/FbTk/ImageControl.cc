@@ -175,7 +175,7 @@ struct ImageControl::Cache {
 };
 
 ImageControl::ImageControl(int screen_num,
-                           int cpc, unsigned long cache_timeout, unsigned long cmax):
+                           int cpc, unsigned int cache_timeout, unsigned long cmax):
     m_colors_per_channel(cpc),
     m_screen_num(screen_num) {
 
@@ -187,12 +187,9 @@ ImageControl::ImageControl(int screen_num,
 
     cache_max = cmax;
 
-    if (cache_timeout && s_timed_cache) {
-        m_timer.setTimeout(cache_timeout);
-        RefCount<Command<void> > clean_cache(new SimpleCommand<ImageControl>(*this, &ImageControl::cleanCache));
-        m_timer.setCommand(clean_cache);
-        m_timer.start();
-    }
+    RefCount<Command<void> > clean_cache(new SimpleCommand<ImageControl>(*this, &ImageControl::cleanCache));
+    m_timer.setCommand(clean_cache);
+    setCacheTimeout(cache_timeout);
 
     createColorTable();
 }
@@ -221,6 +218,13 @@ ImageControl::~ImageControl() {
     }
 }
 
+void ImageControl::setCacheTimeout(unsigned int cache_timeout) {
+    if (cache_timeout && s_timed_cache) {
+        m_timer.setTimeout(cache_timeout * 60000l);
+        m_timer.start();
+    } else 
+        m_timer.stop();
+}
 
 Pixmap ImageControl::searchCache(unsigned int width, unsigned int height,
                                  const Texture &text, FbTk::Orientation orient) const {

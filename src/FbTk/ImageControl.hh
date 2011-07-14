@@ -42,8 +42,10 @@ class Texture;
 class ImageControl: private NotCopyable {
 public:
     ImageControl(int screen_num, int colors_per_channel = 4,
-                  unsigned long cache_timeout = 300000l, unsigned long cache_max = 200l);
+                  unsigned int cache_timeout = 5, unsigned long cache_max = 200l);
     virtual ~ImageControl();
+
+    void setCacheTimeout(unsigned int cache_timeout);
 
     int depth() const { return m_screen_depth; }
     int colorsPerChannel() const { return m_colors_per_channel; }

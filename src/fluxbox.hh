@@ -129,7 +129,7 @@ public:
 
     time_t getAutoRaiseDelay() const { return *m_rc_auto_raise_delay; }
 
-    unsigned int getCacheLife() const { return *m_rc_cache_life * 60000; }
+    FbTk::UIntResource &getCacheLifeResource() { return m_rc_cache_life; }
     unsigned int getCacheMax() const { return *m_rc_cache_max; }
 
 
