@@ -419,7 +419,9 @@ void FluxboxWindow::init() {
 
     updateMWMHintsFromClient(*m_client);
 
-    m_timer.setTimeout(fluxbox.getAutoRaiseDelay());
+    m_timer.setTimeout(*fluxbox.getAutoRaiseDelayResource());
+    join(fluxbox.getAutoRaiseDelayResource().modifiedSig(), FbTk::MemFun(m_timer,
+                static_cast<void (FbTk::Timer::*)(time_t)>(&FbTk::Timer::setTimeout) ) );
     FbTk::RefCount<FbTk::Command<void> > raise_cmd(new FbTk::SimpleCommand<FluxboxWindow>(*this,
                                                                                    &FluxboxWindow::raise));
     m_timer.setCommand(raise_cmd);
@@ -1052,8 +1054,6 @@ void FluxboxWindow::reconfigure() {
     setFocusFlag(m_focused);
 
     moveResize(frame().x(), frame().y(), frame().width(), frame().height());
-
-    m_timer.setTimeout(Fluxbox::instance()->getAutoRaiseDelay());
 
     updateButtons();
 

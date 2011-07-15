@@ -127,7 +127,8 @@ public:
     FbTk::IntResource &getTabsPaddingResource() { return m_rc_tabs_padding; }
 
 
-    time_t getAutoRaiseDelay() const { return *m_rc_auto_raise_delay; }
+    FbTk::Resource<time_t, FbTk::IntTraits<time_t> > &
+    getAutoRaiseDelayResource() { return m_rc_auto_raise_delay; }
 
     FbTk::UIntResource &getCacheLifeResource() { return m_rc_cache_life; }
     FbTk::UIntResource &getCacheMaxResource() { return m_rc_cache_max; }
