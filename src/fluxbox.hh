@@ -240,6 +240,7 @@ private:
 
     FbTk::BoolResource m_rc_ignoreborder;
     FbTk::BoolResource m_rc_pseudotrans;
+    // XXX new value of m_rc_colors_per_channel does not get used until restart
     FbTk::RangedIntResource m_rc_colors_per_channel;
     FbTk::IntResource m_rc_double_click_interval,
         m_rc_tabs_padding;
