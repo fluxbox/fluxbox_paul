@@ -177,15 +177,13 @@ struct ImageControl::Cache {
 ImageControl::ImageControl(int screen_num,
                            int cpc, unsigned int cache_timeout, unsigned long cmax):
     m_colors_per_channel(cpc),
-    m_screen_num(screen_num) {
+    m_screen_num(screen_num), m_cache_max(cmax) {
 
     Display *disp = FbTk::App::instance()->display();
 
     m_screen_depth = DefaultDepth(disp, screen_num);
     m_visual = DefaultVisual(disp, screen_num);
     m_colormap = DefaultColormap(disp, screen_num);
-
-    cache_max = cmax;
 
     RefCount<Command<void> > clean_cache(new SimpleCommand<ImageControl>(*this, &ImageControl::cleanCache));
     m_timer.setCommand(clean_cache);
@@ -224,6 +222,12 @@ void ImageControl::setCacheTimeout(unsigned int cache_timeout) {
         m_timer.start();
     } else 
         m_timer.stop();
+}
+
+void ImageControl::setCacheMax(unsigned long cache_max) {
+    m_cache_max = cache_max;
+    if (cache.size() > m_cache_max)
+        cleanCache();
 }
 
 Pixmap ImageControl::searchCache(unsigned int width, unsigned int height,
@@ -326,7 +330,7 @@ Pixmap ImageControl::renderImage(unsigned int width, unsigned int height,
 
         cache.push_back(tmp);
 
-        if (cache.size() > cache_max)
+        if (cache.size() > m_cache_max)
             cleanCache();
 
         return pixmap;
