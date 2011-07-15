@@ -46,6 +46,7 @@ public:
     virtual ~ImageControl();
 
     void setCacheTimeout(unsigned int cache_timeout);
+    void setCacheMax(unsigned long cache_max);
 
     int depth() const { return m_screen_depth; }
     int colorsPerChannel() const { return m_colors_per_channel; }
@@ -112,7 +113,7 @@ private:
     typedef std::list<Cache *> CacheList;
 
     mutable CacheList cache;
-    unsigned long cache_max;
+    unsigned long m_cache_max;
 };
 
 } // end namespace FbTk

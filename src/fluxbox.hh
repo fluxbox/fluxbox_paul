@@ -130,7 +130,7 @@ public:
     time_t getAutoRaiseDelay() const { return *m_rc_auto_raise_delay; }
 
     FbTk::UIntResource &getCacheLifeResource() { return m_rc_cache_life; }
-    unsigned int getCacheMax() const { return *m_rc_cache_max; }
+    FbTk::UIntResource &getCacheMaxResource() { return m_rc_cache_max; }
 
 
     void maskWindowEvents(Window w, FluxboxWindow *bw)
