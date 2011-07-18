@@ -1061,12 +1061,6 @@ void FluxboxWindow::reconfigure() {
 
     frame().reconfigure();
     menu().reconfigure();
-
-    Client2ButtonMap::iterator it = m_labelbuttons.begin(),
-                               it_end = m_labelbuttons.end();
-    for (; it != it_end; ++it)
-        it->second->setPixmap(screen().getTabsUsePixmap());
-
 }
 
 void FluxboxWindow::updateMWMHintsFromClient(WinClient &client) {
@@ -3683,7 +3677,10 @@ void FluxboxWindow::associateClient(WinClient &client) {
     btn->signalTracker().join(Fluxbox::instance()->getTabsPaddingResource().modifiedSig(),
             FbTk::MemFun(static_cast<FbTk::TextButton &>(*btn), &FbTk::TextButton::setTextPadding));
     btn->setTextPadding(*Fluxbox::instance()->getTabsPaddingResource());
-    btn->setPixmap(screen().getTabsUsePixmap());
+
+    btn->signalTracker().join(screen().getTabsUsePixmapResource().modifiedSig(),
+            FbTk::MemFun(*btn, &IconButton::setPixmap));
+    btn->setPixmap(*screen().getTabsUsePixmapResource());
 
     m_labelbuttons[&client] = btn;
 

@@ -125,7 +125,7 @@ public:
     const bool allowRemoteActions() const { return *resource.allow_remote_actions; }
     const bool clientMenuUsePixmap() const { return *resource.clientmenu_use_pixmap; }
     const bool getDefaultInternalTabs() const { return *resource.default_internal_tabs; }
-    const bool getTabsUsePixmap() const { return *resource.tabs_use_pixmap; }
+    FbTk::BoolResource &getTabsUsePixmapResource() { return resource.tabs_use_pixmap; }
     const bool getMaxOverTabs() const { return *resource.max_over_tabs; }
 
     unsigned int getTabWidth() const { return *resource.tab_width; }
