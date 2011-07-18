@@ -398,8 +398,14 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     m_root_theme.reset(new RootTheme(imageControl()));
     m_root_theme->reconfigTheme();
 
+    m_tracker.join(resource.focused_alpha.modifiedSig(),
+            MemFun(*focusedWinFrameTheme(), &FbWinFrameTheme::setAlpha));
     focusedWinFrameTheme()->setAlpha(*resource.focused_alpha);
+
+    m_tracker.join(resource.unfocused_alpha.modifiedSig(),
+            MemFun(*unfocusedWinFrameTheme(), &FbWinFrameTheme::setAlpha));
     unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
+
     m_menutheme->setAlpha(*resource.menu_alpha);
 
     m_menutheme->setDelay(*resource.menu_delay);
@@ -809,8 +815,6 @@ BScreen::addExtraWindowMenu(const FbTk::FbString &label, const FbTk::RefCount<Fb
 }
 
 void BScreen::reconfigure() {
-    focusedWinFrameTheme()->setAlpha(*resource.focused_alpha);
-    unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
     m_menutheme->setAlpha(*resource.menu_alpha);
 
     m_menutheme->setDelay(*resource.menu_delay);
