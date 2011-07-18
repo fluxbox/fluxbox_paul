@@ -420,6 +420,9 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
 
     renderGeomWindow();
     renderPosWindow();
+
+    m_tracker.join(resource.tooltip_delay.modifiedSig(),
+            MemFun(*m_tooltip_window, &TooltipWindow::setDelay));
     m_tooltip_window->setDelay(*resource.tooltip_delay);
 
     // setup workspaces and workspace menu
