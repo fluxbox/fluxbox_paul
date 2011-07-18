@@ -475,6 +475,7 @@ private:
     void grabButtons();
 
     void themeReconfigured();
+    void decorationsChanged();
 
     /**
      * Calculates insertition position in the list by

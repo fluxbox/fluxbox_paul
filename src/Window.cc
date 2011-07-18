@@ -411,13 +411,15 @@ void FluxboxWindow::init() {
     m_workspace_number = m_screen.currentWorkspaceID();
 
     // set default decorations but don't apply them
-    setDecorationMask(WindowState::getDecoMaskFromString(screen().defaultDeco()),
+    setDecorationMask(WindowState::getDecoMaskFromString(*screen().defaultDecoResource()),
                       false);
 
     functions.resize = functions.move = functions.iconify = functions.maximize
     = functions.close = functions.tabable = true;
 
     updateMWMHintsFromClient(*m_client);
+    join(screen().defaultDecoResource().modifiedSig(),
+            FbTk::MemFunIgnoreArgs(*this, &FluxboxWindow::decorationsChanged));
 
     m_timer.setTimeout(*fluxbox.getAutoRaiseDelayResource());
     join(fluxbox.getAutoRaiseDelayResource().modifiedSig(), FbTk::MemFun(m_timer,
@@ -1100,7 +1102,7 @@ void FluxboxWindow::updateMWMHintsFromClient(WinClient &client) {
     }
 
     unsigned int mask = decorationMask();
-    mask &= WindowState::getDecoMaskFromString(screen().defaultDeco());
+    mask &= WindowState::getDecoMaskFromString(*screen().defaultDecoResource());
     setDecorationMask(mask, false);
 
     // functions.tabable is ours, not special one
@@ -2691,6 +2693,13 @@ void FluxboxWindow::frameExtentChanged() {
 void FluxboxWindow::themeReconfigured() {
     frame().applyDecorations();
     sendConfigureNotify();
+}
+
+void FluxboxWindow::decorationsChanged() {
+    setDecorationMask(WindowState::getDecoMaskFromString(*screen().defaultDecoResource()),
+                      false);
+    updateMWMHintsFromClient(*m_client);
+    applyDecorations();
 }
 
 void FluxboxWindow::workspaceAreaChanged(BScreen &screen) {
