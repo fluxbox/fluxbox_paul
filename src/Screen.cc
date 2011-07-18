@@ -826,9 +826,6 @@ void BScreen::reconfigure() {
     for(size_t i = 0; i < std::min(m_workspaces_list.size(), resource.workspace_names->size()); ++i)
         m_workspaces_list[i]->setName( resource.workspace_names.get()[i] );
 
-    // update menu filenames
-    m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
-
     // reconfigure workspaces
     for_each(m_workspaces_list.begin(),
              m_workspaces_list.end(),
@@ -1347,7 +1344,9 @@ void BScreen::initMenus() {
             MemFun(*m_rootmenu->reloadHelper(), &FbTk::AutoReloadHelper::setMainFile));
     m_rootmenu->reloadHelper()->setMainFile(*Fluxbox::instance()->getMenuResource());
 
-    m_windowmenu->reloadHelper()->setMainFile(windowMenuFilename());
+    m_tracker.join(resource.windowmenufile.modifiedSig(),
+            MemFun(*m_windowmenu->reloadHelper(), &FbTk::AutoReloadHelper::setMainFile));
+    m_windowmenu->reloadHelper()->setMainFile(*resource.windowmenufile);
 }
 
 
@@ -1390,12 +1389,6 @@ void BScreen::rereadMenu() {
 
 }
 
-const std::string BScreen::windowMenuFilename() const {
-    if ((*resource.windowmenufile).empty())
-        return Fluxbox::instance()->getDefaultDataFilename("windowmenu");
-    return *resource.windowmenufile;
-}
-
 void BScreen::rereadWindowMenu() {
     lua::state &l = Fluxbox::instance()->lua();
     l.checkstack(1);
@@ -1403,7 +1396,7 @@ void BScreen::rereadWindowMenu() {
 
     m_windowmenu->removeAll();
     try {
-        l.loadfile(FbTk::StringUtil::expandFilename(windowMenuFilename()).c_str());
+        l.loadfile(FbTk::StringUtil::expandFilename(resource.windowmenufile).c_str());
         l.call(0, 1);
         MenuCreator::createMenu(*m_windowmenu, l, m_windowmenu->reloadHelper());
     }
