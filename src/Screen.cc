@@ -406,8 +406,12 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
             MemFun(*unfocusedWinFrameTheme(), &FbWinFrameTheme::setAlpha));
     unfocusedWinFrameTheme()->setAlpha(*resource.unfocused_alpha);
 
+    m_tracker.join(resource.menu_alpha.modifiedSig(),
+            MemFun(*m_menutheme, &FbTk::MenuTheme::setAlpha));
     m_menutheme->setAlpha(*resource.menu_alpha);
 
+    m_tracker.join(resource.menu_delay.modifiedSig(),
+            MemFun(*m_menutheme, &FbTk::MenuTheme::setDelay));
     m_menutheme->setDelay(*resource.menu_delay);
 
     m_tracker.join(focusedWinFrameTheme()->reconfigSig(),
@@ -815,10 +819,6 @@ BScreen::addExtraWindowMenu(const FbTk::FbString &label, const FbTk::RefCount<Fb
 }
 
 void BScreen::reconfigure() {
-    m_menutheme->setAlpha(*resource.menu_alpha);
-
-    m_menutheme->setDelay(*resource.menu_delay);
-
     // realize the number of workspaces from the init-file
     const unsigned int nr_ws = *resource.workspaces;
     while(nr_ws > m_workspaces_list.size())
