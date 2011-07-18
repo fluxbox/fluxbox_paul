@@ -108,7 +108,6 @@ public:
     bool getMaxDisableResize() const { return *resource.max_disable_resize; }
     bool doShowWindowPos() const { return *resource.show_window_pos; }
     FbTk::StringResource &defaultDecoResource() { return resource.default_deco; }
-    const std::string windowMenuFilename() const;
     FbTk::ImageControl &imageControl() { return *m_image_control.get(); }
     // menus
     const FbMenu &rootMenu() const { return *m_rootmenu.get(); }
