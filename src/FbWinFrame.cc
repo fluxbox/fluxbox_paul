@@ -260,13 +260,13 @@ void FbWinFrame::moveResize(int x, int y, unsigned int width, unsigned int heigh
     m_state.saveGeometry(window().x(), window().y(),
                          window().width(), window().height());
 
-    if (move || (resize && m_screen.getTabPlacement() != TOPLEFT &&
-                           m_screen.getTabPlacement() != LEFTTOP))
+    if (move || (resize && *m_screen.getTabPlacementResource() != TOPLEFT &&
+                           *m_screen.getTabPlacementResource() != LEFTTOP))
         alignTabs();
 
     if (resize) {
         if (m_tabmode == EXTERNAL) {
-            switch(m_screen.getTabPlacement()) {
+            switch(*m_screen.getTabPlacementResource()) {
             case LEFTTOP:
             case RIGHTTOP:
             case LEFT:
@@ -291,7 +291,7 @@ void FbWinFrame::quietMoveResize(int x, int y,
                          window().width(), window().height());
     if (m_tabmode == EXTERNAL) {
 
-        switch(m_screen.getTabPlacement()) {
+        switch(*m_screen.getTabPlacementResource()) {
         case LEFTTOP:
         case RIGHTTOP:
         case LEFT:
@@ -320,7 +320,7 @@ void FbWinFrame::alignTabs() {
         m_tab_container.setMaxSizePerClient(m_screen.getTabWidth());
 
     int tabx = 0, taby = 0;
-    switch (m_screen.getTabPlacement()) {
+    switch (*m_screen.getTabPlacementResource()) {
     case TOPLEFT:
         if (orig_orient != FbTk::ROT0) m_tab_container.hide();
         m_tab_container.setOrientation(FbTk::ROT0);
@@ -910,7 +910,7 @@ void FbWinFrame::reconfigure() {
 
     if (m_tabmode == EXTERNAL) {
         unsigned int neww, newh;
-        switch (m_screen.getTabPlacement()) {
+        switch (*m_screen.getTabPlacementResource()) {
         case TOPLEFT:
         case TOP:
         case TOPRIGHT:
@@ -1640,7 +1640,7 @@ int FbWinFrame::widthOffset() const {
         return 0;
 
     // same height offset for top and bottom tabs
-    switch (m_screen.getTabPlacement()) {
+    switch (*m_screen.getTabPlacementResource()) {
     case LEFTTOP:
     case RIGHTTOP:
     case LEFT:
@@ -1659,7 +1659,7 @@ int FbWinFrame::heightOffset() const {
     if (m_tabmode != EXTERNAL || !m_use_tabs)
         return 0;
 
-    switch (m_screen.getTabPlacement()) {
+    switch (*m_screen.getTabPlacementResource()) {
     case TOPLEFT:
     case TOP:
     case TOPRIGHT:
@@ -1678,7 +1678,7 @@ int FbWinFrame::xOffset() const {
     if (m_tabmode != EXTERNAL || !m_use_tabs)
         return 0;
 
-    switch (m_screen.getTabPlacement()) {
+    switch (*m_screen.getTabPlacementResource()) {
     case LEFTTOP:
     case LEFT:
     case LEFTBOTTOM:
@@ -1694,7 +1694,7 @@ int FbWinFrame::yOffset() const {
     if (m_tabmode != EXTERNAL || !m_use_tabs)
         return 0;
 
-    switch (m_screen.getTabPlacement()) {
+    switch (*m_screen.getTabPlacementResource()) {
     case TOPLEFT:
     case TOP:
     case TOPRIGHT:
