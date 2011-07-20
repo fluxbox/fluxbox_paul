@@ -100,7 +100,7 @@ FbWinFrame::FbWinFrame(BScreen &screen, unsigned int client_depth,
     m_use_handle(true),
     m_visible(false),
     m_button_pm(0),
-    m_tabmode(screen.getDefaultInternalTabs()?INTERNAL:EXTERNAL),
+    m_tabmode(*screen.getDefaultInternalTabsResource()?INTERNAL:EXTERNAL),
     m_active_orig_client_bw(0),
     m_need_render(true),
     m_button_size(1),
@@ -1464,7 +1464,7 @@ void FbWinFrame::applyDecorations(bool do_move) {
     // we rely on frame not doing anything if it is already shown/hidden
     if (m_state.useTitlebar()) {
         client_move |= showTitlebar();
-        if (m_screen.getDefaultInternalTabs())
+        if (*m_screen.getDefaultInternalTabsResource())
             client_move |= setTabMode(INTERNAL);
         else
             client_move |= setTabMode(EXTERNAL);

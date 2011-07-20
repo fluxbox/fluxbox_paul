@@ -429,6 +429,9 @@ void FluxboxWindow::init() {
     m_timer.setCommand(raise_cmd);
     m_timer.fireOnce(true);
 
+    join(screen().getDefaultInternalTabsResource().modifiedSig(),
+            FbTk::MemFunIgnoreArgs(*this, &FluxboxWindow::applyDecorations));
+
     /**************************************************/
     /* Read state above here, apply state below here. */
     /**************************************************/

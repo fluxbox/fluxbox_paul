@@ -124,7 +124,7 @@ public:
     unsigned int noFocusWhileTypingDelay() const { return *resource.typing_delay; }
     const bool allowRemoteActions() const { return *resource.allow_remote_actions; }
     const bool clientMenuUsePixmap() const { return *resource.clientmenu_use_pixmap; }
-    const bool getDefaultInternalTabs() const { return *resource.default_internal_tabs; }
+    FbTk::BoolResource &getDefaultInternalTabsResource() { return resource.default_internal_tabs; }
     FbTk::BoolResource &getTabsUsePixmapResource() { return resource.tabs_use_pixmap; }
     const bool getMaxOverTabs() const { return *resource.max_over_tabs; }
 
