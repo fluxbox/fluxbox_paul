@@ -89,6 +89,10 @@ public:
     typedef std::vector<std::string> WorkspaceNames;
     typedef std::list<std::pair<FbTk::FbString, FbTk::RefCount<FbTk::Menu> > > ExtraMenus;
 
+    typedef FbTk::Resource<
+        FbWinFrame::TabPlacement, FbTk::EnumTraits<FbWinFrame::TabPlacement> 
+    > TabPlacementResource;
+
     BScreen(FbTk::ResourceManager_base &rm,
             const std::string &screenname,
             int scrn, int number_of_layers);
@@ -120,7 +124,7 @@ public:
     ExtraMenus &extraWindowMenus() { return m_extramenus; }
     const ExtraMenus &extraWindowMenus() const { return m_extramenus; }
 
-    FbWinFrame::TabPlacement getTabPlacement() const { return *resource.tab_placement; }
+    TabPlacementResource &getTabPlacementResource() { return resource.tab_placement; }
 
     unsigned int noFocusWhileTypingDelay() const { return *resource.typing_delay; }
     const bool allowRemoteActions() const { return *resource.allow_remote_actions; }
@@ -252,8 +256,6 @@ public:
     int getEdgeSnapThreshold() const { return *resource.edge_snap_threshold; }
 
     void setRootColormapInstalled(bool r) { root_colormap_installed = r;  }
-
-    void saveTabPlacement(FbWinFrame::TabPlacement place) { *resource.tab_placement = place; }
 
     void saveWorkspaces(int w) { *resource.workspaces = w;  }
 
@@ -532,7 +534,7 @@ private:
             max_ignore_inc, max_disable_move, max_disable_resize,
             workspace_warping, show_window_pos, auto_raise, click_raises;
         FbTk::StringResource default_deco;
-        FbTk::Resource<FbWinFrame::TabPlacement, FbTk::EnumTraits<FbWinFrame::TabPlacement> > tab_placement;
+        TabPlacementResource tab_placement;
         FbTk::StringResource windowmenufile;
         FbTk::UIntResource typing_delay;
         FbTk::IntResource workspaces, edge_snap_threshold, focused_alpha,

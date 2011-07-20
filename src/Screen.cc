@@ -192,9 +192,9 @@ public:
         setCloseOnClick(false);
     }
 
-    bool isSelected() const { return m_screen.getTabPlacement() == m_place; }
+    bool isSelected() const { return *m_screen.getTabPlacementResource() == m_place; }
     void click(int button, int time, unsigned int mods) {
-        m_screen.saveTabPlacement(m_place);
+        *m_screen.getTabPlacementResource() = m_place;
         FbTk::RadioMenuItem::click(button, time, mods);
     }
 
@@ -1653,7 +1653,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
             tabplacement_menu->insert(p.label);
             tabplacement_menu->setItemEnabled(i, false);
         } else
-            tabplacement_menu->insert(new TabPlacementMenuItem(p.label, *this, p.placement, save_and_reconftabs));
+            tabplacement_menu->insert(new TabPlacementMenuItem(p.label, *this, p.placement, saverc_cmd));
     }
     tabplacement_menu->updateMenu();
 
