@@ -1604,7 +1604,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     _BOOLITEM(*tab_menu,Configmenu, TabsInTitlebar,
               "Tabs in Titlebar", "Tabs in Titlebar",
-              resource.default_internal_tabs, save_and_reconftabs);
+              resource.default_internal_tabs, saverc_cmd);
     tab_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, MaximizeOver,
               "Maximize Over", "Maximize over this thing when maximizing"),
               resource.max_over_tabs, save_and_reconfigure));
