@@ -102,13 +102,13 @@ public:
 
     void click(int button, int time, unsigned int mods) {
 
+        std::string newformat = *m_tool.timeFormatResource();
         // does the current format string contain something with 24/12h?
         size_t found;
         size_t pos = FbTk::StringUtil::findCharFromAlphabetAfterTrigger(
-                m_tool.timeFormat(), '%', SWITCHES_24_12H, sizeof(SWITCHES_24_12H), &found);
+                newformat, '%', SWITCHES_24_12H, sizeof(SWITCHES_24_12H), &found);
 
         if (pos != std::string::npos) { // if so, exchange it with 12/24h
-            std::string newformat = m_tool.timeFormat();
             newformat[pos+1] = SWITCHES_12_24H[found];
 
             if (found < 3) { // 24h? erase %P/%p (AM|PM / am|pm)
@@ -119,7 +119,7 @@ public:
                 }
             }
 
-            m_tool.setTimeFormat(newformat);
+            *m_tool.timeFormatResource() = newformat;
             setClockModeLabel();
 
         } // else some other strange format...so we don't do anything
@@ -130,7 +130,7 @@ private:
     void setClockModeLabel() {
         _FB_USES_NLS;
         if (FbTk::StringUtil::findCharFromAlphabetAfterTrigger(
-            m_tool.timeFormat(), '%', SWITCHES_24_12H, 3, 0) != std::string::npos) {
+            *m_tool.timeFormatResource(), '%', SWITCHES_24_12H, 3, 0) != std::string::npos) {
             setLabel( _FB_XTEXT(Toolbar, Clock24,   "Clock: 24h",   "set Clockmode to 24h") );
         } else {
             setLabel( _FB_XTEXT(Toolbar, Clock12,   "Clock: 12h",   "set Clockmode to 12h") );
@@ -170,6 +170,8 @@ ClockTool::ClockTool(const FbTk::FbWindow &parent,
     m_stringconvertor(FbTk::StringConvertor::ToFbString) {
     // attach signals
     m_tracker.join(theme.reconfigSig(), FbTk::MemFun(*this, &ClockTool::themeReconfigured));
+    m_tracker.join(m_timeformat.modifiedSig(),
+            FbTk::MemFunIgnoreArgs(*this, &ClockTool::themeReconfigured));
 
     std::string time_locale = setlocale(LC_TIME, NULL);
     size_t pos = time_locale.find('.');
@@ -230,11 +232,6 @@ void ClockTool::show() {
 
 void ClockTool::hide() {
     m_button.hide();
-}
-
-void ClockTool::setTimeFormat(const std::string &format) {
-    *m_timeformat = format;
-    themeReconfigured();
 }
 
 void ClockTool::themeReconfigured() {

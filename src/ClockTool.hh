@@ -54,12 +54,11 @@ public:
 
     void show();
     void hide();
-    void setTimeFormat(const std::string &format);
     // accessors
     unsigned int width() const;
     unsigned int height() const;
     unsigned int borderWidth() const;
-    const std::string &timeFormat() const { return *m_timeformat; }
+    FbTk::StringResource &timeFormatResource() { return m_timeformat; }
 
     void setOrientation(FbTk::Orientation orient);
 
