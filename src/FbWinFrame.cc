@@ -316,8 +316,8 @@ void FbWinFrame::alignTabs() {
     FbTk::Orientation orig_orient = m_tab_container.orientation();
     unsigned int orig_tabwidth = m_tab_container.maxWidthPerClient();
 
-    if (orig_tabwidth != m_screen.getTabWidth())
-        m_tab_container.setMaxSizePerClient(m_screen.getTabWidth());
+    if (orig_tabwidth != *m_screen.getTabWidthResource())
+        m_tab_container.setMaxSizePerClient(*m_screen.getTabWidthResource());
 
     int tabx = 0, taby = 0;
     switch (*m_screen.getTabPlacementResource()) {
