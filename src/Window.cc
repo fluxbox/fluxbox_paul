@@ -433,6 +433,8 @@ void FluxboxWindow::init() {
             FbTk::MemFunIgnoreArgs(*this, &FluxboxWindow::applyDecorations));
     join(screen().getTabPlacementResource().modifiedSig(),
             FbTk::MemFunIgnoreArgs(*this, &FluxboxWindow::applyDecorations));
+    join(screen().getTabWidthResource().modifiedSig(),
+            FbTk::MemFunIgnoreArgs(*this, &FluxboxWindow::applyDecorations));
 
     /**************************************************/
     /* Read state above here, apply state below here. */

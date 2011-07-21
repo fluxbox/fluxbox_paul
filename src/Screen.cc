@@ -1492,21 +1492,14 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     menu.removeAll();
 
     FbTk::MacroCommand *s_a_reconf_macro = new FbTk::MacroCommand();
-    FbTk::MacroCommand *s_a_reconftabs_macro = new FbTk::MacroCommand();
     FbTk::RefCount<FbTk::Command<void> > saverc_cmd(new FbTk::SimpleCommand<Fluxbox>(
                                                  *Fluxbox::instance(),
                                                  &Fluxbox::save_rc));
     FbTk::RefCount<FbTk::Command<void> > reconf_cmd(FbTk::CommandParser<void>::instance().parse("reconfigure"));
 
-    FbTk::RefCount<FbTk::Command<void> > reconftabs_cmd(new FbTk::SimpleCommand<BScreen>(
-                                                 *this,
-                                                 &BScreen::reconfigureTabs));
     s_a_reconf_macro->add(saverc_cmd);
     s_a_reconf_macro->add(reconf_cmd);
-    s_a_reconftabs_macro->add(saverc_cmd);
-    s_a_reconftabs_macro->add(reconftabs_cmd);
     FbTk::RefCount<FbTk::Command<void> > save_and_reconfigure(s_a_reconf_macro);
-    FbTk::RefCount<FbTk::Command<void> > save_and_reconftabs(s_a_reconftabs_macro);
     // create focus menu
     // we don't set this to internal menu so will
     // be deleted toghether with the parent
@@ -1618,7 +1611,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
                                        "Width of external-style tabs"),
                                resource.tab_width, 10, 3000, /* silly number */
                                *tab_menu);
-    tab_width_item->setCommand(save_and_reconftabs);
+    tab_width_item->setCommand(saverc_cmd);
     tab_menu->insert(tab_width_item);
 
     // menu is 3 wide, 5 down

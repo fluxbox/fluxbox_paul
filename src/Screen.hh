@@ -133,7 +133,7 @@ public:
     FbTk::BoolResource &getTabsUsePixmapResource() { return resource.tabs_use_pixmap; }
     const bool getMaxOverTabs() const { return *resource.max_over_tabs; }
 
-    unsigned int getTabWidth() const { return *resource.tab_width; }
+    FbTk::IntResource &getTabWidthResource() { return resource.tab_width; }
     /// @return the slit, @see Slit
     Slit *slit() { return m_slit.get(); }
     /// @return the slit, @see Slit
