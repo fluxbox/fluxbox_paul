@@ -106,15 +106,6 @@ private:
     std::string m_filename;
 };
 
-class KeyModeCmd: public FbTk::Command<void> {
-public:
-    explicit KeyModeCmd(const std::string &arguments);
-    void execute();
-private:
-    std::string m_keymode;
-    std::string m_end_args;
-};
-
 class HideMenuCmd: public FbTk::Command<void> {
 public:
     void execute();
@@ -186,14 +177,6 @@ private:
 class SetResourceValueDialogCmd: public FbTk::Command<void> {
 public:
     void execute();
-};
-
-class BindKeyCmd: public FbTk::Command<void> {
-public:
-    BindKeyCmd(const std::string &keybind);
-    void execute();
-private:
-    const std::string m_keybind;
 };
 
 /// deiconifies iconified windows
