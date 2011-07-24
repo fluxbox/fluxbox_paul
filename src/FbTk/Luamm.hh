@@ -204,6 +204,7 @@ namespace lua {
         bool isnumber(int index) throw() { return lua_isnumber(cobj, index); }
         bool isstring(int index) throw() { return lua_isstring(cobj, index); }
         bool istable(int index) throw() { return lua_istable(cobj, index); }
+        bool isuserdata(int index) throw() { return lua_isuserdata(cobj, index); }
         void pop(int n = 1) throw() { lua_pop(cobj, n); }
         void pushboolean(bool b) throw() { lua_pushboolean(cobj, b); }
         void pushinteger(integer n) throw() { lua_pushinteger(cobj, n); }
