@@ -231,7 +231,7 @@ struct Options {
 #endif
         if (env && strlen(env) > 0) {
             rc_path.assign(std::string(env) + "/." + realProgramName("fluxbox"));
-            rc_file = rc_path + "/init2";
+            rc_file = rc_path + "/init.lua";
         }
     }
 
