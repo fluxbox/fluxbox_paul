@@ -21,6 +21,7 @@
 
 #include "Keys.hh"
 
+#include "FbCommands.hh"
 #include "fluxbox.hh"
 #include "Screen.hh"
 #include "WinClient.hh"
@@ -34,6 +35,7 @@
 #include "FbTk/Command.hh"
 #include "FbTk/RefCount.hh"
 #include "FbTk/KeyUtil.hh"
+#include "FbTk/LuaUtil.hh"
 #include "FbTk/CommandParser.hh"
 #include "FbTk/I18n.hh"
 #include "FbTk/AutoReloadHelper.hh"
@@ -105,8 +107,6 @@ using std::vector;
 using std::ifstream;
 using std::pair;
 
-using FbTk::STLUtil::destroyAndClearSecond;
-
 namespace {
 
 // candidate for FbTk::StringUtil ?
@@ -127,6 +127,13 @@ int extractKeyFromString(const std::string& in, const char* start_pattern, unsig
     return ret;
 }
 
+struct KeyError: public std::runtime_error {
+    KeyError(const std::string &e) : std::runtime_error(e) {}
+};
+
+const char keymode_metatable[] = "Keys::keymode_metatable";
+const char default_keymode[] = "default_keymode";
+
 } // end of anonymous namespace
 
 // helper class 'keytree'
@@ -135,6 +142,9 @@ public:
 
     // typedefs
     typedef std::list<RefKey> keylist_t;
+
+    static void initKeys(FbTk::Lua &l);
+    static int addBindingWrapper(lua::state *l);
 
     // constructor / destructor
     t_key(int type = 0, unsigned int mod = 0, unsigned int key = 0,
@@ -156,6 +166,19 @@ public:
         return RefKey();
     }
 
+    RefKey find_or_insert(int type_, unsigned int mod_, unsigned int key_,
+                const std::string &key_str_, int context_, bool isdouble_) {
+
+        RefKey t = find(type_, mod_, key_, context_, isdouble_);
+        if(! t) {
+            t.reset(new t_key(type_, mod_, key_, key_str_, context_, isdouble_));
+            keylist.push_back(t);
+        }
+        return t;
+    }
+
+    void addBinding(vector<string> val, const FbTk::RefCount<FbTk::Command<void> > &cmd );
+
     // member variables
 
     int type; // KeyPress or ButtonPress
@@ -167,7 +190,77 @@ public:
     FbTk::RefCount<FbTk::Command<void> > m_command;
 
     keylist_t keylist;
+
+    static FbTk::Lua::RegisterInitFunction registerInitKeys;
 };
+
+int Keys::t_key::addBindingWrapper(lua::state *l)
+{
+    l->checkstack(2);
+
+    try {
+        if(l->gettop() != 3) {
+            throw KeyError(_FB_CONSOLETEXT(Keys, WrongArgNo, "Wrong number of arguments.",
+                        "Wrong number of arguments to a function"));
+        }
+
+        l->getmetatable(1); l->rawgetfield(lua::REGISTRYINDEX, keymode_metatable); {
+            if(! l->rawequal(-1, -2)) {
+                throw KeyError(_FB_CONSOLETEXT(Keys, Bad1stArg, "1st argument is not a keymode.",
+                            "1st argument is not a keymode."));
+            }
+        } l->pop(2);
+        const RefKey &k = *static_cast<RefKey *>(l->touserdata(1));
+
+        if(! l->isstring(2)) {
+                throw KeyError(_FB_CONSOLETEXT(Keys, Bad2ndArg, "2nd argument is not a string.",
+                            "2nd argument is not a string."));
+        }
+        vector<string> val;
+        FbTk::StringUtil::stringtok(val, l->tostring(-2).c_str());
+
+        if(! (l->isstring(3) || l->isfunction(3)) ) {
+            throw KeyError(_FB_CONSOLETEXT(Keys, Bad3rdArg, "3rd argument is not a command.",
+                        "3rd argument is not a command."));
+        }
+        FbTk::RefCount<FbTk::Command<void> > cmd;
+        if(l->isstring(3))
+            cmd.reset(FbTk::CommandParser<void>::instance().parse(l->tostring(-1)));
+        else {
+            l->pushvalue(3);
+            cmd.reset(new FbCommands::LuaCmd(*l));
+        }
+
+        k->addBinding(val, cmd);
+    }
+    catch(std::runtime_error &e) {
+        cerr << "addBinding: " << e.what() << endl;
+    }
+
+    return 0;
+}
+
+void Keys::t_key::initKeys(FbTk::Lua &l) {
+    l.checkstack(3);
+    lua::stack_sentry s(l);
+
+    l.newtable(); {
+        l.pushdestructor<RefKey>();
+        l.rawsetfield(-2, "__gc");
+
+        l.newtable(); {
+            l.pushfunction(&addBindingWrapper);
+            l.rawsetfield(-2, "addBinding");
+        } l.rawsetfield(-2, "__index");
+    } l.rawsetfield(lua::REGISTRYINDEX, keymode_metatable);
+
+    l.pushstring(default_keymode); l.createuserdata<RefKey>(new t_key()); {
+        l.rawgetfield(lua::REGISTRYINDEX, keymode_metatable);
+        l.setmetatable(-2);
+    } l.readOnlySet(lua::GLOBALSINDEX);
+}
+
+FbTk::Lua::RegisterInitFunction Keys::t_key::registerInitKeys(&Keys::t_key::initKeys);
 
 Keys::t_key::t_key(int type_, unsigned int mod_, unsigned int key_,
                    const std::string &key_str_,
@@ -181,6 +274,124 @@ Keys::t_key::t_key(int type_, unsigned int mod_, unsigned int key_,
     m_command(0) {
 
     context = context_ ? context_ : GLOBAL;
+}
+
+void Keys::t_key::addBinding(vector<string> val, const FbTk::RefCount<FbTk::Command<void> > &cmd ) {
+
+    unsigned int key = 0, mod = 0;
+    int type = 0, context = 0;
+    bool isdouble = false;
+    string processed;
+    string key_str;
+
+    // for each argument
+    while(!val.empty()) {
+
+        string arg_ = val[0];
+        val.erase(val.begin());
+
+        processed += ' ' + arg_;;
+        string arg = FbTk::StringUtil::toLower(arg_);
+
+        int tmpmod = FbTk::KeyUtil::getModifier(arg.c_str());
+        if(tmpmod)
+            mod |= tmpmod; //If it's a modifier
+        else if (arg == "ondesktop")
+            context |= ON_DESKTOP;
+        else if (arg == "ontoolbar")
+            context |= ON_TOOLBAR;
+        else if (arg == "onwindow")
+            context |= ON_WINDOW;
+        else if (arg == "ontitlebar")
+            context |= ON_TITLEBAR;
+        else if (arg == "onwindowborder")
+            context |= ON_WINDOWBORDER;
+        else if (arg == "onleftgrip")
+            context |= ON_LEFTGRIP;
+        else if (arg == "onrightgrip")
+            context |= ON_RIGHTGRIP;
+        else if (arg == "double")
+            isdouble = true;
+        else {
+            if (arg == "focusin") {
+                context = ON_WINDOW;
+                mod = key = 0;
+                type = FocusIn;
+            } else if (arg == "focusout") {
+                context = ON_WINDOW;
+                mod = key = 0;
+                type = FocusOut;
+            } else if (arg == "changeworkspace") {
+                context = ON_DESKTOP;
+                mod = key = 0;
+                type = FocusIn;
+            } else if (arg == "mouseover") {
+                type = EnterNotify;
+                if (!(context & (ON_WINDOW|ON_TOOLBAR)))
+                    context |= ON_WINDOW;
+                key = 0;
+            } else if (arg == "mouseout") {
+                type = LeaveNotify;
+                if (!(context & (ON_WINDOW|ON_TOOLBAR)))
+                    context |= ON_WINDOW;
+                key = 0;
+
+            // check if it's a mouse button
+            } else if (extractKeyFromString(arg, "mouse", key)) {
+                type = ButtonPress;
+
+                // fluxconf mangles things like OnWindow Mouse# to Mouse#ow
+                if (strstr(arg.c_str(), "top"))
+                    context = ON_DESKTOP;
+                else if (strstr(arg.c_str(), "ebar"))
+                    context = ON_TITLEBAR;
+                else if (strstr(arg.c_str(), "bar"))
+                    context = ON_TOOLBAR;
+                else if (strstr(arg.c_str(), "ow"))
+                    context = ON_WINDOW;
+            } else if (extractKeyFromString(arg, "click", key)) {
+                type = ButtonRelease;
+            } else if (extractKeyFromString(arg, "move", key)) {
+                type = MotionNotify;
+
+            } else if ((key = FbTk::KeyUtil::getKey(arg_.c_str()))) { // convert from string symbol
+                type = KeyPress;
+                key_str = arg_;
+
+            // keycode covers the following three two-byte cases:
+            // 0x       - hex
+            // +[1-9]   - number between +1 and +9
+            // numbers 10 and above
+            //
+            } else {
+                FbTk::StringUtil::extractNumber(arg, key);
+                type = KeyPress;
+            }
+
+            break;
+        }
+
+    } // end while
+
+
+    if (key == 0 && (type == KeyPress || type == ButtonPress || type == ButtonRelease))
+        throw KeyError("Invalid key combination:" + processed);
+
+    if (type != ButtonPress)
+        isdouble = false;
+
+    RefKey new_key = find_or_insert(type, mod, key, key_str, context, isdouble);
+
+    if (new_key->m_command)
+        throw KeyError("Key combination already used:" + processed);
+
+    if(val.empty()) {
+        if(! new_key->keylist.empty())
+            throw KeyError("Key combination already used as a keychain:" + processed);
+
+        new_key->m_command = cmd;
+    } else
+        new_key->addBinding(val, cmd);
 }
 
 
@@ -205,7 +416,6 @@ Keys::~Keys() {
 /// Destroys the keytree
 void Keys::deleteTree() {
 
-    m_map.clear();
     m_keylist.reset();
     next_key.reset();
     saved_keymode.reset();
@@ -285,237 +495,52 @@ void Keys::grabWindow(Window win) {
 */
 void Keys::reload() {
     // an intentionally empty file will still have one root mapping
-    bool firstload = m_map.empty();
-    const std::string filename = FbTk::StringUtil::expandFilename(*Fluxbox::instance()->getKeysResource());
+    Fluxbox &fluxbox = *Fluxbox::instance();
+    FbTk::Lua &l = fluxbox.lua();
+    l.checkstack(1);
+    lua::stack_sentry s(l);
 
-    if (filename.empty()) {
-        if (firstload)
-            loadDefaults();
-        return;
-    }
-
-    FbTk::App::instance()->sync(false);
-
-    if (! FbTk::FileUtil::isRegularFile(filename.c_str())) {
-        return;
-    }
-
-    // open the file
-    ifstream infile(filename.c_str());
-    if (!infile) {
-        if (firstload)
-            loadDefaults();
-        return; // failed to open file
-    }
-
-    // free memory of previous grabs
     deleteTree();
+    l.getglobal(default_keymode);
+    assert(l.isuserdata(-1));
+    RefKey t = *static_cast<RefKey *>(l.touserdata(-1));
+    next_key.reset();
+    saved_keymode.reset();
 
-    m_map["default:"] = FbTk::makeRef<t_key>();
+    try {
+        l.loadfile(FbTk::StringUtil::expandFilename(*fluxbox.getKeysResource()).c_str());
+        l.call(0, 0);
+    }
+    catch(std::runtime_error &e) {
+        cerr << _FB_CONSOLETEXT(Keys, LoadError, "Error loading keys file: ",
+                "Actual error message follows") << e.what() << endl;
+        loadDefaults(l);
+    }
 
-    unsigned int current_line = 0; //so we can tell the user where the fault is
-
-    while (!infile.eof()) {
-        string linebuffer;
-
-        getline(infile, linebuffer);
-
-        current_line++;
-
-        if (!addBinding(linebuffer)) {
-            _FB_USES_NLS;
-            cerr<<_FB_CONSOLETEXT(Keys, InvalidKeyMod,
-                          "Keys: Invalid key/modifier on line",
-                          "A bad key/modifier string was found on line (number following)")<<" "<<
-                current_line<<"): "<<linebuffer<<endl;
-        }
-    } // end while eof
-
-    keyMode("default");
+    setKeyMode(t);
 }
 
 /**
  * Load critical key/mouse bindings for when there are fatal errors reading the keyFile.
  */
-void Keys::loadDefaults() {
+void Keys::loadDefaults(FbTk::Lua &l) {
     fbdbg<<"Loading default key bindings"<<endl;
 
-    deleteTree();
-    m_map["default:"] = FbTk::makeRef<t_key>();
-    addBinding("OnDesktop Mouse1 :HideMenus");
-    addBinding("OnDesktop Mouse2 :WorkspaceMenu");
-    addBinding("OnDesktop Mouse3 :RootMenu");
-    addBinding("OnTitlebar Mouse3 :WindowMenu");
-    addBinding("OnWindow Mouse1 :MacroCmd {Focus} {Raise} {StartMoving}");
-    addBinding("OnTitlebar Mouse1 :MacroCmd {Focus} {Raise} {ActivateTab}");
-    addBinding("OnTitlebar Move1 :StartMoving");
-    addBinding("OnLeftGrip Move1 :StartResizing bottomleft");
-    addBinding("OnRightGrip Move1 :StartResizing bottomright");
-    addBinding("OnWindowBorder Move1 :StartMoving");
-    addBinding("Mod1 Tab :NextWindow (workspace=[current])");
-    addBinding("Mod1 Shift Tab :PrevWindow (workspace=[current])");
-    keyMode("default");
-}
-
-bool Keys::addBinding(const string &linebuffer) {
-
-    vector<string> val;
-    // Parse arguments
-    FbTk::StringUtil::stringtok(val, linebuffer.c_str());
-
-    // must have at least 1 argument
-    if (val.empty())
-        return true; // empty lines are valid.
-
-    if (val[0][0] == '#' || val[0][0] == '!' ) //the line is commented
-        return true; // still a valid line.
-
-    unsigned int key = 0, mod = 0;
-    int type = 0, context = 0;
-    bool isdouble = false;
-    size_t argc = 0;
-    RefKey current_key = m_map["default:"];
-    RefKey first_new_keylist = current_key, first_new_key;
-
-    if (val[0][val[0].length()-1] == ':') {
-        argc++;
-        keyspace_t::iterator it = m_map.find(val[0]);
-        if (it == m_map.end())
-            m_map[val[0]] = FbTk::makeRef<t_key>();
-        current_key = m_map[val[0]];
-    }
-    // for each argument
-    for (; argc < val.size(); argc++) {
-
-        std::string arg = FbTk::StringUtil::toLower(val[argc]);
-
-        if (arg[0] != ':') { // parse key(s)
-
-            std::string key_str;
-
-            int tmpmod = FbTk::KeyUtil::getModifier(arg.c_str());
-            if(tmpmod)
-                mod |= tmpmod; //If it's a modifier
-            else if (arg == "ondesktop")
-                context |= ON_DESKTOP;
-            else if (arg == "ontoolbar")
-                context |= ON_TOOLBAR;
-            else if (arg == "onwindow")
-                context |= ON_WINDOW;
-            else if (arg == "ontitlebar")
-                context |= ON_TITLEBAR;
-            else if (arg == "onwindowborder")
-                context |= ON_WINDOWBORDER;
-            else if (arg == "onleftgrip")
-                context |= ON_LEFTGRIP;
-            else if (arg == "onrightgrip")
-                context |= ON_RIGHTGRIP;
-            else if (arg == "double")
-                isdouble = true;
-            else if (arg != "none") {
-                if (arg == "focusin") {
-                    context = ON_WINDOW;
-                    mod = key = 0;
-                    type = FocusIn;
-                } else if (arg == "focusout") {
-                    context = ON_WINDOW;
-                    mod = key = 0;
-                    type = FocusOut;
-                } else if (arg == "changeworkspace") {
-                    context = ON_DESKTOP;
-                    mod = key = 0;
-                    type = FocusIn;
-                } else if (arg == "mouseover") {
-                    type = EnterNotify;
-                    if (!(context & (ON_WINDOW|ON_TOOLBAR)))
-                        context |= ON_WINDOW;
-                    key = 0;
-                } else if (arg == "mouseout") {
-                    type = LeaveNotify;
-                    if (!(context & (ON_WINDOW|ON_TOOLBAR)))
-                        context |= ON_WINDOW;
-                    key = 0;
-
-                // check if it's a mouse button
-                } else if (extractKeyFromString(arg, "mouse", key)) {
-                    type = ButtonPress;
-
-                    // fluxconf mangles things like OnWindow Mouse# to Mouse#ow
-                    if (strstr(arg.c_str(), "top"))
-                        context = ON_DESKTOP;
-                    else if (strstr(arg.c_str(), "ebar"))
-                        context = ON_TITLEBAR;
-                    else if (strstr(arg.c_str(), "bar"))
-                        context = ON_TOOLBAR;
-                    else if (strstr(arg.c_str(), "ow"))
-                        context = ON_WINDOW;
-                } else if (extractKeyFromString(arg, "click", key)) {
-                    type = ButtonRelease;
-                } else if (extractKeyFromString(arg, "move", key)) {
-                    type = MotionNotify;
-
-                } else if ((key = FbTk::KeyUtil::getKey(val[argc].c_str()))) { // convert from string symbol
-                    type = KeyPress;
-                    key_str = val[argc];
-
-                // keycode covers the following three two-byte cases:
-                // 0x       - hex
-                // +[1-9]   - number between +1 and +9
-                // numbers 10 and above
-                //
-                } else {
-                    FbTk::StringUtil::extractNumber(arg, key);
-                    type = KeyPress;
-                }
-
-                if (key == 0 && (type == KeyPress || type == ButtonPress || type == ButtonRelease))
-                    return false;
-
-                if (type != ButtonPress)
-                    isdouble = false;
-
-                if (!first_new_key) {
-                    first_new_keylist = current_key;
-                    current_key = current_key->find(type, mod, key, context,
-                                                    isdouble);
-                    if (!current_key) {
-                        first_new_key.reset( new t_key(type, mod, key, key_str, context,
-                                                  isdouble) );
-                        current_key = first_new_key;
-                    } else if (current_key->m_command) // already being used
-                        return false;
-                } else {
-                    RefKey temp_key( new t_key(type, mod, key, key_str, context,
-                                                isdouble) );
-                    current_key->keylist.push_back(temp_key);
-                    current_key = temp_key;
-                }
-                mod = 0;
-                key = 0;
-                type = 0;
-                context = 0;
-                isdouble = false;
-            }
-
-        } else { // parse command line
-            if (!first_new_key)
-                return false;
-
-            const char *str = FbTk::StringUtil::strcasestr(linebuffer.c_str(),
-                   val[argc].c_str());
-            if (str) // +1 to skip ':'
-                current_key->m_command.reset(FbTk::CommandParser<void>::instance().parse(str + 1));
-
-            if (!str || current_key->m_command == 0 || mod)
-                return false;
-
-            // success
-            first_new_keylist->keylist.push_back(first_new_key);
-            return true;
-        }  // end if
-    } // end for
-
-    return false;
+    l.loadstring(
+        "default_keymode:addBinding('OnDesktop Mouse1', 'HideMenus')\n"
+        "default_keymode:addBinding('OnDesktop Mouse2', 'WorkspaceMenu')\n"
+        "default_keymode:addBinding('OnDesktop Mouse3', 'RootMenu')\n"
+        "default_keymode:addBinding('OnTitlebar Mouse3', 'WindowMenu')\n"
+        "default_keymode:addBinding('OnWindow Mouse1', 'MacroCmd {Focus} {Raise} {StartMoving}')\n"
+        "default_keymode:addBinding('OnTitlebar Mouse1', 'MacroCmd {Focus} {Raise} {ActivateTab}')\n"
+        "default_keymode:addBinding('OnTitlebar Move1', 'StartMoving')\n"
+        "default_keymode:addBinding('OnLeftGrip Move1', 'StartResizing bottomleft')\n"
+        "default_keymode:addBinding('OnRightGrip Move1', 'StartResizing bottomright')\n"
+        "default_keymode:addBinding('OnWindowBorder Move1', 'StartMoving')\n"
+        "default_keymode:addBinding('Mod1 Tab', 'NextWindow (workspace=[current])')\n"
+        "default_keymode:addBinding('Mod1 Shift Tab', 'PrevWindow (workspace=[current])')\n"
+    );
+    l.call(0, 0);
 }
 
 // return true if bound to a command, else false
@@ -614,14 +639,6 @@ void Keys::unregisterWindow(Window win) {
 
 void Keys::regrab() {
     setKeyMode(m_keylist);
-}
-
-void Keys::keyMode(const string& keyMode) {
-    keyspace_t::iterator it = m_map.find(keyMode + ":");
-    if (it == m_map.end())
-        setKeyMode(m_map["default:"]);
-    else
-        setKeyMode(it->second);
 }
 
 void Keys::setKeyMode(const FbTk::RefCount<t_key> &keyMode) {

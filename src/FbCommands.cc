@@ -260,23 +260,6 @@ void SetStyleCmd::execute() {
     *Fluxbox::instance()->getStyleResource() = m_filename;
 }
 
-REGISTER_COMMAND_WITH_ARGS(keymode, FbCommands::KeyModeCmd, void);
-
-KeyModeCmd::KeyModeCmd(const string &arguments):m_keymode(arguments),m_end_args("None Escape") {
-    string::size_type second_pos = m_keymode.find_first_of(" \t", 0);
-    if (second_pos != string::npos) {
-        // ok we have arguments, parsing them here
-        m_end_args = m_keymode.substr(second_pos);
-        m_keymode.erase(second_pos); // remove argument from command
-    }
-    if (m_keymode != "default")
-        Fluxbox::instance()->keys()->addBinding(m_keymode + ": " + m_end_args + " :keymode default");
-}
-
-void KeyModeCmd::execute() {
-    Fluxbox::instance()->keys()->keyMode(m_keymode);
-}
-
 REGISTER_COMMAND(hidemenus, FbCommands::HideMenuCmd, void);
 
 void HideMenuCmd::execute() {
@@ -447,21 +430,6 @@ void SetResourceValueDialogCmd::execute() {
 
     FbTk::FbWindow *win = new CommandDialog(*screen,  "Type resource name and the value", "SetResourceValue ");
     win->show();
-}
-
-REGISTER_UNTRUSTED_COMMAND_WITH_ARGS(bindkey, FbCommands::BindKeyCmd, void);
-
-BindKeyCmd::BindKeyCmd(const string &keybind):m_keybind(keybind) { }
-
-void BindKeyCmd::execute() {
-    if (Fluxbox::instance()->keys() != 0) {
-        if (Fluxbox::instance()->keys()->addBinding(m_keybind)) {
-            ofstream ofile(Fluxbox::instance()->getKeysResource()->c_str(), ios::app);
-            if (!ofile)
-                return;
-            ofile<<m_keybind<<endl;
-        }
-    }
 }
 
 FbTk::Command<void> *DeiconifyCmd::parse(const string &command, const string &args,

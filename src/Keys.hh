@@ -35,6 +35,7 @@ class WinClient;
 namespace FbTk {
     class EventHandler;
     class AutoReloadHelper;
+    class Lua;
 }
 
 class Keys: private FbTk::NotCopyable, private FbTk::SignalTracker  {
@@ -63,10 +64,6 @@ public:
     /// destructor
     ~Keys();
 
-    /// bind a key action from a string
-    /// @return false on failure
-    bool addBinding(const std::string &binding);
-
     /**
        do action from XKeyEvent; return false if not bound to anything
     */
@@ -85,17 +82,12 @@ public:
        Load configuration from file
     */
     void reload();
-    /**
-       Reload configuration if keys file has changed
-    */
-    void keyMode(const std::string& keyMode);
 
     bool inKeychain() const { return saved_keymode != 0; }
 
 private:
     class t_key; // helper class to build a 'keytree'
     typedef FbTk::RefCount<t_key> RefKey;
-    typedef std::map<std::string, RefKey> keyspace_t;
     typedef std::map<Window, int> WindowMap;
     typedef std::map<Window, FbTk::EventHandler*> HandlerMap;
 
@@ -108,14 +100,13 @@ private:
     void grabWindow(Window win);
 
     // Load default keybindings for when there are errors loading the keys file
-    void loadDefaults();
+    void loadDefaults(FbTk::Lua &l);
     void setKeyMode(const FbTk::RefCount<t_key> &keyMode);
 
 
     // member variables
     FbTk::AutoReloadHelper* m_reloader;
     RefKey m_keylist;
-    keyspace_t m_map;
 
     RefKey next_key;
     RefKey saved_keymode;
