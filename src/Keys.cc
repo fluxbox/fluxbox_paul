@@ -551,7 +551,7 @@ void Keys::loadDefaults(FbTk::Lua &l) {
         "default_keymode:addBinding('OnDesktop Mouse2', 'WorkspaceMenu')\n"
         "default_keymode:addBinding('OnDesktop Mouse3', 'RootMenu')\n"
         "default_keymode:addBinding('OnTitlebar Mouse3', 'WindowMenu')\n"
-        "default_keymode:addBinding('OnWindow Mouse1', 'MacroCmd {Focus} {Raise} {StartMoving}')\n"
+        "default_keymode:addBinding('Mod1 OnWindow Mouse1', 'MacroCmd {Focus} {Raise} {StartMoving}')\n"
         "default_keymode:addBinding('OnTitlebar Mouse1', 'MacroCmd {Focus} {Raise} {ActivateTab}')\n"
         "default_keymode:addBinding('OnTitlebar Move1', 'StartMoving')\n"
         "default_keymode:addBinding('OnLeftGrip Move1', 'StartResizing bottomleft')\n"
