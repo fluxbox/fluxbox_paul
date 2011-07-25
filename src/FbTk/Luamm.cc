@@ -24,6 +24,8 @@
 
 #include "Luamm.hh"
 
+#include <sstream>
+
 namespace lua {
     namespace {
         // keys for storing values in lua registry
@@ -272,6 +274,35 @@ namespace lua {
             throw lua::errfunc_error(this);
         else
             throw lua::exception(this);
+    }
+
+    void state::checkargno(int argno) throw(lua::check_error)
+    {
+        if(gettop() != argno) {
+            std::ostringstream str;
+            str << "Wrong number of arguments: expected " << argno << ", got " << gettop();
+            throw lua::check_error(str.str());
+        }
+    }
+
+    void *state::checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc)
+    {
+        checkstack(2);
+        stack_sentry s(*this);
+
+        void *p = touserdata(narg);
+        if(p != NULL) {
+            if(getmetatable(narg)) {
+                rawgetfield(REGISTRYINDEX, tname);
+                if(rawequal(-1, -2))
+                    return p;
+                pop(2);
+            }
+        }
+        std::ostringstream str;
+        str << "Invalid argument #" << narg << ": expected " << type_name(TUSERDATA)
+            << ", got " << type_name(type(narg));
+        throw lua::check_error(str.str());
     }
 
     void state::checkstack(int extra) throw(std::bad_alloc)
