@@ -115,4 +115,13 @@ void Lua::readOnlySet(int index) {
     pop();
 }
 
+void Lua::readOnlySetField(int index, const char *k) {
+    checkstack(1);
+    index = absindex(index);
+
+    pushstring(k);
+    insert(-2);
+    readOnlySet(index);
+}
+
 } // namespace FbTk

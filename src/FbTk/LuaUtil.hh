@@ -52,6 +52,7 @@ public:
      * It can be used to modify protected entries or create new ones.
      */
     void readOnlySet(int index);
+    void readOnlySetField(int index, const char *k);
 
     template<typename Functor>
     static void registerInitFunction(const Functor &fn) {
