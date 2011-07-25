@@ -131,6 +131,14 @@ namespace lua {
         {}
     };
 
+    // thrown by check* functions when they detect an invalid argument
+    class check_error: public std::runtime_error {
+    public:
+        check_error(const std::string &msg)
+            : std::runtime_error(msg)
+        {}
+    };
+
     // a fancy wrapper around lua_State
     class state {
         lua_State *cobj;
@@ -264,6 +272,10 @@ namespace lua {
         // type c, throw everything but the kitchen sink
         // call() is a protected mode call, we don't allow unprotected calls
         void call(int nargs, int nresults, int errfunc = 0);
+        void checkargno(int argno) throw(lua::check_error);
+        void *checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc);
+        template<typename T>
+        T *checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc) { return static_cast<T *>(checkudata(narg, tname)); }
         void concat(int n);
         bool equal(int index1, int index2);
         int gc(int what, int data);
