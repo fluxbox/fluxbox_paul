@@ -350,11 +350,11 @@ void setupConfigFiles(const std::string& dirname, const std::string& rc) {
         const std::string filename;
     } cfiles[] = {
         { !has_dir, DEFAULT_INITFILE, rc },
-        { !has_dir, DEFAULTKEYSFILE, dirname + "/keys" },
-        { !has_dir, DEFAULTMENU, dirname + "/menu" },
+        { !has_dir, DEFAULTKEYSFILE, dirname + "/keys.lua" },
+        { !has_dir, DEFAULTMENU, dirname + "/menu.lua" },
         { !has_dir, DEFAULT_APPSFILE, dirname + "/apps" },
         { !has_dir, DEFAULT_OVERLAY, dirname + "/overlay" },
-        { !has_dir, DEFAULT_WINDOWMENU, dirname + "/windowmenu" }
+        { !has_dir, DEFAULT_WINDOWMENU, dirname + "/windowmenu.lua" }
     };
     const size_t nr_of_cfiles = sizeof(cfiles)/sizeof(CFInfo);
 

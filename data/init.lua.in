@@ -1,7 +1,7 @@
 -- If you're looking for settings to configure, they won't be saved here until
 -- you change something in the fluxbox configuration menu.
 
-session.menuFile = '~/.@pkgprefix@fluxbox@pkgsuffix@/menu2'
-session.keyFile = '~/.@pkgprefix@fluxbox@pkgsuffix@/keys'
+session.menuFile = '~/.@pkgprefix@fluxbox@pkgsuffix@/menu.lua'
+session.keyFile = '~/.@pkgprefix@fluxbox@pkgsuffix@/keys.lua'
 session.styleFile = '@default_style@'
 session.configVersion = 14

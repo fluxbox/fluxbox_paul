@@ -631,7 +631,7 @@ AC_ARG_WITH(
   menu,
   [  --with-menu=path        location menu file (PREFIX/share/fluxbox/menu)],
   DEFAULT_MENU=$with_menu,
-  DEFAULT_MENU=\$\(prefix\)/share/fluxbox/menu
+  DEFAULT_MENU=\$\(prefix\)/share/fluxbox/menu.lua
 )
 AC_SUBST(DEFAULT_MENU)
 
@@ -639,7 +639,7 @@ AC_ARG_WITH(
   windowmenu,
   [  --with-windowmenu=path  location windowmenu file (PREFIX/share/fluxbox/windowmenu)],
   DEFAULT_WINDOWMENU=$with_windowmenu,
-  DEFAULT_WINDOWMENU=\$\(prefix\)/share/fluxbox/windowmenu
+  DEFAULT_WINDOWMENU=\$\(prefix\)/share/fluxbox/windowmenu.lua
 )
 AC_SUBST(DEFAULT_WINDOWMENU)
 
@@ -655,7 +655,7 @@ AC_ARG_WITH(
   keys,
   [  --with-keys=path        location keys file (PREFIX/share/fluxbox/keys)],
   DEFAULT_KEYS=$with_keys,
-  DEFAULT_KEYS=\$\(prefix\)/share/fluxbox/keys
+  DEFAULT_KEYS=\$\(prefix\)/share/fluxbox/keys.lua
 )
 AC_SUBST(DEFAULT_KEYS)
 
@@ -679,7 +679,7 @@ AC_ARG_WITH(
   init,
   [  --with-init=path        location init file (PREFIX/share/fluxbox/init)],
   DEFAULT_INIT=$with_init,
-  DEFAULT_INIT=\$\(prefix\)/share/fluxbox/init
+  DEFAULT_INIT=\$\(prefix\)/share/fluxbox/init.lua
 )
 AC_SUBST(DEFAULT_INIT)
 
