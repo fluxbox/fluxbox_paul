@@ -145,6 +145,7 @@ public:
 
     static void initKeys(FbTk::Lua &l);
     static int addBindingWrapper(lua::state *l);
+    static int newKeyMode(lua::state *l);
 
     // constructor / destructor
     t_key(int type = 0, unsigned int mod = 0, unsigned int key = 0,
@@ -199,18 +200,9 @@ int Keys::t_key::addBindingWrapper(lua::state *l)
     l->checkstack(2);
 
     try {
-        if(l->gettop() != 3) {
-            throw KeyError(_FB_CONSOLETEXT(Keys, WrongArgNo, "Wrong number of arguments.",
-                        "Wrong number of arguments to a function"));
-        }
+        l->checkargno(3);
 
-        l->getmetatable(1); l->rawgetfield(lua::REGISTRYINDEX, keymode_metatable); {
-            if(! l->rawequal(-1, -2)) {
-                throw KeyError(_FB_CONSOLETEXT(Keys, Bad1stArg, "1st argument is not a keymode.",
-                            "1st argument is not a keymode."));
-            }
-        } l->pop(2);
-        const RefKey &k = *static_cast<RefKey *>(l->touserdata(1));
+        const RefKey &k = *l->checkudata<RefKey>(1, keymode_metatable);
 
         if(! l->isstring(2)) {
                 throw KeyError(_FB_CONSOLETEXT(Keys, Bad2ndArg, "2nd argument is not a string.",
@@ -240,24 +232,37 @@ int Keys::t_key::addBindingWrapper(lua::state *l)
     return 0;
 }
 
+int Keys::t_key::newKeyMode(lua::state *l) {
+    l->checkstack(2);
+
+    l->createuserdata<RefKey>(new t_key()); {
+        l->rawgetfield(lua::REGISTRYINDEX, keymode_metatable);
+        l->setmetatable(-2);
+    } return 1;
+}
+
 void Keys::t_key::initKeys(FbTk::Lua &l) {
     l.checkstack(3);
     lua::stack_sentry s(l);
 
-    l.newtable(); {
+    l.newmetatable(keymode_metatable); {
         l.pushdestructor<RefKey>();
         l.rawsetfield(-2, "__gc");
 
         l.newtable(); {
             l.pushfunction(&addBindingWrapper);
             l.rawsetfield(-2, "addBinding");
-        } l.rawsetfield(-2, "__index");
-    } l.rawsetfield(lua::REGISTRYINDEX, keymode_metatable);
 
-    l.pushstring(default_keymode); l.createuserdata<RefKey>(new t_key()); {
-        l.rawgetfield(lua::REGISTRYINDEX, keymode_metatable);
-        l.setmetatable(-2);
-    } l.readOnlySet(lua::GLOBALSINDEX);
+            l.pushfunction(&setKeyModeWrapper);
+            l.rawsetfield(-2, "activate");
+        } l.rawsetfield(-2, "__index");
+    } l.pop();
+
+    newKeyMode(&l);
+    l.readOnlySetField(lua::GLOBALSINDEX, default_keymode);
+
+    l.pushfunction(&newKeyMode);
+    l.readOnlySetField(lua::GLOBALSINDEX, "newKeyMode");
 }
 
 FbTk::Lua::RegisterInitFunction Keys::t_key::registerInitKeys(&Keys::t_key::initKeys);
@@ -413,6 +418,18 @@ Keys::~Keys() {
     delete m_reloader;
 }
 
+int Keys::setKeyModeWrapper(lua::state *l) {
+    try {
+        l->checkargno(1);
+        const RefKey &k = *l->checkudata<RefKey>(1, keymode_metatable);
+        Fluxbox::instance()->keys()->setKeyMode(k);
+    }
+    catch(std::runtime_error &e) {
+        cerr << "activate: " << e.what() << endl;
+    }
+    return 0;
+}
+
 /// Destroys the keytree
 void Keys::deleteTree() {
 
@@ -501,9 +518,12 @@ void Keys::reload() {
     lua::stack_sentry s(l);
 
     deleteTree();
+
     l.getglobal(default_keymode);
     assert(l.isuserdata(-1));
-    RefKey t = *static_cast<RefKey *>(l.touserdata(-1));
+    RefKey t = *static_cast<RefKey *>(l.touserdata(-1)) = RefKey(new t_key);
+    l.pop();
+
     next_key.reset();
     saved_keymode.reset();
 

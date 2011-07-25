@@ -32,6 +32,10 @@
 
 class WinClient;
 
+namespace lua {
+    class state;
+}
+
 namespace FbTk {
     class EventHandler;
     class AutoReloadHelper;
@@ -90,6 +94,8 @@ private:
     typedef FbTk::RefCount<t_key> RefKey;
     typedef std::map<Window, int> WindowMap;
     typedef std::map<Window, FbTk::EventHandler*> HandlerMap;
+
+    static int setKeyModeWrapper(lua::state *l);
 
     void deleteTree();
 
