@@ -137,17 +137,23 @@ const char default_keymode[] = "default_keymode";
 } // end of anonymous namespace
 
 // helper class 'keytree'
-class Keys::t_key {
+class Keys::t_key: private FbTk::NotCopyable {
 public:
 
     // typedefs
     typedef std::list<RefKey> keylist_t;
+    typedef std::pair<keylist_t::iterator, t_key &> FindPair;
 
     static void initKeys(FbTk::Lua &l);
-    static int addBindingWrapper(lua::state *l);
+    static int addBinding(lua::state *l);
     static int newKeyMode(lua::state *l);
 
-    // constructor / destructor
+    bool equalExact(const RefKey &x) {
+        return type == x->type && key == x->key && context == x->context
+                    && isdouble == x->isdouble && mod == x->mod;
+    }
+
+    // constructor
     t_key(int type = 0, unsigned int mod = 0, unsigned int key = 0,
             const std::string &key_str = std::string(), int context = 0,
             bool isdouble = false);
@@ -167,18 +173,11 @@ public:
         return RefKey();
     }
 
-    RefKey find_or_insert(int type_, unsigned int mod_, unsigned int key_,
-                const std::string &key_str_, int context_, bool isdouble_) {
-
-        RefKey t = find(type_, mod_, key_, context_, isdouble_);
-        if(! t) {
-            t.reset(new t_key(type_, mod_, key_, key_str_, context_, isdouble_));
-            keylist.push_back(t);
-        }
-        return t;
-    }
-
-    void addBinding(vector<string> val, const FbTk::RefCount<FbTk::Command<void> > &cmd );
+    /**
+     * Returns the t_key object corresponding to the binding val and it's parent.
+     * The parent comes in handy when we want to remove the binding.
+     */
+    FindPair findBinding(vector<string> val, bool insert);
 
     // member variables
 
@@ -195,14 +194,14 @@ public:
     static FbTk::Lua::RegisterInitFunction registerInitKeys;
 };
 
-int Keys::t_key::addBindingWrapper(lua::state *l)
+int Keys::t_key::addBinding(lua::state *l)
 {
     l->checkstack(2);
 
     try {
         l->checkargno(3);
 
-        const RefKey &k = *l->checkudata<RefKey>(1, keymode_metatable);
+        RefKey k = *l->checkudata<RefKey>(1, keymode_metatable);
 
         if(! l->isstring(2)) {
                 throw KeyError(_FB_CONSOLETEXT(Keys, Bad2ndArg, "2nd argument is not a string.",
@@ -223,7 +222,11 @@ int Keys::t_key::addBindingWrapper(lua::state *l)
             cmd.reset(new FbCommands::LuaCmd(*l));
         }
 
-        k->addBinding(val, cmd);
+        FindPair p = k->findBinding(val, true);
+
+        k = *p.first;
+        k->m_command = cmd;
+        k->keylist.clear();
     }
     catch(std::runtime_error &e) {
         cerr << "addBinding: " << e.what() << endl;
@@ -250,7 +253,7 @@ void Keys::t_key::initKeys(FbTk::Lua &l) {
         l.rawsetfield(-2, "__gc");
 
         l.newtable(); {
-            l.pushfunction(&addBindingWrapper);
+            l.pushfunction(&addBinding);
             l.rawsetfield(-2, "addBinding");
 
             l.pushfunction(&setKeyModeWrapper);
@@ -274,14 +277,12 @@ Keys::t_key::t_key(int type_, unsigned int mod_, unsigned int key_,
     mod(mod_),
     key(key_),
     key_str(key_str_),
-    context(context_),
+    context(context_ ? context_ : GLOBAL),
     isdouble(isdouble_),
     m_command(0) {
-
-    context = context_ ? context_ : GLOBAL;
 }
 
-void Keys::t_key::addBinding(vector<string> val, const FbTk::RefCount<FbTk::Command<void> > &cmd ) {
+Keys::t_key::FindPair Keys::t_key::findBinding(vector<string> val, bool insert ) {
 
     unsigned int key = 0, mod = 0;
     int type = 0, context = 0;
@@ -379,24 +380,23 @@ void Keys::t_key::addBinding(vector<string> val, const FbTk::RefCount<FbTk::Comm
     } // end while
 
 
-    if (key == 0 && (type == KeyPress || type == ButtonPress || type == ButtonRelease))
+    if (key == 0 && (type == 0 || type == KeyPress || type == ButtonPress || type == ButtonRelease))
         throw KeyError("Invalid key combination:" + processed);
 
     if (type != ButtonPress)
         isdouble = false;
 
-    RefKey new_key = find_or_insert(type, mod, key, key_str, context, isdouble);
+    RefKey new_key = RefKey(new t_key(type, mod, key, key_str, context, isdouble));
+    keylist_t::iterator new_it = std::find_if(keylist.begin(), keylist.end(),
+            FbTk::MemFun(*new_key, &t_key::equalExact));
 
-    if (new_key->m_command)
-        throw KeyError("Key combination already used:" + processed);
+    if(new_it == keylist.end() && insert)
+        new_it = keylist.insert(new_it, new_key);
 
-    if(val.empty()) {
-        if(! new_key->keylist.empty())
-            throw KeyError("Key combination already used as a keychain:" + processed);
-
-        new_key->m_command = cmd;
-    } else
-        new_key->addBinding(val, cmd);
+    if(new_it == keylist.end() || val.empty())
+        return FindPair(new_it, *this);
+    else
+        return (*new_it)->findBinding(val, insert);
 }
 
 
