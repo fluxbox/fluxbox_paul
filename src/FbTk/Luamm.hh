@@ -161,6 +161,7 @@ namespace lua {
 
         bool safe_compare(lua_CFunction trampoline, int index1, int index2);
         void do_pushclosure(int n);
+        void throw_check_error(int narg, Type expected) throw(lua::check_error) __attribute__((noreturn));
 
         /**
          * The pointed-to value is true if this object still exists. We need this because the
@@ -273,6 +274,7 @@ namespace lua {
         // call() is a protected mode call, we don't allow unprotected calls
         void call(int nargs, int nresults, int errfunc = 0);
         void checkargno(int argno) throw(lua::check_error);
+        std::string checkstring(int narg) throw(lua::check_error, std::bad_alloc);
         void *checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc);
         template<typename T>
         T *checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc) { return static_cast<T *>(checkudata(narg, tname)); }

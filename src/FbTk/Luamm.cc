@@ -285,6 +285,16 @@ namespace lua {
         }
     }
 
+    std::string state::checkstring(int narg) throw(lua::check_error, std::bad_alloc)
+    {
+        try {
+            return tostring(narg);
+        }
+        catch(lua::not_string_error &e) {
+            throw_check_error(narg, TSTRING);
+        }
+    }
+
     void *state::checkudata(int narg, const char *tname) throw(lua::check_error, std::bad_alloc)
     {
         checkstack(2);
@@ -299,10 +309,7 @@ namespace lua {
                 pop(2);
             }
         }
-        std::ostringstream str;
-        str << "Invalid argument #" << narg << ": expected " << type_name(TUSERDATA)
-            << ", got " << type_name(type(narg));
-        throw lua::check_error(str.str());
+        throw_check_error(narg, TUSERDATA);
     }
 
     void state::checkstack(int extra) throw(std::bad_alloc)
@@ -476,6 +483,14 @@ namespace lua {
         lua_pushcfunction(cobj, (&safe_misc_trampoline<&lua_settable, 0>));
         insert(-4);
         call(3, 0, 0);
+    }
+
+    void state::throw_check_error(int narg, Type expected) throw(lua::check_error)
+    {
+        std::ostringstream str;
+        str << "Invalid argument #" << narg << ": expected " << type_name(expected)
+            << ", got " << type_name(type(narg));
+        throw lua::check_error(str.str());
     }
 
     std::string state::tostring(int index) throw(lua::not_string_error)
