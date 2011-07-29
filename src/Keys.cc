@@ -147,6 +147,8 @@ public:
     static void initKeys(FbTk::Lua &l);
     static int addBinding(lua::state *l);
     static int newKeyMode(lua::state *l);
+    static int index(lua::state *l);
+    static int newindex(lua::state *l);
 
     bool equalExact(const RefKey &x) {
         return type == x->type && key == x->key && context == x->context
@@ -194,7 +196,7 @@ public:
     static FbTk::Lua::RegisterInitFunction registerInitKeys;
 };
 
-int Keys::t_key::addBinding(lua::state *l)
+int Keys::t_key::newindex(lua::state *l)
 {
     l->checkstack(2);
 
@@ -203,33 +205,43 @@ int Keys::t_key::addBinding(lua::state *l)
 
         RefKey k = *l->checkudata<RefKey>(1, keymode_metatable);
 
-        if(! l->isstring(2)) {
-                throw KeyError(_FB_CONSOLETEXT(Keys, Bad2ndArg, "2nd argument is not a string.",
-                            "2nd argument is not a string."));
-        }
         vector<string> val;
-        FbTk::StringUtil::stringtok(val, l->tostring(-2).c_str());
+        FbTk::StringUtil::stringtok(val, l->checkstring(2).c_str());
 
-        if(! (l->isstring(3) || l->isfunction(3)) ) {
-            throw KeyError(_FB_CONSOLETEXT(Keys, Bad3rdArg, "3rd argument is not a command.",
-                        "3rd argument is not a command."));
+        RefKey k2;
+        try {
+            k2 = *l->checkudata<RefKey>(3, keymode_metatable);
         }
-        FbTk::RefCount<FbTk::Command<void> > cmd;
-        if(l->isstring(3))
-            cmd.reset(FbTk::CommandParser<void>::instance().parse(l->tostring(-1)));
-        else {
-            l->pushvalue(3);
-            cmd.reset(new FbCommands::LuaCmd(*l));
+        catch(lua::check_error &) {
+            k2.reset(new t_key);
+
+            if(l->isstring(3))
+                k2->m_command.reset(FbTk::CommandParser<void>::instance().parse(l->tostring(-1)));
+            else if(l->isfunction(3)) {
+                l->pushvalue(3);
+                k2->m_command.reset(new FbCommands::LuaCmd(*l));
+            } else if(l->isnil(3))
+                k2.reset();
+            else {
+                throw KeyError(_FB_CONSOLETEXT(Keys, Bad3rdArg, "3rd argument is not a command.",
+                            "3rd argument is not a command."));
+            }
         }
 
         FindPair p = k->findBinding(val, true);
-
-        k = *p.first;
-        k->m_command = cmd;
-        k->keylist.clear();
+        if(k2) {
+            RefKey t = *p.first;
+            k2->type = t->type;
+            k2->mod = t->mod;
+            k2->key = t->key;
+            k2->context = t->context;
+            k2->isdouble = t->isdouble;
+            *p.first = k2;
+        } else
+            p.second.keylist.erase(p.first);
     }
     catch(std::runtime_error &e) {
-        cerr << "addBinding: " << e.what() << endl;
+        cerr << "keymode newindex: " << e.what() << endl;
     }
 
     return 0;
@@ -244,6 +256,42 @@ int Keys::t_key::newKeyMode(lua::state *l) {
     } return 1;
 }
 
+int Keys::t_key::index(lua::state *l) {
+    l->checkstack(2);
+
+    try {
+        l->checkargno(2);
+
+        RefKey k = *l->checkudata<RefKey>(1, keymode_metatable);
+
+        string str = l->checkstring(2);
+
+        if(str == "activate")
+            l->pushfunction(&setKeyModeWrapper);
+        else {
+            vector<string> val;
+            FbTk::StringUtil::stringtok(val, str.c_str());
+
+            FindPair p = k->findBinding(val, false);
+            if(p.first == p.second.keylist.end())
+                l->pushnil();
+            else {
+                l->createuserdata<RefKey>(*p.first); {
+                    l->rawgetfield(lua::REGISTRYINDEX, keymode_metatable);
+                    l->setmetatable(-2);
+                }
+            }
+
+        }
+    }
+    catch(std::runtime_error &e) {
+        cerr << "keymode index: " << e.what() << endl;
+        l->pushnil();
+    }
+
+    return 1;
+}
+
 void Keys::t_key::initKeys(FbTk::Lua &l) {
     l.checkstack(3);
     lua::stack_sentry s(l);
@@ -252,13 +300,11 @@ void Keys::t_key::initKeys(FbTk::Lua &l) {
         l.pushdestructor<RefKey>();
         l.rawsetfield(-2, "__gc");
 
-        l.newtable(); {
-            l.pushfunction(&addBinding);
-            l.rawsetfield(-2, "addBinding");
+        l.pushfunction(&index);
+        l.rawsetfield(-2, "__index");
 
-            l.pushfunction(&setKeyModeWrapper);
-            l.rawsetfield(-2, "activate");
-        } l.rawsetfield(-2, "__index");
+        l.pushfunction(&newindex);
+        l.rawsetfield(-2, "__newindex");
     } l.pop();
 
     newKeyMode(&l);
@@ -547,18 +593,18 @@ void Keys::loadDefaults(FbTk::Lua &l) {
     fbdbg<<"Loading default key bindings"<<endl;
 
     l.loadstring(
-        "default_keymode:addBinding('OnDesktop Mouse1', 'HideMenus')\n"
-        "default_keymode:addBinding('OnDesktop Mouse2', 'WorkspaceMenu')\n"
-        "default_keymode:addBinding('OnDesktop Mouse3', 'RootMenu')\n"
-        "default_keymode:addBinding('OnTitlebar Mouse3', 'WindowMenu')\n"
-        "default_keymode:addBinding('Mod1 OnWindow Mouse1', 'MacroCmd {Focus} {Raise} {StartMoving}')\n"
-        "default_keymode:addBinding('OnTitlebar Mouse1', 'MacroCmd {Focus} {Raise} {ActivateTab}')\n"
-        "default_keymode:addBinding('OnTitlebar Move1', 'StartMoving')\n"
-        "default_keymode:addBinding('OnLeftGrip Move1', 'StartResizing bottomleft')\n"
-        "default_keymode:addBinding('OnRightGrip Move1', 'StartResizing bottomright')\n"
-        "default_keymode:addBinding('OnWindowBorder Move1', 'StartMoving')\n"
-        "default_keymode:addBinding('Mod1 Tab', 'NextWindow (workspace=[current])')\n"
-        "default_keymode:addBinding('Mod1 Shift Tab', 'PrevWindow (workspace=[current])')\n"
+        "default_keymode['OnDesktop Mouse1'] = 'HideMenus'\n"
+        "default_keymode['OnDesktop Mouse2'] = 'WorkspaceMenu'\n"
+        "default_keymode['OnDesktop Mouse3'] = 'RootMenu'\n"
+        "default_keymode['OnTitlebar Mouse3'] = 'WindowMenu'\n"
+        "default_keymode['Mod1 OnWindow Mouse1'] = 'MacroCmd {Focus} {Raise} {StartMoving}'\n"
+        "default_keymode['OnTitlebar Mouse1'] = 'MacroCmd {Focus} {Raise} {ActivateTab}'\n"
+        "default_keymode['OnTitlebar Move1'] = 'StartMoving'\n"
+        "default_keymode['OnLeftGrip Move1'] = 'StartResizing bottomleft'\n"
+        "default_keymode['OnRightGrip Move1'] = 'StartResizing bottomright'\n"
+        "default_keymode['OnWindowBorder Move1'] = 'StartMoving'\n"
+        "default_keymode['Mod1 Tab'] = 'NextWindow (workspace=[current])'\n"
+        "default_keymode['Mod1 Shift Tab'] = 'PrevWindow (workspace=[current])'\n"
     );
     l.call(0, 0);
 }
