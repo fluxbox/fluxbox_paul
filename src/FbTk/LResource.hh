@@ -41,8 +41,11 @@ public:
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
+    void setLua(Lua &l);
 
 private:
+    void doAddResource(Resource_base &r);
+    void doRemoveResource(Resource_base &r);
 
     Lua *m_l;
 };

@@ -101,17 +101,8 @@ void LResourceManager::convert(ResourceManager &old, const std::string &new_file
 }
 
 LResourceManager::LResourceManager(const std::string &root, Lua &l)
-                        : ResourceManager_base(root), m_l(&l) {
-    l.checkstack(2);
-    lua::stack_sentry s(l);
-
-    l.pushstring(root);
-
-    l.getfield(lua::REGISTRYINDEX, make_root);
-    l.pushstring(root);
-    l.call(1, 1);
-
-    l.readOnlySet(lua::GLOBALSINDEX);
+        : ResourceManager_base(root), m_l(&l) {
+    setLua(l);
 }
 
 bool LResourceManager::save(const char *filename, const char *) {
@@ -127,10 +118,19 @@ bool LResourceManager::save(const char *filename, const char *) {
 }
 
 void LResourceManager::addResource(Resource_base &r) {
+    ResourceManager_base::addResource(r);
+    try {
+        doAddResource(r);
+    }
+    catch(...) {
+        ResourceManager_base::removeResource(r);
+        throw;
+    }
+}
+
+void LResourceManager::doAddResource(Resource_base &r) {
     m_l->checkstack(5);
     lua::stack_sentry s(*m_l);
-
-    ResourceManager_base::addResource(r);
 
     m_l->getfield(lua::REGISTRYINDEX, register_resource);
     m_l->getfield(lua::GLOBALSINDEX, m_root.c_str());
@@ -143,7 +143,12 @@ void LResourceManager::addResource(Resource_base &r) {
 }
 
 void LResourceManager::removeResource(Resource_base &r) {
-    m_l->checkstack(5);
+    doRemoveResource(r);
+    ResourceManager_base::removeResource(r);
+}
+
+void LResourceManager::doRemoveResource(Resource_base &r) {
+    m_l->checkstack(4);
     lua::stack_sentry s(*m_l);
 
     m_l->getfield(lua::REGISTRYINDEX, register_resource);
@@ -153,8 +158,25 @@ void LResourceManager::removeResource(Resource_base &r) {
     m_l->call(3, 1);
     *static_cast<Resource_base **>(m_l->touserdata(-1)) = NULL;
     m_l->pop();
+}
 
-    ResourceManager_base::removeResource(r);
+void LResourceManager::setLua(Lua &l) {
+    l.checkstack(2);
+    lua::stack_sentry s(l);
+
+    for(ResourceList::const_iterator i = begin(); i != end(); ++i)
+        doRemoveResource(**i);
+
+    l.getfield(lua::REGISTRYINDEX, make_root);
+    l.pushstring(m_root);
+    l.call(1, 1);
+
+    l.readOnlySetField(lua::GLOBALSINDEX, m_root.c_str());
+
+    m_l = &l;
+
+    for(ResourceList::const_iterator i = begin(); i != end(); ++i)
+        doAddResource(**i);
 }
 
 } // end namespace FbTk
