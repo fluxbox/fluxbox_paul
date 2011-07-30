@@ -303,7 +303,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
     // Because when the command is executed we shouldn't do reconfig directly
     // because it could affect ongoing menu stuff so we need to reconfig in
     // the next event "round".
-    FbTk::RefCount<FbTk::Command<void> > reconfig_cmd(new FbTk::SimpleCommand<Fluxbox>(*this, &Fluxbox::timed_reconfigure));
+    FbTk::RefCount<FbTk::Command<void> > reconfig_cmd(new FbTk::SimpleCommand<Fluxbox>(*this, &Fluxbox::reconfigure));
     m_reconfig_timer.setTimeout(0, 1);
     m_reconfig_timer.setCommand(reconfig_cmd);
     m_reconfig_timer.fireOnce(true);
@@ -434,8 +434,6 @@ Fluxbox::Fluxbox(int argc, char **argv,
 
     //XSynchronize(disp, False);
     sync(false);
-
-    m_reconfigure_wait = false;
 
     ungrab();
 
@@ -896,7 +894,7 @@ void Fluxbox::handleSignal(int signum) {
         load_rc();
         break;
     case SIGUSR2:
-        reconfigure();
+        m_reconfig_timer.start();
         break;
 #endif
     case SIGSEGV:
@@ -1248,11 +1246,12 @@ BScreen *Fluxbox::findScreen(int id) {
     return result;
 }
 
-void Fluxbox::timed_reconfigure() {
-    if (m_reconfigure_wait)
-        real_reconfigure();
-
-    m_reconfigure_wait = false;
+void Fluxbox::reconfigure() {
+    std::auto_ptr<FbTk::Lua> t = m_l;
+    m_l.reset(new Lua);
+    m_resourcemanager.setLua(*m_l);
+    load_rc();
+    STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
 }
 
 void Fluxbox::revertFocus() {

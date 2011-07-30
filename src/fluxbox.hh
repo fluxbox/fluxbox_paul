@@ -159,7 +159,6 @@ public:
     void attachSignals(FluxboxWindow &win);
     void attachSignals(WinClient &winclient);
 
-    void timed_reconfigure();
     void revertFocus();
     void setShowingDialog(bool value) {
         m_showing_dialog = value; if (!value) revertFocus();
@@ -192,8 +191,6 @@ public:
 private:
     std::string getRcFilename();
     void load_rc();
-
-    void real_reconfigure();
 
     void handleEvent(XEvent *xe);
 
@@ -273,7 +270,6 @@ private:
 
     Atom m_fluxbox_pid;
 
-    bool m_reconfigure_wait;
     Time m_last_time;
     Window m_masked;
     std::string m_rc_file; ///< resource filename
