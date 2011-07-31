@@ -292,7 +292,10 @@ createMenu_(FbTk::Menu &inject_into, lua::state &l, FbTk::StringConvertor &conv,
     lua::stack_sentry s(l, -1);
     l.checkstack(1);
 
-    inject_into.setLabel(getField(l, -1, "label", &conv));
+    std::string title = getField(l, -1, "title", &conv);
+    if(title.empty())
+        title = getField(l, -1, "label", &conv);
+    inject_into.setLabel(title);
 
     for(int i = 1; l.rawgeti(-1, i), !l.isnil(-1); ++i) {
         try {
