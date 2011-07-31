@@ -411,53 +411,61 @@ lookupIcon() {
     echo $iconString
 }
 
+do_append() {
+    [ -n "$BUFFER" ] && echo "$BUFFER" >> ${MENUFILENAME}
+    BUFFER=
+    {
+        echo -n "$NEST{ type = '$1'"
+        [ -n "$2" ] && echo -n ", label = '$2'"
+        [ -n "$3" ] && echo -n ", param = '$3'"
+        [ -n "$4" ] && echo -n ", icon = '$4'"
+        echo " };"
+    } >> ${MENUFILENAME}
+}
+
 append() {
+    execname=$3
+    iconString=$4
      if [ -z "${INSTALL}" ]; then
         # $dnlamVERBOSE echo "append: $*" >&2
-        iconString="`echo $* | grep -o '<.*>'`"
-        # echo "iconString=$iconString" >&2
-        if [ -z "$iconString" ] && [ -z "$NO_ICON" ]; then
-            echo -n "      $* " >> ${MENUFILENAME}
+        if [ -z "$iconString" ] && [ -z "$NO_ICON" ] && [ -n "$execname" ]; then
             # get the program name between '{}' from parameters            
-            execname="$*"
-            execname=${execname#*\{}
-            execname=${execname%%\}*}
             # $dnlamVERBOSE echo "execname=$execname" >&2
             # if execname hasn't changed from original $*, then no '{...}' was given
-            if [ ! "$execname" = "$*" ]; then
-                case "$execname" in
-                    $DEFAULT_TERM*)
-                        # remove quotes
-                        execname=`replaceWithinString "$execname" "\""`
-                        # remove "$DEFAULT_TERM -e "
-                        # needed in case calling another program (e.g., vi) via "xterm -e"                    
-                        execname=${execname##*$DEFAULT_TERM -e }
-                    ;;
-                esac
-                # lookup execname in icon map file
-                iconString=`lookupIcon "$execname"`
-                #[ -n "$iconString" ] || echo "No icon found for $execname"
-            fi
-            echo "${iconString}" >> ${MENUFILENAME}
-        else
-            echo "      $*" >> ${MENUFILENAME}
+            case "$execname" in
+                $DEFAULT_TERM*)
+                    # remove quotes
+                    execname=`replaceWithinString "$execname" "\""`
+                    # remove "$DEFAULT_TERM -e "
+                    # needed in case calling another program (e.g., vi) via "xterm -e"
+                    execname=${execname##*$DEFAULT_TERM -e }
+                ;;
+            esac
+            # lookup execname in icon map file
+            iconString=`lookupIcon "$execname"`
+            #[ -n "$iconString" ] || echo "No icon found for $execname"
         fi
-    else
-        echo "      $*" >> ${MENUFILENAME}
     fi
+    iconString=`replaceWithinString "$iconString" '<'`
+    iconString=`replaceWithinString "$iconString" '>'`
+    do_append "$1" "$2" "$3" "$iconString"
 }
 
 append_menu() {
-    echo "$*" >> ${MENUFILENAME}
-}
-
-append_submenu() {
-    [ "${REMOVE}" ] && echo >> ${MENUFILENAME} # only an empty line in templates
-    append_menu "[submenu] ($1)"
+    [ -n "$BUFFER" ] && echo "$BUFFER" >> ${MENUFILENAME}
+    BUFFER="`
+        echo "$NEST{"
+        echo "$NEST    type = 'menu';"
+        echo "$NEST    label = '$1';"
+        [ -n "$2" ] && echo "$NEST    title = '$2';"
+    `"
+    NEST="$NEST    "
 }
 
 append_menu_end() {
-    append_menu '[end]'
+    NEST=${NEST%    }
+    [ -z "$BUFFER" ] && echo "$NEST};" >> ${MENUFILENAME}
+    BUFFER=
     [ "${REMOVE}" ] && echo >> ${MENUFILENAME} # only an empty line in templates
 }
 
@@ -467,7 +475,7 @@ menu_entry() {
         entry_name=`grep '^[     ]*Name=' "$1" | head -n 1 | cut -d = -f 2`
         entry_exec=`grep '^[     ]*Exec=' "$1" | head -n 1 | cut -d = -f 2`
         if [ -n "$entry_name" -a -n "$entry_exec" ]; then
-            append "[exec] ($entry_name) {$entry_exec}"
+            append exec "$entry_name" "$entry_exec"
         fi
     fi
 }
@@ -492,7 +500,7 @@ recurse_dir_menu () {
         for dir in "$@"; do
             if [ -n "$name" -a -d "$dir/$name" ]; then
                 # recurse
-                append_submenu "${name}"
+                append_menu "${name}"
                 # unfortunately, this is messy since we can't easily expand
                 # them all. Only allow for 3 atm. Add more if needed
                 recurse_dir_menu ${1:+"$1/$name"}  ${2:+"$2/$name"} ${3:+"$3/$name"}
@@ -512,14 +520,14 @@ recurse_dir_menu () {
 
 normal_find() {
     while [ "$1" ]; do
-        find_it $1     append "[exec]   ($1) {$1}"
+        find_it $1     append exec "$1" "$1"
         shift
     done
 }
 
 cli_find() {
     while [ "$1" ]; do
-        find_it $1     append "[exec]   ($1) {${DEFAULT_TERM} -e $1}"
+        find_it $1     append exec "$1" "${DEFAULT_TERM} -e $1"
         shift
     done
 }
@@ -527,32 +535,13 @@ cli_find() {
 sudo_find() {
     [ "${DOSUDO}" = yes ] || return
     while [ "$1" ]; do
-        find_it $1     append "[exec]   ($1 (as root)) {${DEFAULT_TERM} -e sudo $1}"
+        find_it $1     append exec "$1 (as root)" "${DEFAULT_TERM} -e sudo $1"
         shift
     done
 }
 
 clean_up() {
 [ -f "$ICONMAPPING" ] && rm -f "$ICONMAPPING"
-
-# Some magic to clean up empty menus
-rm -f ${MENUFILENAME}.tmp
-touch ${MENUFILENAME}.tmp
-counter=10 # prevent looping in odd circumstances
-until [ $counter -lt 1 ] || \
-    cmp ${MENUFILENAME} ${MENUFILENAME}.tmp >/dev/null 2>&1; do
-    [ -s ${MENUFILENAME}.tmp ] && mv ${MENUFILENAME}.tmp ${MENUFILENAME}
-    counter=`expr $counter - 1`
-    grep -v '^$' ${MENUFILENAME}|sed -e "/^\[submenu].*/{
-n
-N
-/^\[submenu].*\n\[end]/d
-}"|sed -e "/^\[submenu].*/{
-N
-/^\[submenu].*\n\[end]/d
-}" > ${MENUFILENAME}.tmp
-done
-rm -f ${MENUFILENAME}.tmp
 }
 # End functions
 
@@ -1552,104 +1541,105 @@ fi
 
 # Start of menu
 cat << EOF > ${MENUFILENAME}
-# Generated by fluxbox-generate_menu
-#
-# If you read this it means you want to edit this file manually, so here
-# are some useful tips:
-#
-# - You can add your own menu-entries to ~/.@pkgprefix@fluxbox@pkgsuffix@/usermenu
-#
-# - If you miss apps please let me know and I will add them for the next
-#   release.
-#
-# - The -r option prevents removing of empty menu entries and lines which
-#   makes things much more readable.
-#
-# - To prevent any other app from overwriting your menu
-#   you can change the menu name in ~/.@pkgprefix@fluxbox@pkgsuffix@/init to:
-#     session.menuFile: ~/.@pkgprefix@fluxbox@pkgsuffix@/my-menu
+-- Generated by fluxbox-generate_menu
+--
+-- If you read this it means you want to edit this file manually, so here
+-- are some useful tips:
+--
+-- - You can add your own menu-entries to ~/.@pkgprefix@fluxbox@pkgsuffix@/usermenu
+--
+-- - If you miss apps please let me know and I will add them for the next
+--   release.
+--
+-- - The -r option prevents removing of empty menu entries and lines which
+--   makes things much more readable.
+--
+-- - To prevent any other app from overwriting your menu
+--   you can change the menu name in ~/.@pkgprefix@fluxbox@pkgsuffix@/init to:
+--     session.menuFile: ~/.@pkgprefix@fluxbox@pkgsuffix@/my-menu
 
 EOF
 
-echo "[begin] (${MENUTITLE})" >> ${MENUFILENAME}
+{
+    echo "return {"
+    echo "    title = '${MENUTITLE}';"
+    [ -n "$MENU_ENCODING" ] && echo "    encoding = '$MENU_ENCODING';"
+}>> ${MENUFILENAME}
+NEST='    '
 
-if [ -n "$MENU_ENCODING" ]; then
-    append_menu "[encoding] {$MENU_ENCODING}"
-fi
-
-append "[exec] (${DEFAULT_TERMNAME}) {${DEFAULT_TERM}}"
+append exec "${DEFAULT_TERMNAME}" "${DEFAULT_TERM}"
 
 case "$DEFAULT_BROWSERNAME" in
-    links|w3m|lynx)  append "[exec] (${DEFAULT_BROWSERNAME}) {${DEFAULT_TERM} -e ${DEFAULT_BROWSER} ${HOMEPAGE}}" ;;
-    firefox|firebird|mozilla|seamonkey|phoenix|galeon|dillo|netscape|amaya) append "[exec] (${DEFAULT_BROWSERNAME}) {${DEFAULT_BROWSER}}" ;;
-    konqueror) append "[exec] (konqueror) {kfmclient openProfile webbrowsing}" ;;
-    opera) append "[exec] (opera) {env QT_XFT=true opera}" ;;
-    MozillaFirebird) append "[exec] (firebird) {MozillaFirebird}" ;;
-    MozillaFirefox) append "[exec] (firefox) {MozillaFirefox}" ;;
-    *) append "[exec] ($DEFAULT_BROWSERNAME) {$DEFAULT_BROWSER}" ;;
+    links|w3m|lynx)  append exec "${DEFAULT_BROWSERNAME}" "${DEFAULT_TERM} -e ${DEFAULT_BROWSER} ${HOMEPAGE}" ;;
+    firefox|firebird|mozilla|seamonkey|phoenix|galeon|dillo|netscape|amaya) append exec "${DEFAULT_BROWSERNAME}" "${DEFAULT_BROWSER}" ;;
+    konqueror) append exec "konqueror" "kfmclient openProfile webbrowsing" ;;
+    opera) append exec "opera" "env QT_XFT=true opera" ;;
+    MozillaFirebird) append exec "firebird" "MozillaFirebird" ;;
+    MozillaFirefox) append exec "firefox" "MozillaFirefox" ;;
+    *) append exec "$DEFAULT_BROWSERNAME" "$DEFAULT_BROWSER" ;;
 esac
 
-find_it "${LAUNCHER}" append "[exec]   (${RUNCOMMAND}) {$LAUNCHER_CMD}"
+find_it "${LAUNCHER}" append exec "${RUNCOMMAND}" "$LAUNCHER_CMD"
 
 
-append_submenu "${TERMINALMENU}"
+append_menu "${TERMINALMENU}"
     normal_find xterm urxvt urxvtc gnome-terminal multi-gnome-terminal Eterm \
         konsole aterm mlterm multi-aterm rxvt mrxvt
 append_menu_end
 
 
-append_submenu "${NETMENU}"
-    append_submenu "${BROWSERMENU}"
+append_menu "${NETMENU}"
+    append_menu "${BROWSERMENU}"
         normal_find firefox mozilla-firefox MozillaFirefox galeon mozilla seamonkey dillo netscape vncviewer
-        find_it links       append "[exec]   (links-graphic) {links -driver x ${HOMEPAGE}}"
-        find_it opera       append "[exec]   (opera) {env QT_XFT=true opera}"
-        find_it konqueror   append "[exec]   (konqueror) {kfmclient openProfile webbrowsing}"
-        find_it links       append "[exec]   (links) {${DEFAULT_TERM} -e links ${HOMEPAGE}}"
-        find_it w3m         append "[exec]   (w3m) {${DEFAULT_TERM} -e w3m ${HOMEPAGE}}"
-        find_it lynx        append "[exec]   (lynx) {${DEFAULT_TERM} -e lynx ${HOMEPAGE}}"
+        find_it links       append exec "links-graphic" "links -driver x ${HOMEPAGE}"
+        find_it opera       append exec "opera" "env QT_XFT=true opera"
+        find_it konqueror   append exec "konqueror" "kfmclient openProfile webbrowsing"
+        find_it links       append exec "links" "${DEFAULT_TERM} -e links ${HOMEPAGE}"
+        find_it w3m         append exec "w3m" "${DEFAULT_TERM} -e w3m ${HOMEPAGE}"
+        find_it lynx        append exec "lynx" "${DEFAULT_TERM} -e lynx ${HOMEPAGE}"
     append_menu_end
 
-    append_submenu IM
+    append_menu IM
         normal_find pidgin gaim kopete gnomemeeting sim kadu psi amsn aim ayttm everybuddy gabber ymessenger
-        find_it licq        append "[exec]   (licq) {env QT_XFT=true licq}"
+        find_it licq        append exec "licq" "env QT_XFT=true licq"
         cli_find centericq micq
     append_menu_end
 
-    append_submenu Mail
+    append_menu Mail
         normal_find sylpheed kmail evolution thunderbird mozilla-thunderbird \
             sylpheed-claws claws-mail
         cli_find mutt pine
     append_menu_end
 
-    append_submenu News
+    append_menu News
         normal_find liferea pears pan
         cli_find slrn tin
     append_menu_end
 
-    append_submenu IRC
+    append_menu IRC
         normal_find xchat xchat-2 ksirc vyqchat lostirc logui konversation kvirc skype
         cli_find irssi epic4 weechat ninja
-        find_it BitchX        append "[exec]   (BitchX) {${DEFAULT_TERM} -e BitchX -N}" || \
-        find_it bitchx        append "[exec]   (BitchX) {${DEFAULT_TERM} -e bitchx -N}"
-        find_it ircii         append "[exec]   (ircii) {${DEFAULT_TERM} -e ircii -s}"
+        find_it BitchX        append exec "BitchX" "${DEFAULT_TERM} -e BitchX -N" || \
+        find_it bitchx        append exec "BitchX" "${DEFAULT_TERM} -e bitchx -N"
+        find_it ircii         append exec "ircii" "${DEFAULT_TERM} -e ircii -s"
     append_menu_end
 
-    append_submenu P2P
+    append_menu P2P
         normal_find gtk-gnutella lopster nicotine pyslsk xmule amule \
             valknut dcgui-qt dc_qt quickdc asami azureus
         cli_find TekNap giFTcurs
     append_menu_end
 
-    append_submenu FTP
+    append_menu FTP
         normal_find gftp IglooFTP-PRO kbear
         cli_find ncftp pftp ftp lftp yafc
     append_menu_end
 
-    append_submenu SMB
+    append_menu SMB
       normal_find LinNeighborhood jags SambaSentinel
     append_menu_end
 
-    append_submenu "${ANALYZERMENU}"
+    append_menu "${ANALYZERMENU}"
 	  normal_find xnmap nmapfe wireshark ettercap
 	  sudo_find xnmap nmapfe wireshark ettercap
     append_menu_end
@@ -1658,41 +1648,41 @@ append_submenu "${NETMENU}"
 
 append_menu_end
 
-append_submenu "${EDITORMENU}"
+append_menu "${EDITORMENU}"
     normal_find gvim bluefish nedit gedit xedit kword kwrite kate anjuta \
         wings xemacs emacs kvim cream evim scite Ted
     cli_find nano vim vi zile jed joe
-    find_it     emacs  append "[exec]   (emacs-nw) {${DEFAULT_TERM} -e emacs -nw}"
-    find_it     xemacs append "[exec]   (xemacs-nw) {${DEFAULT_TERM} -e xemacs -nw}"
+    find_it     emacs  append exec "emacs-nw" "${DEFAULT_TERM} -e emacs -nw"
+    find_it     xemacs append exec "xemacs-nw" "${DEFAULT_TERM} -e xemacs -nw"
 append_menu_end
 
-append_submenu "${EDUCATIONMENU}"
+append_menu "${EDUCATIONMENU}"
     normal_find celestia scilab geomview scigraphica oregano xcircuit electric \
         pymol elem chemtool xdrawchem gperiodic stellarium   
-    find_it drgeo          append "[exec] (Dr. Geo) {drgeo}"
-    find_it     R          append "[exec] (R) {${DEFAULT_TERM} -e R --gui=gnome}"
+    find_it drgeo          append exec "Dr. Geo" "drgeo"
+    find_it     R          append exec "R" "${DEFAULT_TERM} -e R --gui=gnome"
     cli_find maxima grace yacas octave gnuplot grass coq acl
 append_menu_end
 
-append_submenu "${FILEUTILSMENU}"
-    find_it     konqueror append "[exec] (konqueror) {kfmclient openProfile filemanagement}"
+append_menu "${FILEUTILSMENU}"
+    find_it     konqueror append exec "konqueror" "kfmclient openProfile filemanagement"
     normal_find gentoo krusader kcommander linuxcmd rox tuxcmd krename xfe xplore worker endeavour2 evidence
-    find_it     nautilus append "[exec] (nautilus) {nautilus --no-desktop --browser}"
+    find_it     nautilus append exec "nautilus" "nautilus --no-desktop --browser"
     cli_find mc
 append_menu_end
 
-append_submenu "${MULTIMEDIAMENU}"
-       append_submenu "${GRAPHICMENU}"
+append_menu "${MULTIMEDIAMENU}"
+       append_menu "${GRAPHICMENU}"
                normal_find gimp gimp2 gimp-2.2 inkscape sodipodi xv gqview showimg xpaint kpaint kiconedit \
                    ee xzgv xscreensaver-demo xlock gphoto tuxpaint krita skencil
-               find_it xnview           append "[exec] (xnview browser) {xnview -browser}"
-               find_it blender          append "[exec] (blender) {blender -w}"
-               find_it gears            append "[exec] (Mesa gears) {gears}"
-               find_it morph3d          append "[exec] (Mesa morph) {morph3d}"
-               find_it reflect          append "[exec] (Mesa reflect) {reflect}"
+               find_it xnview           append exec "xnview browser" "xnview -browser"
+               find_it blender          append exec "blender" "blender -w"
+               find_it gears            append exec "Mesa gears" "gears"
+               find_it morph3d          append exec "Mesa morph" "morph3d"
+               find_it reflect          append exec "Mesa reflect" "reflect"
        append_menu_end
 
-       append_submenu "${MUSICMENU}"
+       append_menu "${MUSICMENU}"
                normal_find xmms noatun alsaplayer gqmpeg aumix xmixer gnome-alsamixer gmix kmix kscd \
                    grecord kmidi xplaycd soundtracker grip easytag audacity \
                    zinf rhythmbox kaboodle beep-media-player amarok tagtool \
@@ -1701,52 +1691,52 @@ append_submenu "${MULTIMEDIAMENU}"
        append_menu_end
 
 
-       append_submenu "${VIDEOMENU}"
+       append_menu "${VIDEOMENU}"
            normal_find xine gxine aviplay gtv gmplayer xmovie xcdroast xgdb \
                realplay xawtv fxtv ogle goggles vlc
-           find_it dvdrip append "[exec] (dvdrip) {nohup dvdrip}"
+           find_it dvdrip append exec "dvdrip" "nohup dvdrip"
        append_menu_end
 
-       append_submenu "${XUTILSMENU}"
+       append_menu "${XUTILSMENU}"
            normal_find xfontsel xman xload xbiff editres viewres xclock \
                xmag wmagnify gkrellm gkrellm2 vmware portagemaster agave 
-           find_it xrdb append "[exec] (Reload .Xdefaults) {xrdb -load \$HOME/.Xdefaults}"
+           find_it xrdb append exec "Reload .Xdefaults" "xrdb -load \$HOME/.Xdefaults"
        append_menu_end
 append_menu_end
 
 
-append_submenu "${OFFICEMENU}"
+append_menu "${OFFICEMENU}"
     normal_find xclock xcalc kcalc grisbi qbankmanager evolution
-    find_it gcalc           append "[exec] (gcalc) {gcalc}" || \
-        find_it gnome-calculator append "[exec] (gcalc) {gnome-calculator}"
-    find_it ical            append "[exec] (Calendar)   {ical}"
+    find_it gcalc           append exec "gcalc" "gcalc" || \
+        find_it gnome-calculator append exec "gcalc" "gnome-calculator"
+    find_it ical            append exec "Calendar"   "ical"
 
     # older <=1.1.3 apparently have stuff like swriter, not sowriter
     for ext in s so oo xoo; do
         find_it ${ext}ffice2 && (
-            find_it ${ext}ffice2        append "[exec] (Open Office 2)  {${ext}ffice2}"
-            find_it ${ext}base2         append "[exec] (OO Base 2)      {${ext}base2}"
-            find_it ${ext}calc2         append "[exec] (OO Calc 2)      {${ext}calc2}"
-            find_it ${ext}writer2       append "[exec] (OO Writer 2)    {${ext}writer2}"
-            find_it ${ext}web2          append "[exec] (OO Web 2)       {${ext}web2}"
-            find_it ${ext}html2         append "[exec] (OO HTML 2)      {${ext}html2}"
-            find_it ${ext}impress2      append "[exec] (OO Impress 2)   {${ext}impress2}"
-            find_it ${ext}draw2         append "[exec] (OO Draw 2)      {${ext}draw2}"
-            find_it ${ext}math2         append "[exec] (OO Math 2)      {${ext}math2}"
-            find_it ${ext}fromtemplate2 append "[exec] (OO Templates 2) {${ext}fromtemplate2}"
+            find_it ${ext}ffice2        append exec "Open Office 2"  "${ext}ffice2"
+            find_it ${ext}base2         append exec "OO Base 2"      "${ext}base2"
+            find_it ${ext}calc2         append exec "OO Calc 2"      "${ext}calc2"
+            find_it ${ext}writer2       append exec "OO Writer 2"    "${ext}writer2"
+            find_it ${ext}web2          append exec "OO Web 2"       "${ext}web2"
+            find_it ${ext}html2         append exec "OO HTML 2"      "${ext}html2"
+            find_it ${ext}impress2      append exec "OO Impress 2"   "${ext}impress2"
+            find_it ${ext}draw2         append exec "OO Draw 2"      "${ext}draw2"
+            find_it ${ext}math2         append exec "OO Math 2"      "${ext}math2"
+            find_it ${ext}fromtemplate2 append exec "OO Templates 2" "${ext}fromtemplate2"
         )
         find_it ${ext}ffice && (
-            find_it ${ext}ffice        append "[exec] (Open Office)      {${ext}ffice}"
-            find_it ${ext}base         append "[exec] (OO Base)          {${ext}base}"
-            find_it ${ext}calc         append "[exec] (OO Calc)          {${ext}calc}"
-            find_it ${ext}writer       append "[exec] (OO Writer)        {${ext}writer}"
-            find_it ${ext}web          append "[exec] (OO Web)           {${ext}web}"
-            find_it ${ext}impress      append "[exec] (OO Impress)       {${ext}impress}"
-            find_it ${ext}draw         append "[exec] (OO Draw)          {${ext}draw}"
-            find_it ${ext}math         append "[exec] (OO Math)          {${ext}math}"
-            find_it ${ext}fromtemplate append "[exec] (OO Templates)     {${ext}fromtemplate}"
-            find_it ${ext}padmin       append "[exec] (OO Printer Admin) {${ext}padmin}"
-            find_it mrproject          append "[exec] (Mr.Project)       {mrproject}"
+            find_it ${ext}ffice        append exec "Open Office"      "${ext}ffice"
+            find_it ${ext}base         append exec "OO Base"          "${ext}base"
+            find_it ${ext}calc         append exec "OO Calc"          "${ext}calc"
+            find_it ${ext}writer       append exec "OO Writer"        "${ext}writer"
+            find_it ${ext}web          append exec "OO Web"           "${ext}web"
+            find_it ${ext}impress      append exec "OO Impress"       "${ext}impress"
+            find_it ${ext}draw         append exec "OO Draw"          "${ext}draw"
+            find_it ${ext}math         append exec "OO Math"          "${ext}math"
+            find_it ${ext}fromtemplate append exec "OO Templates"     "${ext}fromtemplate"
+            find_it ${ext}padmin       append exec "OO Printer Admin" "${ext}padmin"
+            find_it mrproject          append exec "Mr.Project"       "mrproject"
         )
     done
 
@@ -1755,7 +1745,7 @@ append_submenu "${OFFICEMENU}"
     normal_find gnumeric
 append_menu_end
 
-append_submenu "${GAMESMENU}"
+append_menu "${GAMESMENU}"
     normal_find bzflag gnibbles gnobots2 tuxpuck gataxx glines \
         gnect mahjongg gnomine gnome-stones gnometris gnotravex \
         gnotski iagno knights eboard xboard scid freecell pysol \
@@ -1770,14 +1760,14 @@ append_submenu "${GAMESMENU}"
         torrent scramble kiki xmoto warsow wormux zsnes
     cli_find gnugo xgame
 
-    find_it et append "[exec] (Enemy Territory) {et}"
-    find_it ut append "[exec] (Unreal Tournament) {ut}"
-    find_it ut2003 append "[exec] (Unreal Tournament 2003) {ut2003}"
-    find_it ut2004 append "[exec] (Unreal Tournament 2004) {ut2004}"
+    find_it et append exec "Enemy Territory" "et"
+    find_it ut append exec "Unreal Tournament" "ut"
+    find_it ut2003 append exec "Unreal Tournament 2003" "ut2003"
+    find_it ut2004 append exec "Unreal Tournament 2004" "ut2004"
 append_menu_end
 
-append_submenu "${SYSTEMTOOLSMENU}"
-  append_submenu "${BURNINGMENU}"
+append_menu "${SYSTEMTOOLSMENU}"
+  append_menu "${BURNINGMENU}"
     normal_find k3b cdbakeoven graveman xcdroast arson eroaster gcombust \
                 gtoaster kiso kover gtkcdlabel kcdlabel cdw cdlabelgen 
     cli_find     mp3burn cdrx burncenter
@@ -1785,7 +1775,7 @@ append_submenu "${SYSTEMTOOLSMENU}"
 
   normal_find firestarter gtk-lshw gproftd gpureftpd guitoo porthole gtk-iptables \
               gtk-cpuspeedy
-  find_it    fireglcontrol   append "[exec] (ATI Config) {fireglcontrol}"
+  find_it    fireglcontrol   append exec "ATI Config" "fireglcontrol"
   cli_find    top htop iotop ntop powertop
 append_menu_end
 
@@ -1797,7 +1787,7 @@ ETCAPPLNK=/etc/X11/applnk
 PARSING_DESKTOP="true"
 # gnome menu
 if [ "${GNOMEMENU}" ]; then
-    append_submenu "${GNOMEMENUTEXT}"
+    append_menu "${GNOMEMENUTEXT}"
     recurse_dir_menu "${GNOME_PREFIX}/share/gnome/apps" "$HOME/.gnome/apps" ${ETCAPPLNK}
     append_menu_end
     unset ETCAPPLNK
@@ -1805,7 +1795,7 @@ fi
 
 # kde submenu
 if [ -d "${KDE_PREFIX}/share/applnk/" -a "${KDEMENU}" ]; then
-    append_submenu "${KDEMENUTEXT}"
+    append_menu "${KDEMENUTEXT}"
     recurse_dir_menu "${KDE_PREFIX}/share/applnk" "$HOME/.kde/share/applnk" ${ETCAPPLNK}
     append_menu_end
     unset ETCAPPLNK
@@ -1817,39 +1807,39 @@ if [ -r "${USERMENU}" ]; then
     cat ${USERMENU} >> ${MENUFILENAME}
 fi
 
-append_submenu "${FBSETTINGSMENU}"
-    append "[config] (${CONFIGUREMENU})"
+append_menu "${FBSETTINGSMENU}"
+    append config "${CONFIGUREMENU}"
 
-    append_menu "[submenu] (${SYSTEMSTYLES}) {${STYLEMENUTITLE}}"
-        append "[stylesdir] (${PREFIX}/share/fluxbox/styles)"
+    append_menu "${SYSTEMSTYLES}" "${STYLEMENUTITLE}"
+        append stylesdir "${PREFIX}/share/fluxbox/styles"
     append_menu_end
 
-    append_menu "[submenu] (${USERSTYLES}) {${STYLEMENUTITLE}}"
-        append "[stylesdir] (~/.@pkgprefix@fluxbox@pkgsuffix@/styles)"
+    append_menu "${USERSTYLES}" "${STYLEMENUTITLE}"
+        append stylesdir "~/.@pkgprefix@fluxbox@pkgsuffix@/styles"
     append_menu_end
 
     # Backgroundmenu
     addbackground() {
                 picturename=`basename "$1"`
-                append "[exec] (${picturename%.???}) {@pkgprefix@fbsetbg@pkgsuffix@ -a \"$1\" }"
+                append exec "${picturename%.???}" "@pkgprefix@fbsetbg@pkgsuffix@ -a \"$1\""
     }
 
     if [ "$BACKGROUNDMENUITEM" = yes ]; then
         IFS=: # set delimetor for find
         NUMBER_OF_BACKGROUNDS=`find $BACKGROUND_DIRS -follow -type f 2> /dev/null|wc -l`
         if [ "$NUMBER_OF_BACKGROUNDS" -gt 0 ]; then
-            append_menu "[submenu] (${BACKGROUNDMENU}) {${BACKGROUNDMENUTITLE}}"
-            append "[exec] (${RANDOMBACKGROUND}) {@pkgprefix@fbsetbg@pkgsuffix@ -r ${USERFLUXDIR}/backgrounds}"
+            append_menu "${BACKGROUNDMENU}" "${BACKGROUNDMENUTITLE}"
+            append exec "${RANDOMBACKGROUND}" "@pkgprefix@fbsetbg@pkgsuffix@ -r ${USERFLUXDIR}/backgrounds"
             if [ "$NUMBER_OF_BACKGROUNDS" -gt 30 ]; then
                 menucounter=1 ; counter=1
-                append_menu "[submenu] (${BACKGROUNDMENU} $menucounter) {${BACKGROUNDMENUTITLE}}"
+                append_menu "${BACKGROUNDMENU} $menucounter" "${BACKGROUNDMENUTITLE}"
                 find $BACKGROUND_DIRS -follow -type f|sort|while read i; do
                     counter=`expr $counter + 1`
                     if [ $counter -eq 30 ]; then
                         counter=1
                         menucounter=`expr $menucounter + 1`
                         append_menu_end
-                        append_menu "[submenu] (${BACKGROUNDMENU} $menucounter) {${BACKGROUNDMENUTITLE}}"
+                        append_menu "${BACKGROUNDMENU} $menucounter" "${BACKGROUNDMENUTITLE}"
                     fi
                     addbackground "$i"
                 done
@@ -1866,47 +1856,43 @@ append_submenu "${FBSETTINGSMENU}"
         fi
     fi
 
-    append "[workspaces] (${WORKSPACEMENU})"
+    append workspaces "${WORKSPACEMENU}"
 
-    append_submenu "${TOOLS}"
+    append_menu "${TOOLS}"
         normal_find fluxconf fluxkeys fluxmenu
-        find_it fbpanel append "[exec] (Fluxbox panel) {fbpanel}"
+        find_it fbpanel append exec "Fluxbox panel" "fbpanel"
         find_it $XMESSAGE append \
-            "[exec] (${WINDOWNAME}) {xprop WM_CLASS|cut -d \\\" -f 2|$XMESSAGE -file - -center}"
-        find_it import append "[exec] (${SCREENSHOT} - JPG) {import screenshot.jpg && display -resize 50% screenshot.jpg}"
-        find_it import append "[exec] (${SCREENSHOT} - PNG) {import screenshot.png && display -resize 50% screenshot.png}"
-        find_it ${LAUNCHER} append "[exec] (${RUNCOMMAND}) {$LAUNCHER_CMD}"
-        find_it switch append "[exec] (gtk-theme-switch) {switch}"
-        find_it switch2 append "[exec] (gtk2-theme-switch) {switch2}"
-        find_it @pkgprefix@fluxbox-generate_menu@pkgsuffix@ append "[exec] (${REGENERATEMENU}) {$FBGM_CMD}"
+            exec "${WINDOWNAME}" "xprop WM_CLASS|cut -d \\\" -f 2|$XMESSAGE -file - -center"
+        find_it import append exec "${SCREENSHOT} - JPG" "import screenshot.jpg && display -resize 50% screenshot.jpg"
+        find_it import append exec "${SCREENSHOT} - PNG" "import screenshot.png && display -resize 50% screenshot.png"
+        find_it ${LAUNCHER} append exec "${RUNCOMMAND}" "$LAUNCHER_CMD"
+        find_it switch append exec "gtk-theme-switch" "switch"
+        find_it switch2 append exec "gtk2-theme-switch" "switch2"
+        find_it @pkgprefix@fluxbox-generate_menu@pkgsuffix@ append exec "${REGENERATEMENU}" "$FBGM_CMD"
     append_menu_end
 
-    append_submenu "${WINDOWMANAGERS}"
+    append_menu "${WINDOWMANAGERS}"
     #hard to properly maintain since there are so many exceptions to the rule.
     for wm in mwm twm wmii beryl compiz metacity icewm ion kde sawfish enlightenment fvwm openbox evilwm waimea xfce pekwm xfce4 fvwm2 blackbox ; do
-        find_it start${wm} append "[restart] (${wm}) {start${wm}}" ||\
-            find_it ${wm} append "[restart] (${wm}) {${wm}}"
+        find_it start${wm} append restart "${wm}" "start${wm}" ||\
+            find_it ${wm} append restart "${wm}" "${wm}"
     done
-        find_it startgnome append "[restart] (gnome) {startgnome}" ||\
-            find_it gnome-session append "[restart] (gnome) {gnome-session}"
+        find_it startgnome append restart "gnome" "startgnome" ||\
+            find_it gnome-session append restart "gnome" "gnome-session"
 
-        find_it startwindowmaker append "[restart] (windowmaker) {startwindowmaker}" ||\
-            find_it wmaker append "[restart] (windowmaker) {wmaker}"
+        find_it startwindowmaker append restart "windowmaker" "startwindowmaker" ||\
+            find_it wmaker append restart "windowmaker" "wmaker"
     append_menu_end
-    find_it xlock append "[exec] (${LOCKSCREEN}) {xlock}" ||\
-        find_it xscreensaver-command append "[exec] (${LOCKSCREEN}) {xscreensaver-command -lock}"
-    append "[commanddialog] (${FLUXBOXCOMMAND})"
-    append "[reconfig] (${RELOADITEM})"
-    append "[restart] (${RESTARTITEM})"
-    append "[exec] (${ABOUTITEM}) {(@pkgprefix@fluxbox@pkgsuffix@@EXEEXT@ -v; @pkgprefix@fluxbox@pkgsuffix@@EXEEXT@ -info | sed 1d) | $XMESSAGE -file - -center}"
-    append "[separator]"
-    append "[exit] (${EXITITEM})"
+    find_it xlock append exec "${LOCKSCREEN}" "xlock" ||\
+        find_it xscreensaver-command append exec "${LOCKSCREEN}" "xscreensaver-command -lock"
+    append command "${FLUXBOXCOMMAND}" commanddialog
+    append command "${RELOADITEM}" reconfig
+    append command "${RESTARTITEM}" restart
+    append exec "${ABOUTITEM}" "(@pkgprefix@fluxbox@pkgsuffix@@EXEEXT@ -v; @pkgprefix@fluxbox@pkgsuffix@@EXEEXT@ -info | sed 1d) | $XMESSAGE -file - -center"
+    append separator
+    append exit "${EXITITEM}"
 
     append_menu_end
-
-if [ -n "$MENU_ENCODING" ]; then
-    append_menu "[endencoding]"
-fi
 
 append_menu_end
 
