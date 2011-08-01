@@ -1149,28 +1149,8 @@ string Fluxbox::getDefaultDataFilename(const char *name) const {
 
 /// loads resources
 void Fluxbox::load_rc() {
-    _FB_USES_NLS;
-    lua::stack_sentry s(*m_l);
 
-    string dbfile(getRcFilename());
-
-    try {
-        m_l->loadfile(dbfile.c_str());
-        m_l->call(0, 0);
-    }
-    catch(lua::exception &e) {
-        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<dbfile<<endl;
-        cerr<<"Fluxbox: "<<e.what()<<endl;
-        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with", "Retrying rc file loading with (the following file)")<<": "<<DEFAULT_INITFILE<<endl;
-        try {
-            m_l->loadfile(DEFAULT_INITFILE);
-            m_l->call(0, 0);
-        }
-        catch(lua::exception &e) {
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
-            cerr<<"Fluxbox: "<<e.what()<<endl;
-        }
-    }
+    m_resourcemanager.load(getRcFilename(), DEFAULT_INITFILE);
 
     if (m_rc_menufile->empty())
         m_rc_menufile.setDefaultValue();

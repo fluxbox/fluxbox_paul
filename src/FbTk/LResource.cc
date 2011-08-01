@@ -24,6 +24,7 @@
 
 #include "LResource.hh"
 
+#include "I18n.hh"
 #include "LuaUtil.hh"
 #include "Resource.hh"
 
@@ -105,9 +106,42 @@ LResourceManager::LResourceManager(const std::string &root, Lua &l)
     setLua(l);
 }
 
+void LResourceManager::load(const std::string &filename, const std::string &fallback) {
+    _FB_USES_NLS;
+    m_l->checkstack(1);
+    lua::stack_sentry s(*m_l);
+
+    m_filename = filename;
+
+    try {
+        m_l->loadfile(filename.c_str());
+        m_l->call(0, 0);
+    }
+    catch(lua::exception &e) {
+        std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database",
+                "Failed trying to read rc file") << ":" << filename << std::endl;
+        std::cerr << "Fluxbox: " << e.what() << std::endl;
+        std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with",
+                "Retrying rc file loading with (the following file)")
+            << ": " << fallback << std::endl;
+        try {
+            m_l->loadfile(fallback.c_str());
+            m_l->call(0, 0);
+        }
+        catch(lua::exception &e) {
+            std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")
+                << ": " << fallback << std::endl;
+            std::cerr << "Fluxbox: " << e.what() << std::endl;
+        }
+    }
+}
+
 bool LResourceManager::save(const char *filename, const char *) {
     m_l->checkstack(3);
     lua::stack_sentry s(*m_l);
+
+    if(filename == NULL)
+        filename = m_filename.c_str();
 
     m_l->getfield(lua::REGISTRYINDEX, dump_resources);
     m_l->getfield(lua::GLOBALSINDEX, m_root.c_str());
