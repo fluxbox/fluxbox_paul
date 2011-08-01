@@ -45,7 +45,7 @@ libFbTk_a_SOURCES = App.hh App.cc Color.cc Color.hh Command.hh \
 	MultLayers.cc MultLayers.hh \
 	Layer.cc Layer.hh LayerItem.cc LayerItem.hh \
 	Resource.hh Resource.cc \
-	StringUtil.hh StringUtil.cc Parser.hh Parser.cc \
+	StringUtil.hh StringUtil.cc \
 	RegExp.hh RegExp.cc \
 	FbString.hh FbString.cc \
 	AutoReloadHelper.hh AutoReloadHelper.cc \

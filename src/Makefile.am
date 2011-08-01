@@ -136,7 +136,6 @@ fluxbox_SOURCES = AtomHandler.hh ArrowButton.hh ArrowButton.cc \
 	TextDialog.hh TextDialog.cc \
 	CommandDialog.hh CommandDialog.cc SendToMenu.hh SendToMenu.cc \
 	AlphaMenu.hh AlphaMenu.cc \
-	FbMenuParser.hh FbMenuParser.cc \
 	StyleMenuItem.hh StyleMenuItem.cc \
 	RootCmdMenuItem.hh RootCmdMenuItem.cc\
 	MenuCreator.hh MenuCreator.cc \
