@@ -38,6 +38,7 @@ public:
     static void convert(ResourceManager &old, const std::string &new_file);
 
     LResourceManager(const std::string &root, Lua &l);
+    void load(const std::string &filename, const std::string &fallback);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
@@ -48,6 +49,7 @@ private:
     void doRemoveResource(Resource_base &r);
 
     Lua *m_l;
+    std::string m_filename;
 };
 
 } // end namespace FbTk
