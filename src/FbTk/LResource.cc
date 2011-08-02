@@ -26,8 +26,11 @@
 
 #include "I18n.hh"
 #include "LuaUtil.hh"
+#include "MemFun.hh"
 #include "Resource.hh"
 
+// defined in LResourceHelper-lua.cc
+// contains the compiled code of LResourceHelper.lua
 extern const char LResourceHelper[];
 extern const unsigned int LResourceHelper_size;
 
@@ -101,8 +104,15 @@ void LResourceManager::convert(ResourceManager &old, const std::string &new_file
     new_rm.save(new_file.c_str(), NULL);
 }
 
-LResourceManager::LResourceManager(const std::string &root, Lua &l)
-        : ResourceManager_base(root), m_l(&l) {
+LResourceManager::LResourceManager(const std::string &root, Lua &l, unsigned int autosave)
+    : ResourceManager_base(root), m_l(&l) {
+
+    m_savetimer.setInterval(autosave);
+    m_savetimer.fireOnce(true);
+    m_savetimer.setFunctor( MemFunBind(*this, &LResourceManager::save,
+                static_cast<const char *>(NULL), static_cast<const char *>(NULL)
+            ) );
+
     setLua(l);
 }
 
@@ -142,6 +152,8 @@ bool LResourceManager::save(const char *filename, const char *) {
 
     if(filename == NULL)
         filename = m_filename.c_str();
+
+    std::cerr << "XXX SAVING " << filename << std::endl;
 
     m_l->getfield(lua::REGISTRYINDEX, dump_resources);
     m_l->getfield(lua::GLOBALSINDEX, m_root.c_str());
@@ -192,6 +204,11 @@ void LResourceManager::doRemoveResource(Resource_base &r) {
     m_l->call(3, 1);
     *static_cast<Resource_base **>(m_l->touserdata(-1)) = NULL;
     m_l->pop();
+}
+
+void LResourceManager::resourceChanged(Resource_base &r) {
+    if(! m_savetimer.isTiming())
+        m_savetimer.start();
 }
 
 void LResourceManager::setLua(Lua &l) {

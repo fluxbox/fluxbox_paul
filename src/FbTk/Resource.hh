@@ -96,8 +96,6 @@ public:
     /// @return true on success
     virtual bool save(const char *filename, const char *mergefilename=0) = 0;
 
-
-
     /// Add resource to list, only used in Resource<T>
     virtual void addResource(Resource_base &r);
 
@@ -105,6 +103,9 @@ public:
     virtual void removeResource(Resource_base &r) {
         m_resourcelist.remove(&r);
     }
+
+    /// Called by Resources when their value changes
+    virtual void resourceChanged(Resource_base &r) = 0;
 
     /// searches for the resource with the resourcename
     /// @return pointer to resource base on success, else 0.
@@ -153,6 +154,8 @@ public:
 
     /// Add resource to list, only used in Resource<T>
     virtual void addResource(Resource_base &r);
+
+    virtual void resourceChanged(Resource_base &r) {};
 
     // this marks the database as "in use" and will avoid reloading
     // resources unless it is zero.
@@ -211,12 +214,14 @@ public:
 
     void setDefaultValue() {
         m_value = m_defaultval;
+        m_rm.resourceChanged(*this);
         m_modified_sig.emit(m_value);
     }
     /// sets resource from string, specialized, must be implemented
     void setFromString(const char *strval) {
         try {
             m_value = Traits::fromString(strval);
+            m_rm.resourceChanged(*this);
             m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {
@@ -226,6 +231,7 @@ public:
     }
     Accessor<T> &operator =(const T& newvalue) {
         m_value = newvalue;
+        m_rm.resourceChanged(*this);
         m_modified_sig.emit(m_value);
         return *this;
     }
@@ -236,6 +242,7 @@ public:
     virtual void setFromLua(lua::state &l) {
         try {
             m_value = Traits::fromLua(l);
+            m_rm.resourceChanged(*this);
             m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {

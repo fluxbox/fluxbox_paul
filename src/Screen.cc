@@ -184,9 +184,8 @@ int calcSquareDistance(int x1, int y1, int x2, int y2) {
 class TabPlacementMenuItem: public FbTk::RadioMenuItem {
 public:
     TabPlacementMenuItem(const FbTk::FbString & label, BScreen &screen,
-                         FbWinFrame::TabPlacement place,
-                         FbTk::RefCount<FbTk::Command<void> > &cmd):
-        FbTk::RadioMenuItem(label, cmd),
+                         FbWinFrame::TabPlacement place):
+        FbTk::RadioMenuItem(label),
         m_screen(screen),
         m_place(place) {
         setCloseOnClick(false);
@@ -1442,15 +1441,8 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     menu.removeAll();
 
-    FbTk::MacroCommand *s_a_reconf_macro = new FbTk::MacroCommand();
-    FbTk::RefCount<FbTk::Command<void> > saverc_cmd(new FbTk::SimpleCommand<Fluxbox>(
-                                                 *Fluxbox::instance(),
-                                                 &Fluxbox::save_rc));
     FbTk::RefCount<FbTk::Command<void> > reconf_cmd(FbTk::CommandParser<void>::instance().parse("reconfigure"));
 
-    s_a_reconf_macro->add(saverc_cmd);
-    s_a_reconf_macro->add(reconf_cmd);
-    FbTk::RefCount<FbTk::Command<void> > save_and_reconfigure(s_a_reconf_macro);
     // create focus menu
     // we don't set this to internal menu so will
     // be deleted toghether with the parent
@@ -1459,12 +1451,12 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
                                           "Method used to give focus to windows");
     FbTk::RefCount<FbTk::Menu> focus_menu( createMenu(focusmenu_label) );
 
-#define _BOOLITEM(m,a, b, c, d, e, f) (m).insert(new FbTk::BoolMenuItem(_FB_XTEXT(a, b, c, d), e, f))
+#define _BOOLITEM(m,a, b, c, d, e) (m).insert(new FbTk::BoolMenuItem(_FB_XTEXT(a, b, c, d), e))
 
 
 #define _FOCUSITEM(a, b, c, d, e) \
     focus_menu->insert(new FocusModelMenuItem(_FB_XTEXT(a, b, c, d), focusControl(), \
-                                              e, save_and_reconfigure))
+                                              e, reconf_cmd))
 
     _FOCUSITEM(Configmenu, ClickFocus,
                "Click To Focus", "Click to focus",
@@ -1482,27 +1474,26 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     focus_menu->insert(new FbTk::MenuSeparator());
     focus_menu->insert(new TabFocusModelMenuItem(_FB_XTEXT(Configmenu,
         ClickTabFocus, "ClickTabFocus", "Click tab to focus windows"),
-        focusControl(), FocusControl::CLICKTABFOCUS, save_and_reconfigure));
+        focusControl(), FocusControl::CLICKTABFOCUS, reconf_cmd));
     focus_menu->insert(new TabFocusModelMenuItem(_FB_XTEXT(Configmenu,
         MouseTabFocus, "MouseTabFocus", "Hover over tab to focus windows"),
-        focusControl(), FocusControl::MOUSETABFOCUS, save_and_reconfigure));
+        focusControl(), FocusControl::MOUSETABFOCUS, reconf_cmd));
     focus_menu->insert(new FbTk::MenuSeparator());
 
     try {
         focus_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Configmenu, FocusNew,
             "Focus New Windows", "Focus newly created windows"),
-            m_resource_manager.getResource<bool, FbTk::BoolTraits>(name() + ".focusNewWindows"),
-            saverc_cmd));
+            m_resource_manager.getResource<bool, FbTk::BoolTraits>(name() + ".focusNewWindows")));
     } catch (FbTk::ResourceException e) {
         cerr<<e.what()<<endl;
     }
 
     _BOOLITEM(*focus_menu, Configmenu, AutoRaise,
               "Auto Raise", "Auto Raise windows on sloppy",
-              resource.auto_raise, saverc_cmd);
+              resource.auto_raise);
     _BOOLITEM(*focus_menu, Configmenu, ClickRaises,
               "Click Raises", "Click Raises",
-              resource.click_raises, saverc_cmd);
+              resource.click_raises);
 
     focus_menu->updateMenu();
 
@@ -1518,17 +1509,17 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     _BOOLITEM(*maxmenu, Configmenu, FullMax,
               "Full Maximization", "Maximise over slit, toolbar, etc",
-              resource.full_max, saverc_cmd);
+              resource.full_max);
     _BOOLITEM(*maxmenu, Configmenu, MaxIgnoreInc,
               "Ignore Resize Increment",
               "Maximizing Ignores Resize Increment (e.g. xterm)",
-              resource.max_ignore_inc, saverc_cmd);
+              resource.max_ignore_inc);
     _BOOLITEM(*maxmenu, Configmenu, MaxDisableMove,
               "Disable Moving", "Don't Allow Moving While Maximized",
-              resource.max_disable_move, saverc_cmd);
+              resource.max_disable_move);
     _BOOLITEM(*maxmenu, Configmenu, MaxDisableResize,
               "Disable Resizing", "Don't Allow Resizing While Maximized",
-              resource.max_disable_resize, saverc_cmd);
+              resource.max_disable_resize);
 
     maxmenu->updateMenu();
     menu.insert(maxmenu_label, maxmenu);
@@ -1548,13 +1539,13 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     _BOOLITEM(*tab_menu,Configmenu, TabsInTitlebar,
               "Tabs in Titlebar", "Tabs in Titlebar",
-              resource.default_internal_tabs, saverc_cmd);
+              resource.default_internal_tabs);
     tab_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Common, MaximizeOver,
               "Maximize Over", "Maximize over this thing when maximizing"),
-              resource.max_over_tabs, save_and_reconfigure));
+              resource.max_over_tabs, reconf_cmd));
     tab_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Toolbar, ShowIcons,
               "Show Pictures", "chooses if little icons are shown next to title in the iconbar"),
-              resource.tabs_use_pixmap, save_and_reconfigure));
+              resource.tabs_use_pixmap, reconf_cmd));
 
     FbTk::MenuItem *tab_width_item =
         new FbTk::IntMenuItem(_FB_XTEXT(Configmenu, ExternalTabWidth,
@@ -1562,7 +1553,6 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
                                        "Width of external-style tabs"),
                                resource.tab_width, 10, 3000, /* silly number */
                                *tab_menu);
-    tab_width_item->setCommand(saverc_cmd);
     tab_menu->insert(tab_width_item);
 
     // menu is 3 wide, 5 down
@@ -1597,7 +1587,7 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
             tabplacement_menu->insert(p.label);
             tabplacement_menu->setItemEnabled(i, false);
         } else
-            tabplacement_menu->insert(new TabPlacementMenuItem(p.label, *this, p.placement, saverc_cmd));
+            tabplacement_menu->insert(new TabPlacementMenuItem(p.label, *this, p.placement));
     }
     tabplacement_menu->updateMenu();
 
@@ -1616,13 +1606,13 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
             alpha_menu->insert(new FbTk::BoolMenuItem(_FB_XTEXT(Configmenu, ForcePseudoTrans,
                                "Force Pseudo-Transparency",
                                "When composite is available, still use old pseudo-transparency"),
-                    Fluxbox::instance()->getPseudoTransResource(), save_and_reconfigure));
+                    Fluxbox::instance()->getPseudoTransResource(), reconf_cmd));
         }
 
         // in order to save system resources, don't save or reconfigure alpha
         // settings until after the user is done changing them
         FbTk::RefCount<FbTk::Command<void> > delayed_save_and_reconf(
-            new FbTk::DelayedCmd(save_and_reconfigure));
+            new FbTk::DelayedCmd(reconf_cmd));
 
         FbTk::MenuItem *focused_alpha_item =
             new FbTk::IntMenuItem(_FB_XTEXT(Configmenu, FocusedAlpha,
@@ -1662,11 +1652,11 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     _BOOLITEM(menu, Configmenu, OpaqueMove,
               "Opaque Window Moving",
               "Window Moving with whole window visible (as opposed to outline moving)",
-              resource.opaque_move, saverc_cmd);
+              resource.opaque_move);
     _BOOLITEM(menu, Configmenu, WorkspaceWarping,
               "Workspace Warping",
               "Workspace Warping - dragging windows to the edge and onto the next workspace",
-              resource.workspace_warping, saverc_cmd);
+              resource.workspace_warping);
 
 #undef _BOOLITEM
 
