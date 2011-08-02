@@ -28,6 +28,7 @@
 #include <string>
 
 #include "Resource.hh"
+#include "Timer.hh"
 
 namespace FbTk {
 
@@ -37,11 +38,18 @@ class LResourceManager: public ResourceManager_base {
 public:
     static void convert(ResourceManager &old, const std::string &new_file);
 
-    LResourceManager(const std::string &root, Lua &l);
+    /**
+     * @param root the name of the table where settings will reside
+     * @param l lua context
+     * @param autosave delay (in seconds) for automatic saving of resources. Modifying a resource
+     * starts a timer. If another resource is modified, the timer is restarted. 0 = disabled
+     */
+    LResourceManager(const std::string &root, Lua &l, unsigned int autosave = 0);
     void load(const std::string &filename, const std::string &fallback);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
+    virtual void resourceChanged(Resource_base &r);
     void setLua(Lua &l);
 
 private:
@@ -50,6 +58,7 @@ private:
 
     Lua *m_l;
     std::string m_filename;
+    Timer m_savetimer;
 };
 
 } // end namespace FbTk

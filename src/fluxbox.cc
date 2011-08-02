@@ -230,7 +230,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
     : FbTk::App(dpy_name.c_str()),
       m_l(new Lua),
       m_fbatoms(FbAtoms::instance()),
-      m_resourcemanager("session", *m_l),
+      m_resourcemanager("session", *m_l, 5),
 
       m_RC_PATH(rc_path),
       m_RC_INIT_FILE("init"),
