@@ -45,7 +45,6 @@ public:
      * starts a timer. If another resource is modified, the timer is restarted. 0 = disabled
      */
     LResourceManager(const std::string &root, Lua &l, unsigned int autosave = 0);
-    void load(const std::string &filename, const std::string &fallback);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
@@ -55,9 +54,9 @@ public:
 private:
     void doAddResource(Resource_base &r);
     void doRemoveResource(Resource_base &r);
+    virtual void doLoad(const std::string &filename);
 
     Lua *m_l;
-    std::string m_filename;
     Timer m_savetimer;
 };
 

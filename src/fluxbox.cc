@@ -1150,7 +1150,13 @@ string Fluxbox::getDefaultDataFilename(const char *name) const {
 /// loads resources
 void Fluxbox::load_rc() {
 
-    m_resourcemanager.load(getRcFilename(), DEFAULT_INITFILE);
+    try {
+        m_resourcemanager.load(getRcFilename(), DEFAULT_INITFILE);
+    }
+    catch(std::runtime_error &) {
+        // This should only happen if system-wide init file is broken.
+        // Not much we can do about that, so we just ignore it
+    }
 
     if (m_rc_menufile->empty())
         m_rc_menufile.setDefaultValue();
