@@ -74,7 +74,7 @@ void save_all_files();
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void update_add_mouse_evens_to_keys(FbTk::ResourceManager& rm, 
+void update_add_mouse_evens_to_keys(FbTk::ResourceManager_base& rm, 
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_keyfile = read_file(keyfilename);
@@ -111,7 +111,7 @@ void update_add_mouse_evens_to_keys(FbTk::ResourceManager& rm,
 }
 
 
-void update_move_groups_entries_to_apps_file(FbTk::ResourceManager& rm,
+void update_move_groups_entries_to_apps_file(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     FbTk::StringResource rc_groupfile(rm, "~/.fluxbox/groups",
@@ -148,7 +148,7 @@ void update_move_groups_entries_to_apps_file(FbTk::ResourceManager& rm,
 }
 
 
-void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager& rm,
+void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_keyfile = read_file(keyfilename);
@@ -187,7 +187,7 @@ void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager& rm,
 
 
 
-void update_move_modkey_to_keys_file(FbTk::ResourceManager& rm,
+void update_move_modkey_to_keys_file(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -222,7 +222,7 @@ void update_move_modkey_to_keys_file(FbTk::ResourceManager& rm,
 
 
 
-void update_window_patterns_for_iconbar(FbTk::ResourceManager& rm,
+void update_window_patterns_for_iconbar(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     // this needs to survive after going out of scope
@@ -251,7 +251,7 @@ void update_window_patterns_for_iconbar(FbTk::ResourceManager& rm,
 }
 
 
-void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager& rm,
+void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -288,7 +288,7 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager& rm,
 }
 
 
-void update_added_starttabbing_command(FbTk::ResourceManager& rm,
+void update_added_starttabbing_command(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -302,7 +302,7 @@ void update_added_starttabbing_command(FbTk::ResourceManager& rm,
 
 
 
-void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceManager& rm,
+void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     FbTk::BoolResource *show =
@@ -316,7 +316,7 @@ void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceMana
 
 
 
-void update_change_format_of_split_placement_menu(FbTk::ResourceManager& rm,
+void update_change_format_of_split_placement_menu(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     FbTk::StringResource *placement =
@@ -344,7 +344,7 @@ void update_change_format_of_split_placement_menu(FbTk::ResourceManager& rm,
 
 
 
-void update_update_keys_file_for_nextwindow_syntax_changes(FbTk::ResourceManager& rm,
+void update_update_keys_file_for_nextwindow_syntax_changes(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_keyfile = read_file(keyfilename);
@@ -401,7 +401,7 @@ void update_update_keys_file_for_nextwindow_syntax_changes(FbTk::ResourceManager
 
 
 
-void update_keys_for_ongrip_onwindowborder(FbTk::ResourceManager& rm,
+void update_keys_for_ongrip_onwindowborder(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_keyfile = read_file(keyfilename);
@@ -421,7 +421,7 @@ void update_keys_for_ongrip_onwindowborder(FbTk::ResourceManager& rm,
 
 
 
-void update_keys_for_activetab(FbTk::ResourceManager& rm,
+void update_keys_for_activetab(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_file = read_file(keyfilename);
@@ -439,7 +439,7 @@ void update_keys_for_activetab(FbTk::ResourceManager& rm,
 
 
 // NextWindow {static groups} => NextWindow {static groups} (workspace=[current])
-void update_limit_nextwindow_to_current_workspace(FbTk::ResourceManager& rm,
+void update_limit_nextwindow_to_current_workspace(FbTk::ResourceManager_base& rm,
         const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
 
     string whole_file = read_file(keyfilename);
@@ -530,7 +530,7 @@ void update_limit_nextwindow_to_current_workspace(FbTk::ResourceManager& rm,
 
 struct Update {
     int version;
-    void (*update)(FbTk::ResourceManager& rm, const FbTk::FbString&, const FbTk::FbString&);
+    void (*update)(FbTk::ResourceManager_base& rm, const FbTk::FbString&, const FbTk::FbString&);
 };
 
 const Update UPDATES[] = {
@@ -618,16 +618,13 @@ int main(int argc, char **argv) {
         rc_filename = getenv("HOME") + string("/.fluxbox/init");
 
     FbTk::ResourceManager resource_manager("session", "Session", rc_filename.c_str(),false);
-    if (!resource_manager.load(rc_filename.c_str())) {
-        // couldn't load rc file
-        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "Failed trying to read rc file")<<":"<<rc_filename<<endl;
-        cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with", "Retrying rc file loading with (the following file)")<<": "<<DEFAULT_INITFILE<<endl;
-
-        // couldn't load default rc file, either
-        if (!resource_manager.load(DEFAULT_INITFILE)) {
-            cerr<<_FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")<<": "<<DEFAULT_INITFILE<<endl;
-            exit(1); // this is a fatal error for us
-        }
+    try {
+        resource_manager.load(rc_filename, DEFAULT_INITFILE);
+    }
+    catch(std::runtime_error &) {
+        // This should only happen if system-wide init file is broken.
+        // this is a fatal error for us
+        return 1;
     }
 
     // run updates here

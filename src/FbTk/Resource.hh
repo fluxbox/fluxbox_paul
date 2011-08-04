@@ -92,6 +92,11 @@ public:
 
     virtual ~ResourceManager_base() {}
 
+    /// Load all resources registered to this class
+    /// if loading of filename fails, it tries to load fallback
+    /// if that fails, it throws an exception
+    void load(const std::string &filename, const std::string &fallback);
+
     /// Save all resouces registered to this class
     /// @return true on success
     virtual bool save(const char *filename, const char *mergefilename=0) = 0;
@@ -130,8 +135,12 @@ public:
     ResourceList::const_iterator end() { return m_resourcelist.end(); }
 
 protected:
+    /// does the actual loading
+    virtual void doLoad(const std::string &filename) = 0;
+
     ResourceList m_resourcelist;
     const std::string m_root;
+    std::string m_filename;
 };
 
 class ResourceManager: public ResourceManager_base
@@ -142,10 +151,6 @@ public:
     ResourceManager(const std::string &root, const std::string &alt_root,
             const char *filename, bool lock_db);
     virtual ~ResourceManager();
-
-    /// Load all resources registered to this class
-    /// @return true on success
-    virtual bool load(const char *filename);
 
     /// Save all resouces registered to this class
     /// @return true on success
@@ -173,6 +178,7 @@ public:
         }
     }
 protected:
+    virtual void doLoad(const std::string &filename);
 
     int m_db_lock;
 
@@ -180,7 +186,6 @@ private:
 
     XrmDatabaseHelper *m_database;
 
-    std::string m_filename;
     std::string m_alt_root;
 };
 

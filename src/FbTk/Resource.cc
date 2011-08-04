@@ -38,6 +38,33 @@ using std::string;
 namespace FbTk {
 
 
+void ResourceManager_base::load(const std::string &filename, const std::string &fallback) {
+    _FB_USES_NLS;
+
+    m_filename = filename;
+
+    try {
+        doLoad(filename);
+    }
+    catch(std::runtime_error &e) {
+        std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database",
+                "Failed trying to read rc file") << ":" << filename << std::endl;
+        std::cerr << "Fluxbox: " << e.what() << std::endl;
+        std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFileTrying, "Retrying with",
+                "Retrying rc file loading with (the following file)")
+            << ": " << fallback << std::endl;
+        try {
+            doLoad(fallback);
+        }
+        catch(std::runtime_error &e) {
+            std::cerr << _FB_CONSOLETEXT(Fluxbox, CantLoadRCFile, "Failed to load database", "")
+                << ": " << fallback << std::endl;
+            std::cerr << "Fluxbox: " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
 void ResourceManager_base::addResource(Resource_base &r) {
     m_resourcelist.push_back(&r);
     m_resourcelist.unique();
@@ -87,7 +114,6 @@ ResourceManager::ResourceManager(const std::string &root, const std::string &alt
  ResourceManager_base(root),
  m_db_lock(0),
  m_database(0),
- m_filename(filename ? filename : ""),
  m_alt_root(alt_root)
 {
     static bool xrm_initialized = false;
@@ -96,6 +122,7 @@ ResourceManager::ResourceManager(const std::string &root, const std::string &alt
         xrm_initialized = true;
     }
 
+    m_filename = filename ? filename : "";
     if (lock_db)
         lock();
 }
@@ -108,11 +135,9 @@ ResourceManager::~ResourceManager() {
 
 /**
   reloads all resources from resourcefile
-  @return true on success else false
+  throws an exception in case of failure
 */
-bool ResourceManager::load(const char *filename) {
-    m_filename = StringUtil::expandFilename(filename).c_str();
-
+void ResourceManager::doLoad(const std::string &filename) {
     // force reload (lock will ensure it exists)
     if (m_database) {
         delete m_database;
@@ -122,7 +147,7 @@ bool ResourceManager::load(const char *filename) {
     lock();
     if (!m_database) {
         unlock();
-        return false;
+        throw std::runtime_error("");
     }
 
     XrmValue value;
@@ -146,8 +171,6 @@ bool ResourceManager::load(const char *filename) {
     }
 
     unlock();
-
-    return true;
 }
 
 /**
