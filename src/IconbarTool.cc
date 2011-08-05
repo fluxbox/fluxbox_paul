@@ -77,19 +77,16 @@ const EnumTraits<Container::Alignment>::Pair EnumTraits<Container::Alignment>::s
 
 } // end namespace FbTk
 
-namespace {
-
-class ToolbarModeMenuItem : public FbTk::RadioMenuItem {
+class IconbarTool::ToolbarModeMenuItem : public FbTk::RadioMenuItem {
 public:
     ToolbarModeMenuItem(const FbTk::FbString &label, IconbarTool &handler,
-                        string mode,
-                        FbTk::RefCount<FbTk::Command<void> > &cmd):
-        FbTk::RadioMenuItem(label, cmd), m_handler(handler), m_mode(mode) {
+                        string mode):
+        FbTk::RadioMenuItem(label), m_handler(handler), m_mode(mode) {
         setCloseOnClick(false);
     }
-    bool isSelected() const { return m_handler.mode() == m_mode; }
+    bool isSelected() const { return m_handler.m_rc_mode.get() == m_mode; }
     void click(int button, int time, unsigned int mods) {
-        m_handler.setMode(m_mode);
+        *m_handler.m_rc_mode = m_mode;
         FbTk::RadioMenuItem::click(button, time, mods);
     }
 
@@ -98,12 +95,11 @@ private:
     string m_mode;
 };
 
-class ToolbarAlignMenuItem: public FbTk::RadioMenuItem {
+class IconbarTool::ToolbarAlignMenuItem: public FbTk::RadioMenuItem {
 public:
     ToolbarAlignMenuItem(const FbTk::FbString &label, IconbarTool &handler,
-                        FbTk::Container::Alignment mode,
-                        FbTk::RefCount<FbTk::Command<void> > &cmd):
-        FbTk::RadioMenuItem(label, cmd), m_handler(handler), m_mode(mode) {
+                        FbTk::Container::Alignment mode):
+        FbTk::RadioMenuItem(label), m_handler(handler), m_mode(mode) {
         setCloseOnClick(false);
     }
     bool isSelected() const { return m_handler.alignment() == m_mode; }
@@ -117,76 +113,65 @@ private:
     FbTk::Container::Alignment m_mode;
 };
 
-void setupModeMenu(FbTk::Menu &menu, IconbarTool &handler) {
+void IconbarTool::setupModeMenu(FbTk::Menu &menu) {
     using namespace FbTk;
     _FB_USES_NLS;
 
     menu.setLabel(_FB_XTEXT(Toolbar, IconbarMode, "Iconbar Mode", "Menu title - chooses which set of icons are shown in the iconbar"));
 
-    RefCount<Command<void> > saverc_cmd(new FbCommands::SaveResources());
-
-
     menu.insert(new ToolbarModeMenuItem(_FB_XTEXT(Toolbar, IconbarModeNone,
                                                 "None", "No icons are shown in the iconbar"),
-                    handler,
-                    "none", saverc_cmd));
+                    *this, "none"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeIcons,
                             "Icons", "Iconified windows from all workspaces are shown"),
-                    handler,
-                    "{static groups} (minimized=yes)", saverc_cmd));
+                    *this, "{static groups} (minimized=yes)"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeNoIcons,
                         "NoIcons", "No iconified windows from all workspaces are shown"),
-                    handler,
-                    "{static groups} (minimized=no)", saverc_cmd));
+                    *this, "{static groups} (minimized=no)"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeWorkspaceIcons,
                             "WorkspaceIcons", "Iconified windows from this workspace are shown"),
-                    handler,
-                    "{static groups} (minimized=yes) (workspace)", saverc_cmd));
+                    *this, "{static groups} (minimized=yes) (workspace)"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeWorkspaceNoIcons,
                             "WorkspaceNoIcons", "No iconified windows from this workspace are shown"),
-                    handler,
-                    "{static groups} (minimized=no) (workspace)", saverc_cmd));
+                    *this, "{static groups} (minimized=no) (workspace)"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeWorkspace,
                             "Workspace", "Normal and iconified windows from this workspace are shown"),
-                    handler,
-                    "{static groups} (workspace)", saverc_cmd));
+                    *this, "{static groups} (workspace)"));
 
     menu.insert(new ToolbarModeMenuItem(
                     _FB_XTEXT(Toolbar, IconbarModeAllWindows, "All Windows", "All windows are shown"),
-                    handler,
-                    "{static groups}", saverc_cmd));
+                    *this, "{static groups}"));
 
     menu.insert(new FbTk::MenuSeparator());
 
     menu.insert(new ToolbarAlignMenuItem(
                     _FB_XTEXT(Align, Left, "Left", "Align to the left"),
-                    handler,
-                    FbTk::Container::LEFT, saverc_cmd));
+                    *this, FbTk::Container::LEFT));
 
     menu.insert(new ToolbarAlignMenuItem(
                     _FB_XTEXT(Align, Relative, "Relative", "Align relative to the width"),
-                    handler,
-                    FbTk::Container::RELATIVE, saverc_cmd));
+                    *this, FbTk::Container::RELATIVE));
 
     menu.insert(new ToolbarAlignMenuItem(
                     _FB_XTEXT(Align, Right, "Right", "Align to the right"),
-                    handler,
-                    FbTk::Container::RIGHT, saverc_cmd));
+                    *this, FbTk::Container::RIGHT));
 
     menu.insert(new FbTk::MenuSeparator());
 
     menu.updateMenu();
 }
+
+namespace {
 
 typedef FbTk::RefCount<FbTk::Command<void> > RefCmd;
 
@@ -237,7 +222,6 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     m_unfocused_theme(unfocused_theme),
     m_empty_pm( screen.imageControl() ),
     m_winlist(new FocusableList(screen)),
-    m_mode("none"),
     m_rc_mode(screen.resourceManager(), "{static groups} (workspace)",
               screen.name() + ".iconbar.mode"),
     m_rc_alignment(screen.resourceManager(), FbTk::Container::RELATIVE,
@@ -251,7 +235,7 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     m_alpha(255) {
 
     // setup mode menu
-    setupModeMenu(*m_menu, *this);
+    setupModeMenu(*m_menu);
     _FB_USES_NLS;
     using namespace FbTk;
     // setup use pixmap item to reconfig iconbar and save resource on click
@@ -270,7 +254,8 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     menu.insert(m_menu->label().logical(), FbTk::RefCount<FbTk::Menu>(m_menu));
 
     // setup signals
-    setMode(*m_rc_mode);
+    m_tracker.join(m_rc_mode.modifiedSig(), FbTk::MemFun(*this, &IconbarTool::modeChanged));
+    modeChanged(*m_rc_mode);
 }
 
 IconbarTool::~IconbarTool() {
@@ -309,12 +294,7 @@ void IconbarTool::setAlignment(FbTk::Container::Alignment align) {
     m_menu->reconfigure();
 }
 
-void IconbarTool::setMode(string mode) {
-    if (mode == m_mode)
-        return;
-
-    *m_rc_mode = m_mode = mode;
-
+void IconbarTool::modeChanged(const std::string &mode) {
     // lock graphics update
     m_icon_container.setUpdateLock(true);
 
