@@ -56,14 +56,11 @@ public:
     void show();
     void hide();
     void setAlignment(FbTk::Container::Alignment a);
-    void setMode(std::string mode);
     void parentMoved() { m_icon_container.parentMoved(); }
 
     unsigned int width() const;
     unsigned int height() const;
     unsigned int borderWidth() const;
-
-    std::string mode() const { return *m_rc_mode; }
 
     void setOrientation(FbTk::Orientation orient);
     FbTk::Container::Alignment alignment() const { return m_icon_container.alignment(); }
@@ -73,6 +70,7 @@ private:
     enum UpdateReason { LIST_ORDER, LIST_ADD, LIST_REMOVE, LIST_RESET, ALIGN };
 
     void updateSizing();
+    void setupModeMenu(FbTk::Menu &menu);
 
     /// render single button, and probably apply changes (clear)
     /// @param button the button to render
@@ -96,6 +94,11 @@ private:
 
     /// called when the list emits a signal
     void update(UpdateReason reason, Focusable *win);
+    /// called when the mode changes
+    void modeChanged(const std::string &mode);
+
+    class ToolbarModeMenuItem;
+    class ToolbarAlignMenuItem;
 
     BScreen &m_screen;
     FbTk::Container m_icon_container;
@@ -107,7 +110,6 @@ private:
 
     std::auto_ptr<FocusableList> m_winlist;
     IconMap m_icons;
-    std::string m_mode;
     FbTk::StringResource m_rc_mode;
     /// alignment of buttons
     FbTk::Resource<FbTk::Container::Alignment, FbTk::EnumTraits<FbTk::Container::Alignment> > m_rc_alignment;
