@@ -270,12 +270,7 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
     menu.insert(m_menu->label().logical(), FbTk::RefCount<FbTk::Menu>(m_menu));
 
     // setup signals
-    m_tracker.join(theme.reconfigSig(), FbTk::MemFun(*this, &IconbarTool::themeReconfigured));
-    m_tracker.join(focused_theme.reconfigSig(),
-            FbTk::MemFun(*this, &IconbarTool::themeReconfigured));
-    m_tracker.join(unfocused_theme.reconfigSig(),
-            FbTk::MemFun(*this, &IconbarTool::themeReconfigured));
-    themeReconfigured();
+    setMode(*m_rc_mode);
 }
 
 IconbarTool::~IconbarTool() {
@@ -364,10 +359,6 @@ unsigned int IconbarTool::height() const {
 
 unsigned int IconbarTool::borderWidth() const {
     return m_icon_container.borderWidth();
-}
-
-void IconbarTool::themeReconfigured() {
-    setMode(*m_rc_mode);
 }
 
 void IconbarTool::update(UpdateReason reason, Focusable *win) {

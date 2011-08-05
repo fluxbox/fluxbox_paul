@@ -97,8 +97,6 @@ private:
     /// called when the list emits a signal
     void update(UpdateReason reason, Focusable *win);
 
-    void themeReconfigured();
-
     BScreen &m_screen;
     FbTk::Container m_icon_container;
     IconbarTheme &m_theme;
