@@ -132,6 +132,8 @@ $set 9 #Keys
 1 Keys: Error on line
 2 Keys: Failed to merge keytree!_OBSOLETE
 3 Keys: Invalid key/modifier on line
+4 3rd argument is not a command.
+5 Error loading keys file: 
 
 $set 10 #Menu
 
@@ -145,6 +147,11 @@ $set 10 #Menu
 8 Reload Config
 9 Restart
 10 Warning: unbalanced [encoding] tags
+11 Warning: Menu field %s is not a string
+12 Warning: Menu is not a lua table
+13 Loading root menu failed:
+14 Loading window menu failed: 
+15 Unknown menu type: 
 
 $set 11 #Remember
 
@@ -281,4 +288,6 @@ $set 20 #layers
 5 Normal
 6 Top
 
+$set 21 #FbCommands
 
+1 Failed to load menu file '%s': %s

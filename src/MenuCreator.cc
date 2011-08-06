@@ -194,6 +194,7 @@ createMenu_(FbTk::Menu &inject_into, lua::state &l, FbTk::StringConvertor &conv,
 void
 insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_conv,
                 FbTk::AutoReloadHelper *reloader) {
+    _FB_USES_NLS;
     lua::stack_sentry s(l, -1);
     l.checkstack(1);
 
@@ -318,6 +319,7 @@ MenuCreator::createMenu(FbTk::Menu &inject_into, lua::state &l, FbTk::AutoReload
     lua::stack_sentry s(l, -1);
 
     if(l.type(-1) != lua::TTABLE) {
+        _FB_USES_NLS;
         cerr << _FB_CONSOLETEXT(Menu, MenuNotTable, "Warning: Menu is not a lua table",
                         "Menu is not a lua table") << endl;
         return;

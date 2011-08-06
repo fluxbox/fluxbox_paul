@@ -1370,6 +1370,7 @@ void BScreen::rereadMenu() {
         MenuCreator::createMenu(*m_rootmenu, l, m_rootmenu->reloadHelper());
     }
     catch(std::runtime_error &e) {
+        _FB_USES_NLS;
         cerr << _FB_CONSOLETEXT(Menu, RootLoad, "Loading root menu failed: ",
                     "Actual error message follows this string") << e.what() << endl;
     }
@@ -1407,7 +1408,8 @@ void BScreen::rereadWindowMenu() {
         MenuCreator::createMenu(*m_windowmenu, l, m_windowmenu->reloadHelper());
     }
     catch(std::runtime_error &e) {
-        cerr << _FB_CONSOLETEXT(Menu, RootLoad, "Loading window menu failed: ",
+        _FB_USES_NLS;
+        cerr << _FB_CONSOLETEXT(Menu, WindowLoad, "Loading window menu failed: ",
                     "Actual error message follows this string") << e.what() << endl;
     }
 }
