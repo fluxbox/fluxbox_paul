@@ -130,6 +130,8 @@ enum {
 	KeysBadLine = 1,
 	KeysBadMerge = 2,
 	KeysInvalidKeyMod = 3,
+        KeysBad3rdArg = 4,
+        KeysLoadError = 5,
 
 	MenuSet = 10,
 	MenuConfiguration = 1,
@@ -142,6 +144,11 @@ enum {
 	MenuReconfigure = 8,
 	MenuRestart = 9,
 	MenuErrorEndEncoding = 10,
+        MenuFieldNotString = 11,
+        MenuMenuNotTable = 12,
+        MenuRootLoad = 13,
+        MenuWindowLoad = 14,
+        MenuUnknownType = 15,
 
 	RememberSet = 11,
 	RememberDecorations = 1,
@@ -249,6 +256,9 @@ enum {
 	LayerDock = 4,
 	LayerNormal = 5,
 	LayerTop = 6,
+
+        FbCommandsSet = 21,
+        FbCommandsCantLoadMenu = 1,
 
 	dummy_not_used = 0 // just for the end
 

@@ -223,6 +223,7 @@ int Keys::t_key::newindex(lua::state *l)
             } else if(l->isnil(3))
                 k2.reset();
             else {
+                _FB_USES_NLS;
                 throw KeyError(_FB_CONSOLETEXT(Keys, Bad3rdArg, "3rd argument is not a command.",
                             "3rd argument is not a command."));
             }
@@ -578,6 +579,7 @@ void Keys::reload() {
         l.call(0, 0);
     }
     catch(std::runtime_error &e) {
+        _FB_USES_NLS;
         cerr << _FB_CONSOLETEXT(Keys, LoadError, "Error loading keys file: ",
                 "Actual error message follows") << e.what() << endl;
         loadDefaults(l);
