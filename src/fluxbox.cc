@@ -1233,9 +1233,6 @@ BScreen *Fluxbox::findScreen(int id) {
 }
 
 void Fluxbox::reconfigure() {
-    std::auto_ptr<FbTk::Lua> t = m_l;
-    m_l.reset(new Lua);
-    m_resourcemanager.setLua(*m_l);
     load_rc();
     STLUtil::forAll(m_screen_list, mem_fun(&BScreen::reconfigure));
 }
