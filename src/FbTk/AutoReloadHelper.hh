@@ -28,11 +28,16 @@
 
 #include "Command.hh"
 #include "RefCount.hh"
+#include "Timer.hh"
 
 namespace FbTk {
 
-class AutoReloadHelper {
+class AutoReloadHelper: private NotCopyable {
 public:
+    /**
+     * @param interval time interval (in seconds) between automatic reload checks
+     */
+    AutoReloadHelper(int interval = 0);
 
     void setMainFile(const std::string& filename);
     void addFile(const std::string& filename);
@@ -44,6 +49,7 @@ public:
 private:
     RefCount<Command<void> > m_reload_cmd;
     std::string m_main_file;
+    Timer m_timer;
 
     typedef std::map<std::string, time_t> TimestampMap;
     TimestampMap m_timestamps;
