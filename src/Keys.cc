@@ -465,7 +465,7 @@ Keys::t_key::FindPair Keys::t_key::findBinding(vector<string> val, bool insert )
 
 
 Keys::Keys():
-    m_reloader(new FbTk::AutoReloadHelper()),
+    m_reloader(new FbTk::AutoReloadHelper(5)),
     m_keylist(0),
     next_key(0), saved_keymode(0) {
 

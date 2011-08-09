@@ -22,9 +22,17 @@
 #include "AutoReloadHelper.hh"
 
 #include "FileUtil.hh"
+#include "MemFun.hh"
 #include "StringUtil.hh"
 
 namespace FbTk {
+
+AutoReloadHelper::AutoReloadHelper(int interval) {
+    m_timer.setFunctor(MemFun(*this, &AutoReloadHelper::checkReload));
+    m_timer.setInterval(interval);
+    if(interval > 0)
+        m_timer.start();
+}
 
 void AutoReloadHelper::checkReload() {
     if (!m_reload_cmd.get())
