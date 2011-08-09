@@ -149,6 +149,7 @@ public:
     static int newKeyMode(lua::state *l);
     static int index(lua::state *l);
     static int newindex(lua::state *l);
+    static int clear(lua::state *l);
 
     bool equalExact(const RefKey &x) {
         return type == x->type && key == x->key && context == x->context
@@ -196,8 +197,7 @@ public:
     static FbTk::Lua::RegisterInitFunction registerInitKeys;
 };
 
-int Keys::t_key::newindex(lua::state *l)
-{
+int Keys::t_key::newindex(lua::state *l) {
     l->checkstack(2);
 
     try {
@@ -269,6 +269,8 @@ int Keys::t_key::index(lua::state *l) {
 
         if(str == "activate")
             l->pushfunction(&setKeyModeWrapper);
+        else if(str == "clear")
+            l->pushfunction(&clear);
         else {
             vector<string> val;
             FbTk::StringUtil::stringtok(val, str.c_str());
@@ -291,6 +293,21 @@ int Keys::t_key::index(lua::state *l) {
     }
 
     return 1;
+}
+
+int Keys::t_key::clear(lua::state *l) {
+    try {
+        l->checkargno(1);
+        const RefKey &k = *l->checkudata<RefKey>(1, keymode_metatable);
+
+        k->keylist.clear();
+        k->m_command.reset();
+    }
+    catch(std::runtime_error &e) {
+        cerr << "clear: " << e.what() << endl;
+    }
+    return 0;
+
 }
 
 void Keys::t_key::initKeys(FbTk::Lua &l) {
