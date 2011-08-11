@@ -142,7 +142,7 @@ public:
 
     // typedefs
     typedef std::list<RefKey> keylist_t;
-    typedef std::pair<keylist_t::iterator, t_key &> FindPair;
+    typedef std::pair<keylist_t::iterator, t_key *> FindPair;
 
     static void initKeys(FbTk::Lua &l);
     static int addBinding(lua::state *l);
@@ -239,7 +239,7 @@ int Keys::t_key::newindex(lua::state *l) {
             k2->isdouble = t->isdouble;
             *p.first = k2;
         } else
-            p.second.keylist.erase(p.first);
+            p.second->keylist.erase(p.first);
     }
     catch(std::runtime_error &e) {
         cerr << "keymode newindex: " << e.what() << endl;
@@ -276,7 +276,7 @@ int Keys::t_key::index(lua::state *l) {
             FbTk::StringUtil::stringtok(val, str.c_str());
 
             FindPair p = k->findBinding(val, false);
-            if(p.first == p.second.keylist.end())
+            if(p.first == p.second->keylist.end())
                 l->pushnil();
             else {
                 l->createuserdata<RefKey>(*p.first); {
@@ -458,7 +458,7 @@ Keys::t_key::FindPair Keys::t_key::findBinding(vector<string> val, bool insert )
         new_it = keylist.insert(new_it, new_key);
 
     if(new_it == keylist.end() || val.empty())
-        return FindPair(new_it, *this);
+        return FindPair(new_it, this);
     else
         return (*new_it)->findBinding(val, insert);
 }
