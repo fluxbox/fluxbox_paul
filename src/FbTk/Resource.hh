@@ -47,11 +47,18 @@ private:
     std::string m_str;
 };
 
+// forward declarations
+template <typename T, typename Traits>
+class Resource;
+class ResourceManager_base;
+
 /// Base class for resources, this is only used in ResourceManager
 class Resource_base:private FbTk::NotCopyable
 {
 public:
     virtual ~Resource_base() { };
+
+    virtual void setResourceManager(ResourceManager_base &rm) = 0;
 
     /// set from string value
     virtual void setFromString(char const *strval) = 0;
@@ -79,9 +86,6 @@ private:
     std::string m_name; ///< name of this resource
     std::string m_altname; ///< alternative name
 };
-
-template <typename T, typename Traits>
-class Resource;
 
 class ResourceManager_base
 {
@@ -134,10 +138,10 @@ public:
     ResourceList::const_iterator begin() { return m_resourcelist.begin(); }
     ResourceList::const_iterator end() { return m_resourcelist.end(); }
 
-protected:
     /// does the actual loading
     virtual void doLoad(const std::string &filename) = 0;
 
+protected:
     ResourceList m_resourcelist;
     const std::string m_root;
     std::string m_filename;
@@ -177,9 +181,10 @@ public:
             std::cerr<<(*it)->name()<<std::endl;
         }
     }
-protected:
+
     virtual void doLoad(const std::string &filename);
 
+protected:
     int m_db_lock;
 
 private:
@@ -202,31 +207,37 @@ public:
 
     Resource(ResourceManager_base &rm, T val, const std::string &name,
             const std::string &altname, const Traits &traits = Traits() ):
-        Resource_base(name, altname), Traits(traits), m_value(val), m_defaultval(val), m_rm(rm) {
-        m_rm.addResource(*this); // add this to resource handler
+        Resource_base(name, altname), Traits(traits), m_value(val), m_defaultval(val), m_rm(&rm) {
+        m_rm->addResource(*this); // add this to resource handler
     }
 
     // LResourceManager does not use altname, so we provide a constructor which initializes
     // altname to name
     Resource(ResourceManager_base &rm, T val, const std::string &name,
             const Traits &traits = Traits() ):
-        Resource_base(name, name), Traits(traits), m_value(val), m_defaultval(val), m_rm(rm) {
-        m_rm.addResource(*this); // add this to resource handler
+        Resource_base(name, name), Traits(traits), m_value(val), m_defaultval(val), m_rm(&rm) {
+        m_rm->addResource(*this); // add this to resource handler
     }
     virtual ~Resource() {
-        m_rm.removeResource(*this); // remove this from resource handler
+        m_rm->removeResource(*this); // remove this from resource handler
+    }
+
+    virtual void setResourceManager(ResourceManager_base &rm) {
+        m_rm->removeResource(*this);
+        m_rm = &rm;
+        m_rm->addResource(*this);
     }
 
     void setDefaultValue() {
         m_value = m_defaultval;
-        m_rm.resourceChanged(*this);
+        m_rm->resourceChanged(*this);
         m_modified_sig.emit(m_value);
     }
     /// sets resource from string, specialized, must be implemented
     void setFromString(const char *strval) {
         try {
             m_value = Traits::fromString(strval);
-            m_rm.resourceChanged(*this);
+            m_rm->resourceChanged(*this);
             m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {
@@ -236,7 +247,7 @@ public:
     }
     Accessor<T> &operator =(const T& newvalue) {
         m_value = newvalue;
-        m_rm.resourceChanged(*this);
+        m_rm->resourceChanged(*this);
         m_modified_sig.emit(m_value);
         return *this;
     }
@@ -247,7 +258,7 @@ public:
     virtual void setFromLua(lua::state &l) {
         try {
             m_value = Traits::fromLua(l);
-            m_rm.resourceChanged(*this);
+            m_rm->resourceChanged(*this);
             m_modified_sig.emit(m_value);
         }
         catch(ConversionError &e) {
@@ -268,7 +279,7 @@ public:
 
 private:
     T m_value, m_defaultval;
-    ResourceManager_base &m_rm;
+    ResourceManager_base *m_rm;
     Signal<const T &> m_modified_sig;
 };
 

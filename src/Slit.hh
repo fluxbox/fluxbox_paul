@@ -180,12 +180,18 @@ private:
     class SlitClientsRes: public FbTk::Resource_base, public SlitClients {
     public:
         SlitClientsRes(FbTk::ResourceManager_base &rm, const std::string &name)
-            : FbTk::Resource_base(name, name), m_rm(rm) {
-            m_rm.addResource(*this);
+            : FbTk::Resource_base(name, name), m_rm(&rm) {
+            m_rm->addResource(*this);
         }
 
         ~SlitClientsRes() {
-            m_rm.removeResource(*this);
+            m_rm->removeResource(*this);
+        }
+
+        virtual void setResourceManager(FbTk::ResourceManager_base &rm) {
+            m_rm->removeResource(*this);
+            m_rm = &rm;
+            m_rm->addResource(*this);
         }
 
         virtual void setDefaultValue() {}
@@ -195,7 +201,7 @@ private:
         virtual void pushToLua(lua::state &l) const;
 
     private:
-        FbTk::ResourceManager_base &m_rm;
+        FbTk::ResourceManager_base *m_rm;
     };
 
     SlitClientsRes m_client_list;

@@ -36,7 +36,6 @@ class Lua;
 
 class LResourceManager: public ResourceManager_base {
 public:
-    static void convert(ResourceManager &old, const std::string &new_file);
 
     /**
      * @param root the name of the table where settings will reside
@@ -45,16 +44,21 @@ public:
      * starts a timer. If another resource is modified, the timer is restarted. 0 = disabled
      */
     LResourceManager(const std::string &root, Lua &l, unsigned int autosave = 0);
+    /**
+     * Take over resources from the old resource manager. Used in fluxbox-update_configs.
+     * Resource managers created via this constructor don't support automatic saving.
+     */
+    explicit LResourceManager(ResourceManager &old, Lua &l);
     virtual bool save(const char *filename, const char *);
     virtual void addResource(Resource_base &r);
     virtual void removeResource(Resource_base &r);
     virtual void resourceChanged(Resource_base &r);
+    virtual void doLoad(const std::string &filename);
     void setLua(Lua &l);
 
 private:
     void doAddResource(Resource_base &r);
     void doRemoveResource(Resource_base &r);
-    virtual void doLoad(const std::string &filename);
 
     Lua *m_l;
     Timer m_savetimer;
