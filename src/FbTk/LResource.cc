@@ -89,21 +89,6 @@ namespace {
 
 } // anonymous namespace
 
-void LResourceManager::convert(ResourceManager &old, const std::string &new_file) {
-    Lua l;
-
-    LResourceManager new_rm(old.root(), l);
-    for(ResourceList::const_iterator i = old.begin(); i != old.end(); ++i) {
-        // adding the resource to new_rm will set it to default value
-        // we save the value to a temp variable so we can restore it later
-        const std::string &t = (*i)->getString();
-        new_rm.addResource(**i);
-        (*i)->setFromString(t.c_str());
-    }
-
-    new_rm.save(new_file.c_str(), NULL);
-}
-
 LResourceManager::LResourceManager(const std::string &root, Lua &l, unsigned int autosave)
     : ResourceManager_base(root), m_l(&l) {
 
@@ -114,6 +99,25 @@ LResourceManager::LResourceManager(const std::string &root, Lua &l, unsigned int
             ) );
 
     setLua(l);
+}
+
+LResourceManager::LResourceManager(ResourceManager &old, Lua &l)
+    : ResourceManager_base(old.root()), m_l(&l) {
+
+    // We create a copy of the list so we can safely traverse it while the resources disassociate
+    // themselves from the old resource manager
+    ResourceList list;
+    for(ResourceList::const_iterator i = old.begin(); i != old.end(); ++i) {
+        list.push_back(*i);
+    }
+
+    for(ResourceList::const_iterator i = list.begin(); i != list.end(); ++i) {
+        // adding the resource to this resource manager will set it to default value
+        // we save the value to a temp variable so we can restore it later
+        const std::string &t = (*i)->getString();
+        (*i)->setResourceManager(*this);
+        (*i)->setFromString(t.c_str());
+    }
 }
 
 void LResourceManager::doLoad(const std::string &filename) {

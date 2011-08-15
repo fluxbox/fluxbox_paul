@@ -211,7 +211,7 @@ void Slit::SlitClientsRes::setFromLua(lua::state &l) {
 
     l.pop();
 
-    m_rm.resourceChanged(*this);
+    m_rm->resourceChanged(*this);
 }
 
 void Slit::SlitClientsRes::pushToLua(lua::state &l) const {

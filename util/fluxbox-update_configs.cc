@@ -20,7 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 #include "../src/FbTk/I18n.hh"
-#include "../src/FbTk/Resource.hh"
+#include "../src/FbTk/LResource.hh"
+#include "../src/FbTk/LuaUtil.hh"
 #include "../src/FbTk/StringUtil.hh"
 #include "../src/FbTk/FileUtil.hh"
 
@@ -74,8 +75,8 @@ void save_all_files();
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void update_add_mouse_evens_to_keys(FbTk::ResourceManager_base& rm, 
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_add_mouse_evens_to_keys(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
 
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -89,10 +90,10 @@ void update_add_mouse_evens_to_keys(FbTk::ResourceManager_base& rm,
     // hmmm, what are the odds that somebody wants this to be different on
     // different screens? the ability is going away until we make per-screen
     // keys files, anyway, so let's just use the first screen's setting
-    FbTk::BoolResource rc_wheeling(rm, true,
+    FbTk::BoolResource rc_wheeling(*rm, true,
             "screen0.desktopwheeling",
             "Screen0.DesktopWheeling");
-    FbTk::BoolResource rc_reverse(rm, false,
+    FbTk::BoolResource rc_reverse(*rm, false,
             "screen0.reversewheeling",
             "Screen0.ReverseWheeling");
     if (*rc_wheeling) {
@@ -111,10 +112,10 @@ void update_add_mouse_evens_to_keys(FbTk::ResourceManager_base& rm,
 }
 
 
-void update_move_groups_entries_to_apps_file(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_move_groups_entries_to_apps_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
-    FbTk::StringResource rc_groupfile(rm, "~/.fluxbox/groups",
+    string appsfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("appsFile"));
+    FbTk::StringResource rc_groupfile(*rm, "~/.fluxbox/groups",
             "groupFile", "GroupFile");
     string groupfilename = FbTk::StringUtil::expandFilename(*rc_groupfile);
     string whole_groupfile = read_file(groupfilename);
@@ -148,9 +149,9 @@ void update_move_groups_entries_to_apps_file(FbTk::ResourceManager_base& rm,
 }
 
 
-void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_move_toolbar_wheeling_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
     // let's put our new keybindings first, so they're easy to find
@@ -158,13 +159,13 @@ void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager_base& rm,
     bool keep_changes = false;
 
     // scrolling on toolbar needs to match user's toolbar wheeling settings
-    FbTk::StringResource rc_wheeling(rm, "Off",
+    FbTk::StringResource rc_wheeling(*rm, "Off",
             "screen0.iconbar.wheelMode",
             "Screen0.Iconbar.WheelMode");
-    FbTk::BoolResource rc_screen(rm, true,
+    FbTk::BoolResource rc_screen(*rm, true,
             "screen0.desktopwheeling",
             "Screen0.DesktopWheeling");
-    FbTk::BoolResource rc_reverse(rm, false,
+    FbTk::BoolResource rc_reverse(*rm, false,
             "screen0.reversewheeling",
             "Screen0.ReverseWheeling");
     if (strcasecmp(rc_wheeling->c_str(), "On") == 0 ||
@@ -187,18 +188,18 @@ void update_move_toolbar_wheeling_to_keys_file(FbTk::ResourceManager_base& rm,
 
 
 
-void update_move_modkey_to_keys_file(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_move_modkey_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
     // let's put our new keybindings first, so they're easy to find
     new_keyfile += "!mouse actions added by fluxbox-update_configs\n";
 
     // need to match user's resize model
-    FbTk::StringResource rc_mode(rm, "Bottom",
+    FbTk::StringResource rc_mode(*rm, "Bottom",
             "screen0.resizeMode",
             "Screen0.ResizeMode");
-    FbTk::StringResource rc_modkey(rm, "Mod1",
+    FbTk::StringResource rc_modkey(*rm, "Mod1",
             "modKey",
             "ModKey");
 
@@ -222,13 +223,12 @@ void update_move_modkey_to_keys_file(FbTk::ResourceManager_base& rm,
 
 
 
-void update_window_patterns_for_iconbar(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_window_patterns_for_iconbar(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
     // this needs to survive after going out of scope
     // it won't get freed, but that's ok
     FbTk::StringResource *rc_mode =
-        new FbTk::StringResource(rm, "Workspace",
+        new FbTk::StringResource(*rm, "Workspace",
                                    "screen0.iconbar.mode",
                                    "Screen0.Iconbar.Mode");
 
@@ -251,8 +251,8 @@ void update_window_patterns_for_iconbar(FbTk::ResourceManager_base& rm,
 }
 
 
-void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_move_titlebar_actions_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
     // let's put our new keybindings first, so they're easy to find
@@ -260,8 +260,8 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager_base& rm,
     new_keyfile += "OnTitlebar Double Mouse1 :Shade\n";
     new_keyfile += "OnTitlebar Mouse3 :WindowMenu\n";
 
-    FbTk::BoolResource rc_reverse(rm, false,"screen0.reversewheeling", "Screen0.ReverseWheeling");
-    FbTk::StringResource  scroll_action(rm, "", "screen0.windowScrollAction", "Screen0.WindowScrollAction");
+    FbTk::BoolResource rc_reverse(*rm, false,"screen0.reversewheeling", "Screen0.ReverseWheeling");
+    FbTk::StringResource  scroll_action(*rm, "", "screen0.windowScrollAction", "Screen0.WindowScrollAction");
     if (strcasecmp(scroll_action->c_str(), "shade") == 0) {
         if (*rc_reverse) {
             new_keyfile += "OnTitlebar Mouse5 :ShadeOn\n";
@@ -288,8 +288,8 @@ void update_move_titlebar_actions_to_keys_file(FbTk::ResourceManager_base& rm,
 }
 
 
-void update_added_starttabbing_command(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_added_starttabbing_command(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
     // let's put our new keybindings first, so they're easy to find
@@ -302,11 +302,10 @@ void update_added_starttabbing_command(FbTk::ResourceManager_base& rm,
 
 
 
-void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_disable_icons_in_tabs_for_backwards_compatibility(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
     FbTk::BoolResource *show =
-        new FbTk::BoolResource(rm, false,
+        new FbTk::BoolResource(*rm, false,
                 "screen0.tabs.usePixmap",
                 "Screen0.Tabs.UsePixmap");
     if (!*show) // only change if the setting didn't already exist
@@ -316,16 +315,15 @@ void update_disable_icons_in_tabs_for_backwards_compatibility(FbTk::ResourceMana
 
 
 
-void update_change_format_of_split_placement_menu(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_change_format_of_split_placement_menu(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
     FbTk::StringResource *placement =
-        new FbTk::StringResource(rm, "BottomRight",
+        new FbTk::StringResource(*rm, "BottomRight",
                 "screen0.slit.placement",
                 "Screen0.Slit.Placement");
 
     FbTk::StringResource *direction =
-        new FbTk::StringResource(rm, "Vertical",
+        new FbTk::StringResource(*rm, "Vertical",
                 "screen0.slit.direction",
                 "Screen0.Slit.Direction");
 
@@ -344,9 +342,9 @@ void update_change_format_of_split_placement_menu(FbTk::ResourceManager_base& rm
 
 
 
-void update_update_keys_file_for_nextwindow_syntax_changes(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_update_keys_file_for_nextwindow_syntax_changes(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
 
     size_t pos = 0;
@@ -401,9 +399,9 @@ void update_update_keys_file_for_nextwindow_syntax_changes(FbTk::ResourceManager
 
 
 
-void update_keys_for_ongrip_onwindowborder(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_keys_for_ongrip_onwindowborder(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
     // let's put our new keybindings first, so they're easy to find
@@ -421,9 +419,9 @@ void update_keys_for_ongrip_onwindowborder(FbTk::ResourceManager_base& rm,
 
 
 
-void update_keys_for_activetab(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_keys_for_activetab(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_file = read_file(keyfilename);
     string new_keyfile = "";
 
@@ -439,9 +437,9 @@ void update_keys_for_activetab(FbTk::ResourceManager_base& rm,
 
 
 // NextWindow {static groups} => NextWindow {static groups} (workspace=[current])
-void update_limit_nextwindow_to_current_workspace(FbTk::ResourceManager_base& rm,
-        const FbTk::FbString& keyfilename, const FbTk::FbString& appsfilename) {
+void update_limit_nextwindow_to_current_workspace(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
+    string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_file = read_file(keyfilename);
     string new_keyfile = "";
 
@@ -525,12 +523,22 @@ void update_limit_nextwindow_to_current_workspace(FbTk::ResourceManager_base& rm
     write_file(keyfilename, new_keyfile);
 }
 
+void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+    if( dynamic_cast<FbTk::LResourceManager *>(rm.get()) ) {
+        // there's nothing to do, we already have a lua resource manager
+        // this shouldn't happen, since all lua init files should have versions >= 14
+        return;
+    }
+
+
+}
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
 struct Update {
     int version;
-    void (*update)(FbTk::ResourceManager_base& rm, const FbTk::FbString&, const FbTk::FbString&);
+    void (*update)(std::auto_ptr<FbTk::ResourceManager_base>& rm);
 };
 
 const Update UPDATES[] = {
@@ -546,26 +554,24 @@ const Update UPDATES[] = {
     { 10, update_update_keys_file_for_nextwindow_syntax_changes },
     { 11, update_keys_for_ongrip_onwindowborder },
     { 12, update_keys_for_activetab },
-    { 13, update_limit_nextwindow_to_current_workspace }
+    { 13, update_limit_nextwindow_to_current_workspace },
+    { 14, update_lua_resource_manager }
 };
 
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-int run_updates(int old_version, FbTk::ResourceManager &rm) {
+int run_updates(int old_version, std::auto_ptr<FbTk::ResourceManager_base> &rm, FbTk::Lua &l) {
     int new_version = old_version;
 
-    FbTk::StringResource rc_keyfile(rm, "~/.fluxbox/keys",
+    FbTk::StringResource rc_keyfile(*rm, "~/.fluxbox/keys",
             "keyFile", "KeyFile");
-    FbTk::StringResource rc_appsfile(rm, "~/.fluxbox/apps",
+    FbTk::StringResource rc_appsfile(*rm, "~/.fluxbox/apps",
             "appsFile", "AppsFile");
-
-    string appsfilename = FbTk::StringUtil::expandFilename(*rc_appsfile);
-    string keyfilename = FbTk::StringUtil::expandFilename(*rc_keyfile);
 
     for (size_t i = 0; i < sizeof(UPDATES) / sizeof(Update); ++i) {
         if (old_version < UPDATES[i].version) {
-            UPDATES[i].update(rm, keyfilename, appsfilename);
+            UPDATES[i].update(rm);
             new_version = UPDATES[i].version;
         }
     }
@@ -573,8 +579,32 @@ int run_updates(int old_version, FbTk::ResourceManager &rm) {
     return new_version;
 }
 
+std::auto_ptr<FbTk::ResourceManager_base> try_load(const std::string &filename, FbTk::Lua &l) {
+    _FB_USES_NLS;
+    std::auto_ptr<FbTk::ResourceManager_base> r;
+    try {
+        r.reset(new FbTk::LResourceManager("session", l));
+        r->doLoad(filename);
+    }
+    catch(std::runtime_error &) {
+        try {
+            r.reset(new FbTk::ResourceManager("session", "Session", filename.c_str(), false));
+            r->doLoad(filename);
+        }
+        catch(std::runtime_error &) {
+            r.reset();
+        }
+    }
+    if(r.get()) {
+        cerr << _FB_CONSOLETEXT(Update, Loading, "Loading resources from: ", "filename follows")
+             << filename << endl;
+    }
+    return r;
+}
+
 int main(int argc, char **argv) {
     string rc_filename;
+    string oldrc_filename;
     set<string> style_filenames;
     int i = 1;
     bool check = 0;
@@ -595,6 +625,14 @@ int main(int argc, char **argv) {
             }
 
             rc_filename = argv[i];
+        } else if (arg == "-oldrc") {
+            if ((++i) >= argc) {
+                cerr<<_FB_CONSOLETEXT(main, RCRequiresArg,
+                              "error: '-oldrc' requires an argument", "the -oldrc option requires a file argument")<<endl;
+                return 1;
+            }
+
+            oldrc_filename = argv[i];
         } else if (arg == "-pid") {
             if ((++i) >= argc) {
                 // need translations for this, too
@@ -605,7 +643,8 @@ int main(int argc, char **argv) {
             check = true;
         } else if (arg == "-help" || arg == "-h") {
             // no NLS translations yet -- we'll just have to use English for now
-            cout << "  -rc <string>\t\t\tuse alternate resource file.\n"
+            cout << "  -rc <string>\t\t\twhere to save the new resource file.\n"
+                 << "  -oldrc <string>\t\t\tfile from which to load old resources (default = same as -rc).\n"
                  << "  -pid <int>\t\t\ttell fluxbox to reload configuration.\n"
                  << "  -check\t\t\tcheck version of this tool and the fluxbox config.\n"
                  << "  -help\t\t\t\tdisplay this help text and exit.\n\n"
@@ -614,14 +653,33 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (rc_filename.empty())
-        rc_filename = getenv("HOME") + string("/.fluxbox/init");
-
-    FbTk::ResourceManager resource_manager("session", "Session", rc_filename.c_str(),false);
-    try {
-        resource_manager.load(rc_filename, DEFAULT_INITFILE);
+    string filenames[4];
+    if(!oldrc_filename.empty())
+        filenames[0] = oldrc_filename;
+    else if(!rc_filename.empty())
+        filenames[0] = rc_filename;
+    else {
+        filenames[0] = getenv("HOME") + string("/.fluxbox/init.lua");
+        filenames[1] = getenv("HOME") + string("/.fluxbox/init");
+        filenames[2] = DEFAULT_INITFILE;
+        filenames[3] = string(DEFAULT_INITFILE, string(DEFAULT_INITFILE).rfind(".lua"));
     }
-    catch(std::runtime_error &) {
+
+    if (rc_filename.empty())
+        rc_filename = getenv("HOME") + string("/.fluxbox/init.lua");
+
+    FbTk::Lua l;
+    std::auto_ptr<FbTk::ResourceManager_base> resource_manager;
+    for(size_t i = 0; i < sizeof filenames / sizeof filenames[0]; ++i) {
+        if(!filenames[i].empty()) {
+            resource_manager = try_load(filenames[i], l);
+            if(resource_manager.get()) {
+                oldrc_filename = filenames[i];
+                break;
+            }
+        }
+    }
+    if(!resource_manager.get()) {
         // This should only happen if system-wide init file is broken.
         // this is a fatal error for us
         return 1;
@@ -630,22 +688,22 @@ int main(int argc, char **argv) {
     // run updates here
     // I feel like putting this in a separate function for no apparent reason
 
-    FbTk::IntResource config_version(resource_manager, 0,
+    FbTk::IntResource config_version(*resource_manager, 0,
             "configVersion", "ConfigVersion");
 
     if (check) {
-        cout << rc_filename << ": " << *config_version << endl
+        cout << oldrc_filename << ": " << *config_version << endl
             << "fluxbox-update_configs: " << UPDATES[sizeof(UPDATES)/sizeof(Update) - 1].version << endl;
-        exit(0);
+        return 0;
     }
 
 
     int old_version = *config_version;
-    int new_version = run_updates(old_version, resource_manager);
+    int new_version = run_updates(old_version, resource_manager, l);
     if (new_version > old_version) {
         // configs were updated -- let's save our changes
         config_version = new_version;
-        resource_manager.save(rc_filename.c_str(), rc_filename.c_str());
+        resource_manager->save(rc_filename.c_str());
         save_all_files();
 
 #if defined(HAVE_SIGNAL_H) && !defined(_WIN32)
