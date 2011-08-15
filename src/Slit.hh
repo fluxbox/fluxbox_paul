@@ -176,6 +176,7 @@ private:
     static unsigned int s_eventmask;
     Strut *m_strut;
 
+    // this class is a bit messy. candidate for rethinking
     class SlitClientsRes: public FbTk::Resource_base, public SlitClients {
     public:
         SlitClientsRes(FbTk::ResourceManager_base &rm, const std::string &name)
