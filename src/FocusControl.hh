@@ -26,6 +26,7 @@
 
 #include "FbTk/Resource.hh"
 #include "FocusableList.hh"
+#include "Resources.hh"
 
 class ClientPattern;
 class WinClient;
@@ -40,18 +41,6 @@ class BScreen;
 class FocusControl {
 public:
     typedef std::list<Focusable *> Focusables;
-    /// main focus model
-    enum FocusModel { 
-        MOUSEFOCUS = 0,  ///< focus follows mouse, but only when the mouse is moving
-        CLICKFOCUS,      ///< focus on click
-        STRICTMOUSEFOCUS ///< focus always follows mouse, even when stationary
-    };
-    /// focus model for tabs
-    enum TabFocusModel { 
-        MOUSETABFOCUS = 0, ///< tab focus follows mouse
-        CLICKTABFOCUS  ///< tab focus on click
-    };
-
     /// focus direction for windows
     enum FocusDir { 
         FOCUSUP,    ///< window is above

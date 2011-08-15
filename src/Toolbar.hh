@@ -27,6 +27,7 @@
 
 #include "ToolbarTheme.hh"
 #include "LayerMenu.hh"
+#include "Resources.hh"
 #include "ToolFactory.hh"
 #include "ToolTheme.hh"
 #include "Layer.hh"
@@ -60,19 +61,6 @@ class Shape;
 class Toolbar: public FbTk::EventHandler,
                public LayerObject {
 public:
-
-    /// Toolbar placement on the screen
-    enum Placement {
-        // top and bottom placement
-        TOPLEFT = 1, TOPCENTER, TOPRIGHT,
-        BOTTOMLEFT, BOTTOMCENTER, BOTTOMRIGHT,
-        // left and right placement
-        LEFTBOTTOM, LEFTCENTER, LEFTTOP,
-        RIGHTBOTTOM, RIGHTCENTER, RIGHTTOP,
-
-        DEFAULT = BOTTOMRIGHT
-    };
-
     /// Create a toolbar on the screen with specific width
     Toolbar(BScreen &screen, FbTk::Layer &layer, size_t width = 200);
 
@@ -187,9 +175,9 @@ private:
     FbTk::BoolResource m_rc_auto_hide, m_rc_maximize_over, m_rc_visible;
     FbTk::IntResource m_rc_width_percent;
     FbTk::IntResource m_rc_alpha;
-    FbTk::Resource<ResourceLayer::Type, FbTk::EnumTraits<ResourceLayer::Type> > m_rc_layernum;
+    FbTk::Resource<LayerType, FbTk::EnumTraits<LayerType> > m_rc_layernum;
     FbTk::IntResource m_rc_on_head;
-    FbTk::Resource<Placement, FbTk::EnumTraits<Placement> > m_rc_placement;
+    PlacementResource m_rc_placement;
     FbTk::IntResource m_rc_height;
     FbTk::StringResource m_rc_tools;
     std::auto_ptr<FbTk::Shape> m_shape;

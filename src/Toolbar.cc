@@ -84,33 +84,12 @@ using std::list;
 
 using FbTk::STLUtil::forAll;
 
-namespace FbTk {
-
-template<>
-const EnumTraits<Toolbar::Placement>::Pair EnumTraits<Toolbar::Placement>::s_map[] = {
-    { "TopLeft",      Toolbar::TOPLEFT },
-    { "TopCenter",    Toolbar::TOPCENTER },
-    { "TopRight",     Toolbar::TOPRIGHT },
-    { "BottomLeft",   Toolbar::BOTTOMLEFT },
-    { "BottomCenter", Toolbar::BOTTOMCENTER },
-    { "BottomRight",  Toolbar::BOTTOMRIGHT },
-    { "LeftBottom",   Toolbar::LEFTBOTTOM },
-    { "LeftCenter",   Toolbar::LEFTCENTER },
-    { "LeftTop",      Toolbar::LEFTTOP },
-    { "RightBottom",  Toolbar::RIGHTBOTTOM },
-    { "RightCenter",  Toolbar::RIGHTCENTER },
-    { "RightTop",     Toolbar::RIGHTTOP },
-    { NULL,           Toolbar::RIGHTTOP }
-};
-
-} // end namespace FbTk
-
 namespace {
 
 class PlaceToolbarMenuItem: public FbTk::RadioMenuItem {
 public:
     PlaceToolbarMenuItem(const FbTk::FbString &label, Toolbar &toolbar,
-        Toolbar::Placement place):
+        Placement place):
         FbTk::RadioMenuItem(label), m_toolbar(toolbar), m_place(place) {
         setCloseOnClick(false);
     }
@@ -123,7 +102,7 @@ public:
     }
 private:
     Toolbar &m_toolbar;
-    Toolbar::Placement m_place;
+    Placement m_place;
 };
 
 } // end anonymous
@@ -160,15 +139,15 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
     m_layeritem(frame.window, layer),
     m_layermenu(new LayerMenu(scrn.menuTheme(),
                 scrn.imageControl(),
-                *scrn.layerManager().getLayer(ResourceLayer::MENU),
+                *scrn.layerManager().getLayer(LAYERMENU),
                 this,
                 true)),
     m_placementmenu(new FbMenu(scrn.menuTheme(),
                     scrn.imageControl(),
-                    *scrn.layerManager().getLayer(ResourceLayer::MENU))),
+                    *scrn.layerManager().getLayer(LAYERMENU))),
     m_toolbarmenu(new FbMenu(scrn.menuTheme(),
                   scrn.imageControl(),
-                  *scrn.layerManager().getLayer(ResourceLayer::MENU))),
+                  *scrn.layerManager().getLayer(LAYERMENU))),
 #ifdef XINERAMA
     m_xineramaheadmenu(0),
 #endif // XINERAMA
@@ -180,9 +159,9 @@ Toolbar::Toolbar(BScreen &scrn, FbTk::Layer &layer, size_t width):
     m_rc_visible(scrn.resourceManager(), true, scrn.name() + ".toolbar.visible"),
     m_rc_width_percent(scrn.resourceManager(), 100, scrn.name() + ".toolbar.widthPercent"),
     m_rc_alpha(scrn.resourceManager(), 255, scrn.name() + ".toolbar.alpha"),
-    m_rc_layernum(scrn.resourceManager(), ResourceLayer::DOCK, scrn.name() + ".toolbar.layer"),
+    m_rc_layernum(scrn.resourceManager(), LAYERDOCK, scrn.name() + ".toolbar.layer"),
     m_rc_on_head(scrn.resourceManager(), 1, scrn.name() + ".toolbar.onhead"),
-    m_rc_placement(scrn.resourceManager(), Toolbar::BOTTOMCENTER,
+    m_rc_placement(scrn.resourceManager(), BOTTOMCENTER,
                    scrn.name() + ".toolbar.placement"),
     m_rc_height(scrn.resourceManager(), 0, scrn.name() + ".toolbar.height"),
     m_rc_tools(scrn.resourceManager(), "prevworkspace, workspacename, nextworkspace, iconbar, systemtray, clock",
@@ -423,7 +402,7 @@ void Toolbar::reconfigure() {
         frame.window.setBackgroundColor(theme()->toolbar().color());
     } else {
         FbTk::Orientation orient = FbTk::ROT0;
-        Toolbar::Placement where = *m_rc_placement;
+        Placement where = *m_rc_placement;
         if (where == LEFTCENTER || where == LEFTTOP || where == LEFTBOTTOM)
             orient = FbTk::ROT270;
         if (where == RIGHTCENTER || where == RIGHTTOP || where == RIGHTBOTTOM)
@@ -554,7 +533,7 @@ void Toolbar::handleEvent(XEvent &event) {
 */
 }
 
-void Toolbar::setPlacement(Toolbar::Placement where) {
+void Toolbar::setPlacement(Placement where) {
     // disable vertical toolbar
 
     *m_rc_placement = where;
@@ -732,7 +711,7 @@ void Toolbar::toggleHidden() {
 
 void Toolbar::moveToLayer(int layernum) {
     m_layeritem.moveToLayer(layernum);
-    *m_rc_layernum = static_cast<ResourceLayer::Type>(layernum);
+    *m_rc_layernum = static_cast<LayerType>(layernum);
 }
 
 void Toolbar::setupMenus(bool skip_new_placement) {
@@ -788,7 +767,7 @@ void Toolbar::setupMenus(bool skip_new_placement) {
     if (screen().hasXinerama()) {
         m_xineramaheadmenu.reset( new XineramaHeadMenu<Toolbar>(screen().menuTheme(),
                     screen(), screen().imageControl(),
-                    *screen().layerManager().getLayer(::ResourceLayer::MENU), *this,
+                    *screen().layerManager().getLayer(LAYERMENU), *this,
                     _FB_XTEXT(Toolbar, OnHead, "Toolbar on Head",
                         "Title of toolbar on head menu")));
         menu()->insert(_FB_XTEXT(Menu, OnHead, "On Head...", "Title of On Head menu"),
@@ -801,25 +780,25 @@ void Toolbar::setupMenus(bool skip_new_placement) {
     if (!skip_new_placement) {
         struct PlacementP {
              const FbTk::FbString label;
-             Toolbar::Placement placement;
+             Placement placement;
         };
 
         static const PlacementP place_menu[] = {
-            { _FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), Toolbar::TOPLEFT},
-            { _FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), Toolbar::LEFTTOP},
-            { _FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), Toolbar::LEFTCENTER},
-            { _FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), Toolbar::LEFTBOTTOM},
-            { _FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), Toolbar::BOTTOMLEFT},
-            { _FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), Toolbar::TOPCENTER},
-            { "", Toolbar::TOPLEFT},
-            { "", Toolbar::TOPLEFT},
-            { "", Toolbar::TOPLEFT},
-            { _FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), Toolbar::BOTTOMCENTER},
-            { _FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), Toolbar::TOPRIGHT},
-            { _FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), Toolbar::RIGHTTOP},
-            { _FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), Toolbar::RIGHTCENTER},
-            { _FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), Toolbar::RIGHTBOTTOM},
-            { _FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), Toolbar::BOTTOMRIGHT}
+            { _FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), TOPLEFT},
+            { _FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), LEFTTOP},
+            { _FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), LEFTCENTER},
+            { _FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), LEFTBOTTOM},
+            { _FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), BOTTOMLEFT},
+            { _FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), TOPCENTER},
+            { "", TOPLEFT},
+            { "", TOPLEFT},
+            { "", TOPLEFT},
+            { _FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), BOTTOMCENTER},
+            { _FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), TOPRIGHT},
+            { _FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), RIGHTTOP},
+            { _FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), RIGHTCENTER},
+            { _FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), RIGHTBOTTOM},
+            { _FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), BOTTOMRIGHT}
         };
 
         placementMenu()->setMinimumColumns(3);

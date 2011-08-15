@@ -49,7 +49,7 @@ private:
 SendToMenu::SendToMenu(BScreen &screen):
     FbMenu(screen.menuTheme(),
            screen.imageControl(), 
-           *screen.layerManager().getLayer(ResourceLayer::MENU)) {
+           *screen.layerManager().getLayer(LAYERMENU)) {
     // listen to:
     // workspace count signal
     // workspace names signal

@@ -31,7 +31,6 @@
 #include "Workspace.hh"
 
 #include "Layer.hh"
-#include "FocusControl.hh"
 #include "ScreenPlacement.hh"
 
 // menu items
@@ -184,7 +183,7 @@ int calcSquareDistance(int x1, int y1, int x2, int y2) {
 class TabPlacementMenuItem: public FbTk::RadioMenuItem {
 public:
     TabPlacementMenuItem(const FbTk::FbString & label, BScreen &screen,
-                         FbWinFrame::TabPlacement place):
+                         Placement place):
         FbTk::RadioMenuItem(label),
         m_screen(screen),
         m_place(place) {
@@ -200,40 +199,10 @@ public:
 
 private:
     BScreen &m_screen;
-    FbWinFrame::TabPlacement m_place;
+    Placement m_place;
 };
-
-struct TabPlacementString {
-    FbWinFrame::TabPlacement placement;
-    const char* str;
-};
-
-
 
 } // end anonymous namespace
-
-
-
-namespace FbTk {
-
-template<>
-const EnumTraits<FbWinFrame::TabPlacement>::Pair EnumTraits<FbWinFrame::TabPlacement>::s_map[] = {
-    { "TopLeft",     FbWinFrame::TOPLEFT },
-    { "Top",         FbWinFrame::TOP },
-    { "TopRight",    FbWinFrame::TOPRIGHT },
-    { "BottomLeft",  FbWinFrame::BOTTOMLEFT },
-    { "Bottom",      FbWinFrame::BOTTOM },
-    { "BottomRight", FbWinFrame::BOTTOMRIGHT },
-    { "LeftBottom",  FbWinFrame::LEFTBOTTOM },
-    { "Left",        FbWinFrame::LEFT },
-    { "LeftTop",     FbWinFrame::LEFTTOP },
-    { "RightBottom", FbWinFrame::RIGHTBOTTOM },
-    { "Right",       FbWinFrame::RIGHT },
-    { "RightTop",    FbWinFrame::RIGHTTOP },
-    { NULL,          FbWinFrame::RIGHTTOP }
-};
-
-} // end namespace FbTk
 
 
 BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
@@ -250,7 +219,7 @@ BScreen::ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
     auto_raise(rm, true, scrname+".autoRaise"),
     click_raises(rm, true, scrname+".clickRaises"),
     default_deco(rm, "NORMAL", scrname+".defaultDeco"),
-    tab_placement(rm, FbWinFrame::TOPLEFT, scrname+".tab.placement"),
+    tab_placement(rm, TOPLEFT, scrname+".tab.placement"),
     windowmenufile(rm, Fluxbox::instance()->getDefaultDataFilename("windowmenu.lua"), scrname+".windowMenu"),
     typing_delay(rm, 0, scrname+".noFocusWhileTypingDelay"),
     workspaces(rm, 4, scrname+".workspaces"),
@@ -460,7 +429,7 @@ BScreen::BScreen(FbTk::ResourceManager_base &rm,
     changeWorkspaceID(first_desktop);
 
 #ifdef SLIT
-    m_slit.reset(new Slit(*this, *layerManager().getLayer(ResourceLayer::DESKTOP)));
+    m_slit.reset(new Slit(*this, *layerManager().getLayer(LAYERDESKTOP)));
 #endif // SLIT
 
     XFlush(disp);
@@ -539,7 +508,7 @@ void BScreen::initWindows() {
 
 #ifdef USE_TOOLBAR
     m_toolbar.reset(new Toolbar(*this,
-                                *layerManager().getLayer(::ResourceLayer::NORMAL)));
+                                *layerManager().getLayer(LAYERNORMAL)));
 #endif // USE_TOOLBAR
 
     unsigned int nchild;
@@ -796,7 +765,7 @@ void BScreen::cycleFocus(int options, const ClientPattern *pat, bool reverse) {
 FbMenu *BScreen::createMenu(const string &label) {
     FbMenu *menu = new FbMenu(menuTheme(),
                                   imageControl(),
-                                  *layerManager().getLayer(ResourceLayer::MENU));
+                                  *layerManager().getLayer(LAYERMENU));
     if (!label.empty())
         menu->setLabel(label);
 
@@ -806,7 +775,7 @@ FbMenu *BScreen::createMenu(const string &label) {
 FbMenu *BScreen::createToggleMenu(const string &label) {
     FbMenu *menu = new ToggleMenu(menuTheme(),
                                       imageControl(),
-                                      *layerManager().getLayer(ResourceLayer::MENU));
+                                      *layerManager().getLayer(LAYERMENU));
     if (!label.empty())
         menu->setLabel(label);
 
@@ -1462,24 +1431,24 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
 
     _FOCUSITEM(Configmenu, ClickFocus,
                "Click To Focus", "Click to focus",
-               FocusControl::CLICKFOCUS);
+               CLICKFOCUS);
     _FOCUSITEM(Configmenu, MouseFocus,
                "Mouse Focus (Keyboard Friendly)",
                "Mouse Focus (Keyboard Friendly)",
-               FocusControl::MOUSEFOCUS);
+               MOUSEFOCUS);
     _FOCUSITEM(Configmenu, StrictMouseFocus,
                "Mouse Focus (Strict)",
                "Mouse Focus (Strict)",
-               FocusControl::STRICTMOUSEFOCUS);
+               STRICTMOUSEFOCUS);
 #undef _FOCUSITEM
 
     focus_menu->insert(new FbTk::MenuSeparator());
     focus_menu->insert(new TabFocusModelMenuItem(_FB_XTEXT(Configmenu,
         ClickTabFocus, "ClickTabFocus", "Click tab to focus windows"),
-        focusControl(), FocusControl::CLICKTABFOCUS, reconf_cmd));
+        focusControl(), CLICKTABFOCUS, reconf_cmd));
     focus_menu->insert(new TabFocusModelMenuItem(_FB_XTEXT(Configmenu,
         MouseTabFocus, "MouseTabFocus", "Hover over tab to focus windows"),
-        focusControl(), FocusControl::MOUSETABFOCUS, reconf_cmd));
+        focusControl(), MOUSETABFOCUS, reconf_cmd));
     focus_menu->insert(new FbTk::MenuSeparator());
 
     try {
@@ -1560,25 +1529,25 @@ void BScreen::setupConfigmenu(FbTk::Menu &menu) {
     // menu is 3 wide, 5 down
     struct PlacementP {
          const FbTk::FbString label;
-         FbWinFrame::TabPlacement placement;
+         Placement placement;
     };
     static const PlacementP place_menu[] = {
 
-        { _FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), FbWinFrame::TOPLEFT},
-        { _FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), FbWinFrame::LEFTTOP},
-        { _FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), FbWinFrame::LEFT},
-        { _FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), FbWinFrame::LEFTBOTTOM},
-        { _FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), FbWinFrame::BOTTOMLEFT},
-        { _FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), FbWinFrame::TOP},
-        { "", FbWinFrame::TOPLEFT},
-        { "", FbWinFrame::TOPLEFT},
-        { "", FbWinFrame::TOPLEFT},
-        { _FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), FbWinFrame::BOTTOM},
-        { _FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), FbWinFrame::TOPRIGHT},
-        { _FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), FbWinFrame::RIGHTTOP},
-        { _FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), FbWinFrame::RIGHT},
-        { _FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), FbWinFrame::RIGHTBOTTOM},
-        { _FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), FbWinFrame::BOTTOMRIGHT}
+        { _FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), TOPLEFT},
+        { _FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), LEFTTOP},
+        { _FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), LEFTCENTER},
+        { _FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), LEFTBOTTOM},
+        { _FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), BOTTOMLEFT},
+        { _FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), TOPCENTER},
+        { "", TOPLEFT},
+        { "", TOPLEFT},
+        { "", TOPLEFT},
+        { _FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), BOTTOMCENTER},
+        { _FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), TOPRIGHT},
+        { _FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), RIGHTTOP},
+        { _FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), RIGHTCENTER},
+        { _FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), RIGHTBOTTOM},
+        { _FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), BOTTOMRIGHT}
     };
 
     tabplacement_menu->setMinimumColumns(3);

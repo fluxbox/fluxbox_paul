@@ -57,18 +57,6 @@ public:
     // STRICTINTERNAL means it doesn't go external automatically when no titlebar
     enum TabMode { NOTSET = 0, INTERNAL = 1, EXTERNAL };
 
-   /// Toolbar placement on the screen
-    enum TabPlacement{
-        // top and bottom placement
-        TOPLEFT = 1, TOP, TOPRIGHT,
-        BOTTOMLEFT, BOTTOM, BOTTOMRIGHT,
-        // left and right placement
-        LEFTBOTTOM, LEFT, LEFTTOP,
-        RIGHTBOTTOM, RIGHT, RIGHTTOP,
-
-        DEFAULT = TOPLEFT
-    };
-
     /// create a top level window
     FbWinFrame(BScreen &screen, unsigned int client_depth, WindowState &state,
                FocusableTheme<FbWinFrameTheme> &theme);

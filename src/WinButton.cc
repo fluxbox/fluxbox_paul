@@ -36,7 +36,7 @@
 WinButton::WinButton(FluxboxWindow &listen_to,
                      FbTk::ThemeProxy<WinButtonTheme> &theme,
                      FbTk::ThemeProxy<WinButtonTheme> &pressed,
-                     Type buttontype, const FbTk::FbWindow &parent,
+                     WinButtonType buttontype, const FbTk::FbWindow &parent,
                      int x, int y,
                      unsigned int width, unsigned int height):
     FbTk::Button(parent, x, y, width, height),
@@ -47,7 +47,7 @@ WinButton::WinButton(FluxboxWindow &listen_to,
 
     join(theme.reconfigSig(), FbTk::MemFun(*this, &WinButton::updateAll));
 
-    if (buttontype == MENUICON)
+    if (buttontype == MENUICONBUTTON)
         updateAll();
 }
 
@@ -116,26 +116,26 @@ void WinButton::setPressedColor(const FbTk::Color &color) {
 
 Pixmap WinButton::getBackgroundPixmap() const {
     switch(m_type) {
-    case MAXIMIZE:
+    case MAXIMIZEBUTTON:
         return m_theme->maximizePixmap().pixmap().drawable();
         break;
-    case MINIMIZE:
+    case MINIMIZEBUTTON:
         return m_theme->iconifyPixmap().pixmap().drawable();
         break;
-    case STICK:
+    case STICKBUTTON:
         if (m_listen_to.isStuck())
             return m_theme->stuckPixmap().pixmap().drawable();
         return m_theme->stickPixmap().pixmap().drawable();
         break;
-    case CLOSE:
+    case CLOSEBUTTON:
         return m_theme->closePixmap().pixmap().drawable();
         break;
-    case SHADE:
+    case SHADEBUTTON:
         if (m_listen_to.isShaded())
             return m_theme->unshadePixmap().pixmap().drawable();
         return m_theme->shadePixmap().pixmap().drawable();
         break;
-    case MENUICON:
+    case MENUICONBUTTON:
         if (m_icon_pixmap.drawable())
             return m_theme->titlePixmap().pixmap().drawable();
         return m_theme->menuiconPixmap().pixmap().drawable();
@@ -146,20 +146,20 @@ Pixmap WinButton::getBackgroundPixmap() const {
 
 Pixmap WinButton::getPressedPixmap() const {
     switch(m_type) {
-    case MAXIMIZE:
+    case MAXIMIZEBUTTON:
         return m_pressed_theme->maximizePixmap().pixmap().drawable();
-    case MINIMIZE:
+    case MINIMIZEBUTTON:
         return m_pressed_theme->iconifyPixmap().pixmap().drawable();
-    case STICK:
+    case STICKBUTTON:
         return m_pressed_theme->stickPixmap().pixmap().drawable();
-    case CLOSE:
+    case CLOSEBUTTON:
         return m_pressed_theme->closePixmap().pixmap().drawable();
-    case SHADE:
+    case SHADEBUTTON:
         if (m_listen_to.isShaded())
             return m_pressed_theme->unshadePixmap().pixmap().drawable();
         else
             return m_pressed_theme->shadePixmap().pixmap().drawable();
-    case MENUICON:
+    case MENUICONBUTTON:
         if (m_icon_pixmap.drawable())
             return m_theme->titlePixmap().pixmap().drawable();
         else
@@ -185,7 +185,7 @@ void WinButton::drawType() {
 
     // otherwise draw old style imagery
     switch (m_type) {
-    case MAXIMIZE:
+    case MAXIMIZEBUTTON:
         // if no pixmap was used, use old style
         if (gc() == 0) // must have valid graphic context
             return;
@@ -195,10 +195,10 @@ void WinButton::drawType() {
         drawLine(gc(),
                  2, 3, width() - 3, 3);
         break;
-    case MINIMIZE:
+    case MINIMIZEBUTTON:
         drawRectangle(gc(), 2, height() - 5, width() - 5, 2);
         break;
-    case STICK:
+    case STICKBUTTON:
         // width/4 != width/2, so we use /4*2 so that it's properly centred
         if (m_listen_to.isStuck()) {
             fillRectangle(gc(),
@@ -210,7 +210,7 @@ void WinButton::drawType() {
                           width()/10*2 + oddW, height()/10*2 + oddH);
         }
         break;
-    case CLOSE:
+    case CLOSEBUTTON:
         drawLine(gc(),
                  2, 2,
                  width() - 3, height() - 3);
@@ -229,7 +229,7 @@ void WinButton::drawType() {
                  2, height() - 3,
                  width() - 3, 2);
         break;
-    case SHADE:
+    case SHADEBUTTON:
 
     {
         int size = width() - 5 - oddW;
@@ -246,7 +246,7 @@ void WinButton::drawType() {
 
         break;
     }
-    case MENUICON:
+    case MENUICONBUTTON:
         if (m_icon_pixmap.drawable()) {
 
             if (m_icon_mask.drawable()) {
@@ -282,7 +282,7 @@ void WinButton::clear() {
 void WinButton::updateAll() {
 
     // update the menu icon
-    if (m_type == MENUICON && !m_listen_to.empty()) {
+    if (m_type == MENUICONBUTTON && !m_listen_to.empty()) {
 
         Display* display = m_listen_to.fbWindow().display();
         int screen = m_listen_to.screen().screenNumber();
@@ -308,7 +308,7 @@ void WinButton::updateAll() {
         setBackgroundPixmap(my_pm);
 
     // incorrect, pressed_pixmap is stateful in shade, so we'll do oneoff for now
-    if (m_type == SHADE) {
+    if (m_type == SHADEBUTTON) {
         Pixmap p_pm = getPressedPixmap();
         if (p_pm != None)
             setPressedPixmap(p_pm);

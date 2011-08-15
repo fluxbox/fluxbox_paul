@@ -23,6 +23,7 @@
 #define RESOURCE_LAYER_HH
 
 #include "FbTk/StringUtil.hh"
+#include "Resources.hh"
 
 /** 
  * (This is not the layer->raise/lower handling stuff, @see FbTk::Layer)
@@ -32,23 +33,6 @@
  */
 class  ResourceLayer {
 public:
-    enum Type {
-        MENU = 0,
-        LAYER1 = 1,
-        ABOVE_DOCK = 2,
-        LAYER3 = 3,
-        DOCK = 4,
-        LAYER5 = 5,
-        TOP = 6,
-        LAYER7 = 7,
-        NORMAL = 8,
-        LAYER9 = 9,
-        BOTTOM = 10,
-        LAYER11 = 11,
-        DESKTOP = 12,
-        NUM_LAYERS = 13
-    };
-
     explicit ResourceLayer(int i) : m_num(i) {};
 
     static int getNumFromString(const std::string &str) {
@@ -57,37 +41,37 @@ public:
         if (FbTk::StringUtil::extractNumber(str, tempnum))
             return tempnum;
         if (v == "menu")
-            return ::ResourceLayer::MENU;
+            return LAYERMENU;
         if (v == "abovedock")
-            return ::ResourceLayer::ABOVE_DOCK;
+            return LAYERABOVE_DOCK;
         if (v == "dock")
-            return ::ResourceLayer::DOCK;
+            return LAYERDOCK;
         if (v == "top")
-            return ::ResourceLayer::TOP;
+            return LAYERTOP;
         if (v == "normal")
-            return ::ResourceLayer::NORMAL;
+            return LAYERNORMAL;
         if (v == "bottom")
-            return ::ResourceLayer::BOTTOM;
+            return LAYERBOTTOM;
         if (v == "desktop")
-            return ::ResourceLayer::DESKTOP;
+            return LAYERDESKTOP;
         return -1;
     }
 
     static std::string getString(int num) {
         switch (num) {
-        case ::ResourceLayer::MENU:
+        case LAYERMENU:
             return std::string("Menu");
-        case ::ResourceLayer::ABOVE_DOCK:
+        case LAYERABOVE_DOCK:
             return std::string("AboveDock");
-        case ::ResourceLayer::DOCK:
+        case LAYERDOCK:
             return std::string("Dock");
-        case ::ResourceLayer::TOP:
+        case LAYERTOP:
             return std::string("Top");
-        case ::ResourceLayer::NORMAL:
+        case LAYERNORMAL:
             return std::string("Normal");
-        case ::ResourceLayer::BOTTOM:
+        case LAYERBOTTOM:
             return std::string("Bottom");
-        case ::ResourceLayer::DESKTOP:
+        case LAYERDESKTOP:
             return std::string("Desktop");
         default:
            return FbTk::StringUtil::number2String(num);

@@ -89,27 +89,6 @@ using std::endl;
 using std::hex;
 using std::dec;
 
-namespace FbTk {
-
-template<>
-const EnumTraits<Slit::Placement>::Pair EnumTraits<Slit::Placement>::s_map[] = {
-    { "TopLeft", Slit::TOPLEFT },
-    { "LeftCenter",   Slit::LEFTCENTER },
-    { "BottomLeft",   Slit::BOTTOMLEFT },
-    { "TopCenter",    Slit::TOPCENTER },
-    { "BottomCenter", Slit::BOTTOMCENTER },
-    { "TopRight",     Slit::TOPRIGHT },
-    { "RightCenter",  Slit::RIGHTCENTER },
-    { "BottomRight",  Slit::BOTTOMRIGHT },
-    { "LeftTop",      Slit::LEFTTOP },
-    { "RightTop",     Slit::RIGHTTOP },
-    { "LeftBottom",   Slit::LEFTBOTTOM },
-    { "RightBottom",  Slit::RIGHTBOTTOM },
-    { NULL,           Slit::RIGHTBOTTOM },
-};
-
-} // end namespace FbTk
-
 namespace {
 
 class SlitClientMenuItem: public FbTk::MenuItem{
@@ -145,7 +124,7 @@ private:
 
 class PlaceSlitMenuItem: public FbTk::RadioMenuItem {
 public:
-    PlaceSlitMenuItem(const FbTk::FbString &label, Slit &slit, Slit::Placement place, FbTk::RefCount<FbTk::Command<void> > &cmd):
+    PlaceSlitMenuItem(const FbTk::FbString &label, Slit &slit, Placement place, FbTk::RefCount<FbTk::Command<void> > &cmd):
         FbTk::RadioMenuItem(label, cmd), m_slit(slit), m_place(place) {
         setCloseOnClick(false);
     }
@@ -156,7 +135,7 @@ public:
     }
 private:
     Slit &m_slit;
-    Slit::Placement m_place;
+    Placement m_place;
 };
 
 } // End anonymous namespace
@@ -231,10 +210,10 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer)
       m_screen(scr),
       m_clientlist_menu(new FbMenu(scr.menuTheme(),
                         scr.imageControl(),
-                        *scr.layerManager().getLayer(ResourceLayer::MENU)) ),
+                        *scr.layerManager().getLayer(LAYERMENU)) ),
       m_slitmenu(new FbMenu(scr.menuTheme(),
                  scr.imageControl(),
-                 *scr.layerManager().getLayer(ResourceLayer::MENU)) ),
+                 *scr.layerManager().getLayer(LAYERMENU)) ),
 #ifdef XINERAMA
       m_xineramaheadmenu(0),
 #endif // XINERAMA
@@ -258,7 +237,7 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer)
       m_rc_placement(scr.resourceManager(), RIGHTBOTTOM, scr.name() + ".slit.placement"),
       m_rc_alpha(scr.resourceManager(), 255, scr.name() + ".slit.alpha"),
       m_rc_on_head(scr.resourceManager(), 0, scr.name() + ".slit.onhead"),
-      m_rc_layernum(scr.resourceManager(), ResourceLayer::DOCK, scr.name() + ".slit.layer") {
+      m_rc_layernum(scr.resourceManager(), LAYERDOCK, scr.name() + ".slit.layer") {
 
     _FB_USES_NLS;
 
@@ -298,7 +277,7 @@ Slit::Slit(BScreen &scr, FbTk::Layer &layer)
     m_layermenu.reset(new LayerMenu(scr.menuTheme(),
                                     scr.imageControl(),
                                     *scr.layerManager().
-                                    getLayer(ResourceLayer::MENU),
+                                    getLayer(LAYERMENU),
                                     this,
                                     true));
     m_layermenu->setLabel(_FB_XTEXT(Slit, Layer, "Slit Layer", "Title of Slit Layer Menu"));
@@ -1114,7 +1093,7 @@ void Slit::setupMenu() {
 
     FbTk::RefCount<FbTk::Menu> placement_menu( new FbMenu(m_screen.menuTheme(),
                                         m_screen.imageControl(),
-                                        *m_screen.layerManager().getLayer(::ResourceLayer::MENU)) );
+                                        *m_screen.layerManager().getLayer(LAYERMENU)) );
 
 
     // setup base menu
@@ -1129,7 +1108,7 @@ void Slit::setupMenu() {
     if (screen().hasXinerama()) {
         m_xineramaheadmenu.reset( new XineramaHeadMenu<Slit>(
                     screen().menuTheme(), screen(), screen().imageControl(),
-                    *screen().layerManager().getLayer(::ResourceLayer::MENU), *this,
+                    *screen().layerManager().getLayer(LAYERMENU), *this,
                     _FB_XTEXT(Slit, OnHead, "Slit on Head", "Title of Slits On Head menu")) );
         m_slitmenu->insert(_FB_XTEXT(Menu, OnHead, "On Head...", "Title of On Head menu"),
                               FbTk::RefCount<FbTk::Menu>(m_xineramaheadmenu));
@@ -1167,32 +1146,32 @@ void Slit::setupMenu() {
     placement_menu->setLabel(_FB_XTEXT(Slit, Placement, "Slit Placement", "Slit Placement"));
     placement_menu->setMinimumColumns(3);
 
-    typedef pair<FbTk::FbString, Slit::Placement> PlacementP;
+    typedef pair<FbTk::FbString, Placement> PlacementP;
     typedef list<PlacementP> Placements;
     Placements place_menu;
 
     // menu is 3 wide, 5 down
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), Slit::TOPLEFT));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), Slit::LEFTTOP));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), Slit::LEFTCENTER));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), Slit::LEFTBOTTOM));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), Slit::BOTTOMLEFT));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), Slit::TOPCENTER));
-    place_menu.push_back(PlacementP("", Slit::TOPLEFT));
-    place_menu.push_back(PlacementP("", Slit::TOPLEFT));
-    place_menu.push_back(PlacementP("", Slit::TOPLEFT));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), Slit::BOTTOMCENTER));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), Slit::TOPRIGHT));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), Slit::RIGHTTOP));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), Slit::RIGHTCENTER));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), Slit::RIGHTBOTTOM));
-    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), Slit::BOTTOMRIGHT));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopLeft, "Top Left", "Top Left"), TOPLEFT));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftTop, "Left Top", "Left Top"), LEFTTOP));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftCenter, "Left Center", "Left Center"), LEFTCENTER));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, LeftBottom, "Left Bottom", "Left Bottom"), LEFTBOTTOM));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomLeft, "Bottom Left", "Bottom Left"), BOTTOMLEFT));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopCenter, "Top Center", "Top Center"), TOPCENTER));
+    place_menu.push_back(PlacementP("", TOPLEFT));
+    place_menu.push_back(PlacementP("", TOPLEFT));
+    place_menu.push_back(PlacementP("", TOPLEFT));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomCenter, "Bottom Center", "Bottom Center"), BOTTOMCENTER));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, TopRight, "Top Right", "Top Right"), TOPRIGHT));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightTop, "Right Top", "Right Top"), RIGHTTOP));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightCenter, "Right Center", "Right Center"), RIGHTCENTER));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, RightBottom, "Right Bottom", "Right Bottom"), RIGHTBOTTOM));
+    place_menu.push_back(PlacementP(_FB_XTEXT(Align, BottomRight, "Bottom Right", "Bottom Right"), BOTTOMRIGHT));
 
 
     // create items in sub menu
     for (size_t i=0; i<15; ++i) {
         const FbTk::FbString &str = place_menu.front().first;
-        Slit::Placement placement = place_menu.front().second;
+        Placement placement = place_menu.front().second;
 
         if (str == "") {
             placement_menu->insert("");
@@ -1212,7 +1191,7 @@ void Slit::setupMenu() {
 
 void Slit::moveToLayer(int layernum) {
     m_layeritem->moveToLayer(layernum);
-    *m_rc_layernum = static_cast<ResourceLayer::Type>(layernum);
+    *m_rc_layernum = static_cast<LayerType>(layernum);
 }
 
 void Slit::saveOnHead(int head) {

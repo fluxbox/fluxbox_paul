@@ -52,19 +52,19 @@ public:
     // do all STL set implementations use this for sorting?
     bool operator <(const Area &o) const {
         switch (s_policy) {
-            case ScreenPlacement::ROWMINOVERLAPPLACEMENT:
+            case ROWMINOVERLAPPLACEMENT:
                 // if we're making rows, y-value is most important
                 if (y != o.y)
-                    return ((y < o.y) ^ (s_col_dir == ScreenPlacement::BOTTOMTOP));
+                    return ((y < o.y) ^ (s_col_dir == BOTTOMTOPDIRECTION));
                 if (x != o.x)
-                    return ((x < o.x) ^ (s_row_dir == ScreenPlacement::RIGHTLEFT));
+                    return ((x < o.x) ^ (s_row_dir == RIGHTLEFTDIRECTION));
                 return (corner < o.corner);
-            case ScreenPlacement::COLMINOVERLAPPLACEMENT:
+            case COLMINOVERLAPPLACEMENT:
                 // if we're making columns, x-value is most important
                 if (x != o.x)
-                    return ((x < o.x) ^ (s_row_dir == ScreenPlacement::RIGHTLEFT));
+                    return ((x < o.x) ^ (s_row_dir == RIGHTLEFTDIRECTION));
                 if (y != o.y)
-                    return ((y < o.y) ^ (s_col_dir == ScreenPlacement::BOTTOMTOP));
+                    return ((y < o.y) ^ (s_col_dir == BOTTOMTOPDIRECTION));
                 return (corner < o.corner);
             default:
                 return false;
@@ -74,14 +74,14 @@ public:
     // position where the top left corner of the window will be placed
     int x, y;
 
-    static ScreenPlacement::RowDirection s_row_dir;
-    static ScreenPlacement::ColumnDirection s_col_dir;
-    static ScreenPlacement::PlacementPolicy s_policy;
+    static RowDirection s_row_dir;
+    static ColumnDirection s_col_dir;
+    static PlacementPolicy s_policy;
 };
 
-ScreenPlacement::RowDirection Area::s_row_dir = ScreenPlacement::LEFTRIGHT;
-ScreenPlacement::ColumnDirection Area::s_col_dir = ScreenPlacement::TOPBOTTOM;
-ScreenPlacement::PlacementPolicy Area::s_policy = ScreenPlacement::ROWMINOVERLAPPLACEMENT;
+RowDirection Area::s_row_dir = LEFTRIGHTDIRECTION;
+ColumnDirection Area::s_col_dir = TOPBOTTOMDIRECTION;
+PlacementPolicy Area::s_policy = ROWMINOVERLAPPLACEMENT;
 
 } // end of anonymous namespace
 

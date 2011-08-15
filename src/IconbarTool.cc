@@ -65,18 +65,6 @@ using std::string;
 using std::list;
 using std::endl;
 
-namespace FbTk {
-
-template<>
-const EnumTraits<Container::Alignment>::Pair EnumTraits<Container::Alignment>::s_map[] = {
-    { "Left",     Container::LEFT },
-    { "Right",    Container::RIGHT },
-    { "Relative", Container::RELATIVE }, 
-    { NULL,       Container::RELATIVE }
-};
-
-} // end namespace FbTk
-
 class IconbarTool::ToolbarModeMenuItem : public FbTk::RadioMenuItem {
 public:
     ToolbarModeMenuItem(const FbTk::FbString &label, IconbarTool &handler,
@@ -231,7 +219,7 @@ IconbarTool::IconbarTool(const FbTk::FbWindow &parent, IconbarTheme &theme,
                    screen.name() + ".iconbar.iconTextPadding"),
     m_rc_use_pixmap(screen.resourceManager(), true, screen.name() + ".iconbar.usePixmap"),
     m_menu(new FbMenu(screen.menuTheme(), screen.imageControl(),
-           *screen.layerManager().getLayer(ResourceLayer::MENU)) ),
+           *screen.layerManager().getLayer(LAYERMENU)) ),
     m_alpha(255) {
 
     // setup mode menu

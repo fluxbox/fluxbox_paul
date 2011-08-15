@@ -53,8 +53,8 @@ bool ColSmartPlacement::placeWindow(const FluxboxWindow &win, int head,
     int next_x, next_y;
     const ScreenPlacement &screen_placement = win.screen().placementStrategy();
 
-    bool top_bot = screen_placement.colDirection() == ScreenPlacement::TOPBOTTOM;
-    bool left_right = screen_placement.rowDirection() == ScreenPlacement::LEFTRIGHT;
+    bool top_bot = screen_placement.colDirection() == TOPBOTTOMDIRECTION;
+    bool left_right = screen_placement.rowDirection() == LEFTRIGHTDIRECTION;
 
     int test_x;
 
@@ -70,7 +70,7 @@ bool ColSmartPlacement::placeWindow(const FluxboxWindow &win, int head,
         test_x = head_right - win_w;
 
     int change_y = 1;
-    if (screen_placement.colDirection() == ScreenPlacement::BOTTOMTOP)
+    if (screen_placement.colDirection() == BOTTOMTOPDIRECTION)
         change_y = -1;
 
     while (!placed &&

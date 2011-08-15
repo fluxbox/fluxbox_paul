@@ -44,9 +44,9 @@ using std::cerr;
 using std::endl;
 
 ScreenPlacement::ScreenPlacement(BScreen &screen):
-    m_row_direction(screen.resourceManager(), LEFTRIGHT,
+    m_row_direction(screen.resourceManager(), LEFTRIGHTDIRECTION,
                     screen.name()+".rowPlacementDirection"),
-    m_col_direction(screen.resourceManager(), TOPBOTTOM,
+    m_col_direction(screen.resourceManager(), TOPBOTTOMDIRECTION,
                     screen.name()+".colPlacementDirection"),
     m_placement_policy(screen.resourceManager(), ROWMINOVERLAPPLACEMENT,
                        screen.name()+".windowPlacement"),
@@ -174,33 +174,3 @@ void ScreenPlacement::placeAndShowMenu(FbTk::Menu& menu, int x, int y, bool resp
     menu.show();
     menu.grabInputFocus();
 }
-
-////////////////////// Placement Resources
-namespace FbTk {
-
-template <>
-const EnumTraits<ScreenPlacement::PlacementPolicy>::Pair EnumTraits<ScreenPlacement::PlacementPolicy>::s_map[] = {
-    { "RowSmartPlacement",      ScreenPlacement::ROWSMARTPLACEMENT },
-    { "ColSmartPlacement",      ScreenPlacement::COLSMARTPLACEMENT },
-    { "RowMinOverlapPlacement", ScreenPlacement::ROWMINOVERLAPPLACEMENT },
-    { "ColMinOverlapPlacement", ScreenPlacement::COLMINOVERLAPPLACEMENT },
-    { "UnderMousePlacement",    ScreenPlacement::UNDERMOUSEPLACEMENT },
-    { "CascadePlacement",       ScreenPlacement::CASCADEPLACEMENT },
-    { NULL,                     ScreenPlacement::CASCADEPLACEMENT }
-};
-
-template <>
-const EnumTraits<ScreenPlacement::RowDirection>::Pair EnumTraits<ScreenPlacement::RowDirection>::s_map[] = {
-    { "LeftToRight",            ScreenPlacement::LEFTRIGHT },
-    { "RightToLeft",            ScreenPlacement::RIGHTLEFT },
-    { NULL,                     ScreenPlacement::RIGHTLEFT },
-};
-
-template <>
-const EnumTraits<ScreenPlacement::ColumnDirection>::Pair EnumTraits<ScreenPlacement::ColumnDirection>::s_map[] = {
-    { "TopToBottom",            ScreenPlacement::TOPBOTTOM },
-    { "BottomToTop",            ScreenPlacement::BOTTOMTOP },
-    { NULL,                     ScreenPlacement::BOTTOMTOP },
-};
-
-} // end namespace FbTk
