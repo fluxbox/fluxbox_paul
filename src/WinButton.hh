@@ -25,6 +25,7 @@
 #include "FbTk/Button.hh"
 #include "FbTk/FbPixmap.hh"
 #include "FbTk/Signal.hh"
+#include "Resources.hh"
 
 class FluxboxWindow;
 class WinButtonTheme;
@@ -37,12 +38,10 @@ template <class T> class ThemeProxy;
 /// draws and handles basic window button graphic
 class WinButton:public FbTk::Button, public FbTk::SignalTracker {
 public:
-    /// draw type for the button
-    enum Type {MAXIMIZE, MINIMIZE, SHADE, STICK, CLOSE, MENUICON};
     WinButton(FluxboxWindow &listen_to, 
               FbTk::ThemeProxy<WinButtonTheme> &theme,
               FbTk::ThemeProxy<WinButtonTheme> &pressed,
-              Type buttontype, const FbTk::FbWindow &parent, int x, int y, 
+              WinButtonType buttontype, const FbTk::FbWindow &parent, int x, int y, 
               unsigned int width, unsigned int height);
     /// override for drawing
     void exposeEvent(XExposeEvent &event);
@@ -59,7 +58,7 @@ public:
     void updateAll();
 private:
     void drawType();
-    Type m_type; ///< the button type
+    WinButtonType m_type; ///< the button type
     FluxboxWindow &m_listen_to;
     FbTk::ThemeProxy<WinButtonTheme> &m_theme, &m_pressed_theme;
 

@@ -563,7 +563,7 @@ private:
             maximize:1, close:1, menu:1, sticky:1, shade:1, tab:1, enabled:1;
     } decorations;
 
-    std::vector<WinButton::Type> m_titlebar_buttons[2];
+    std::vector<WinButtonType> m_titlebar_buttons[2];
     bool m_toggled_decos;
 
     struct {

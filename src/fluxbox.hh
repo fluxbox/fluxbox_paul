@@ -32,6 +32,7 @@
 #include "FbTk/Signal.hh"
 
 #include "AttentionNoticeHandler.hh"
+#include "Resources.hh"
 
 #include <X11/Xresource.h>
 
@@ -109,14 +110,10 @@ public:
     void addAtomHandler(AtomHandler *atomh);
     void removeAtomHandler(AtomHandler *atomh);
 
-    /// obsolete
-    enum TabsAttachArea{ATTACH_AREA_WINDOW= 0, ATTACH_AREA_TITLEBAR};
-
-
     bool getIgnoreBorder() const { return *m_rc_ignoreborder; }
     FbTk::BoolResource &getPseudoTransResource() { return m_rc_pseudotrans; }
 
-    Fluxbox::TabsAttachArea getTabsAttachArea() const { return *m_rc_tabs_attach_area; }
+    TabsAttachArea getTabsAttachArea() const { return *m_rc_tabs_attach_area; }
     FbTk::StringResource &getStyleResource() { return m_rc_stylefile; }
     const std::string &getStyleOverlayFilename() const { return *m_rc_styleoverlayfile; }
 

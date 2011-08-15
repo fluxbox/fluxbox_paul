@@ -23,6 +23,7 @@
 #define SCREENPLACEMENT_HH
 
 #include "PlacementStrategy.hh"
+#include "Resources.hh"
 #include "FbTk/Resource.hh"
 
 #include <memory>
@@ -42,24 +43,6 @@ class BScreen;
  */
 class ScreenPlacement: public PlacementStrategy {
 public:
-    enum PlacementPolicy { 
-        ROWSMARTPLACEMENT, 
-        COLSMARTPLACEMENT,
-        COLMINOVERLAPPLACEMENT,
-        ROWMINOVERLAPPLACEMENT,
-        CASCADEPLACEMENT,
-        UNDERMOUSEPLACEMENT
-    };
-
-    enum RowDirection { 
-        LEFTRIGHT, ///< from left to right
-        RIGHTLEFT  ///< from right to left
-    };
-    enum ColumnDirection { 
-        TOPBOTTOM,  ///< from top to bottom
-        BOTTOMTOP   ///< from bottom to top
-    };
-
     explicit ScreenPlacement(BScreen &screen);
 
     virtual ~ScreenPlacement() {}

@@ -343,7 +343,7 @@ FbMenu *MenuCreator::createMenu(const string &label, int screen_number) {
 
     FbMenu *menu = new FbMenu(screen->menuTheme(),
                                   screen->imageControl(),
-                                  *screen->layerManager().getLayer(ResourceLayer::MENU));
+                                  *screen->layerManager().getLayer(LAYERMENU));
     if (!label.empty())
         menu->setLabel(label);
 
@@ -462,7 +462,7 @@ bool MenuCreator::createWindowMenuItem(const string &type,
                 return false;
 
             RefMenu submenu( new AlphaMenu(screen->menuTheme(), screen->imageControl(),
-                              *screen->layerManager().getLayer(ResourceLayer::MENU)) );
+                              *screen->layerManager().getLayer(LAYERMENU)) );
             submenu->disableTitle();
             menu.insert(label.empty() ? _FB_XTEXT(Configmenu, Transparency, "Transparency",
                                                   "Menu containing various transparency options"): label,
@@ -488,7 +488,7 @@ bool MenuCreator::createWindowMenuItem(const string &type,
 
         RefMenu submenu( new LayerMenu(screen->menuTheme(),
                                             screen->imageControl(),
-                                            *screen->layerManager().getLayer(ResourceLayer::MENU),
+                                            *screen->layerManager().getLayer(LAYERMENU),
                                             &context,
                                             false) );
         submenu->disableTitle();

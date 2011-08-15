@@ -396,7 +396,7 @@ Fluxbox::Fluxbox(int argc, char **argv,
         std::string sc_nr = FbTk::StringUtil::number2String(screens[s]);
         BScreen *screen = new BScreen(m_resourcemanager,
                                       std::string("screen") + sc_nr,
-                                      screens[s], ::ResourceLayer::NUM_LAYERS);
+                                      screens[s], NUM_LAYERS);
 
         // already handled
         if (! screen->isScreenManaged()) {

@@ -28,6 +28,7 @@
 #include "FbMenu.hh"
 #include "FbWinFrame.hh"
 #include "FbRootWindow.hh"
+#include "Resources.hh"
 #include "RootTheme.hh"
 #include "WinButtonTheme.hh"
 #include "FbWinFrameTheme.hh"
@@ -89,10 +90,6 @@ public:
     typedef std::vector<std::string> WorkspaceNames;
     typedef std::list<std::pair<FbTk::FbString, FbTk::RefCount<FbTk::Menu> > > ExtraMenus;
 
-    typedef FbTk::Resource<
-        FbWinFrame::TabPlacement, FbTk::EnumTraits<FbWinFrame::TabPlacement> 
-    > TabPlacementResource;
-
     BScreen(FbTk::ResourceManager_base &rm,
             const std::string &screenname,
             int scrn, int number_of_layers);
@@ -124,7 +121,7 @@ public:
     ExtraMenus &extraWindowMenus() { return m_extramenus; }
     const ExtraMenus &extraWindowMenus() const { return m_extramenus; }
 
-    TabPlacementResource &getTabPlacementResource() { return resource.tab_placement; }
+    PlacementResource &getTabPlacementResource() { return resource.tab_placement; }
 
     unsigned int noFocusWhileTypingDelay() const { return *resource.typing_delay; }
     const bool allowRemoteActions() const { return *resource.allow_remote_actions; }
@@ -534,7 +531,7 @@ private:
             max_ignore_inc, max_disable_move, max_disable_resize,
             workspace_warping, show_window_pos, auto_raise, click_raises;
         FbTk::StringResource default_deco;
-        TabPlacementResource tab_placement;
+        PlacementResource tab_placement;
         FbTk::StringResource windowmenufile;
         FbTk::UIntResource typing_delay;
         FbTk::IntResource workspaces, edge_snap_threshold, focused_alpha,

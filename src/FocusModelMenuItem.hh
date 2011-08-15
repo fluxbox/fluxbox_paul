@@ -36,7 +36,7 @@ template <class T> class Command;
 class FocusModelMenuItem : public FbTk::RadioMenuItem {
 public:
     FocusModelMenuItem(const FbTk::FbString &label, FocusControl &focus_control, 
-                       FocusControl::FocusModel model,
+                       FocusModel model,
                        FbTk::RefCount<FbTk::Command<void> > &cmd):
         FbTk::RadioMenuItem(label, cmd),
         m_focus_control(focus_control), 
@@ -53,14 +53,14 @@ public:
 
 private:
     FocusControl &m_focus_control;
-    FocusControl::FocusModel m_focusmodel;
+    FocusModel m_focusmodel;
 };
 
 class TabFocusModelMenuItem : public FbTk::RadioMenuItem {
 public:
     TabFocusModelMenuItem(const FbTk::FbString &label, 
                           FocusControl &focus_control,
-                          FocusControl::TabFocusModel model, 
+                          TabFocusModel model, 
                           FbTk::RefCount<FbTk::Command<void> > &cmd):
         FbTk::RadioMenuItem(label, cmd),
         m_focus_control(focus_control), 
@@ -77,7 +77,7 @@ public:
 
 private:
     FocusControl &m_focus_control;
-    FocusControl::TabFocusModel m_tabfocusmodel;
+    TabFocusModel m_tabfocusmodel;
 };
 
 

@@ -55,16 +55,16 @@ bool RowSmartPlacement::placeWindow(const FluxboxWindow &win, int head,
     const ScreenPlacement &screen_placement = win.screen().placementStrategy();
 
     bool top_bot = 
-        screen_placement.colDirection() == ScreenPlacement::TOPBOTTOM;
+        screen_placement.colDirection() == TOPBOTTOMDIRECTION;
     bool left_right = 
-        screen_placement.rowDirection() == ScreenPlacement::LEFTRIGHT;
+        screen_placement.rowDirection() == LEFTRIGHTDIRECTION;
 
     int change_x = 1, change_y = 1;
 
-    if (screen_placement.colDirection() == ScreenPlacement::BOTTOMTOP)
+    if (screen_placement.colDirection() == BOTTOMTOPDIRECTION)
         change_y = -1;
 
-    if (screen_placement.rowDirection() == ScreenPlacement::RIGHTLEFT)
+    if (screen_placement.rowDirection() == RIGHTLEFTDIRECTION)
         change_x = -1;
 
     int win_w = win.width() + win.fbWindow().borderWidth()*2 + win.widthOffset();

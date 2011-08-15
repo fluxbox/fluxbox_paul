@@ -145,7 +145,7 @@ fluxbox_SOURCES = AtomHandler.hh ArrowButton.hh ArrowButton.cc \
 	FocusModelMenuItem.hh \
 	ToggleMenu.hh \
 	HeadArea.hh HeadArea.cc \
-	Resources.cc \
+	Resources.hh Resources.cc \
 	WindowCmd.hh WindowCmd.cc \
 	FocusControl.hh FocusControl.cc \
 	PlacementStrategy.hh \

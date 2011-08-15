@@ -251,8 +251,8 @@ private:
     int m_mode;
 };
 
-typedef FbTk::VectorTraits<FbTk::EnumTraits<WinButton::Type> > WinButtonsTraits;
-typedef FbTk::Resource<vector<WinButton::Type>, WinButtonsTraits> WinButtonsResource;
+typedef FbTk::VectorTraits<FbTk::EnumTraits<WinButtonType> > WinButtonsTraits;
+typedef FbTk::Resource<vector<WinButtonType>, WinButtonsTraits> WinButtonsResource;
 
 }
 
@@ -489,7 +489,7 @@ void FluxboxWindow::init() {
         m_workspace_number =
                 m_client->transientFor()->fbwindow()->workspaceNumber();
     } else // if no parent then set default layer
-        moveToLayer(m_state.layernum, m_state.layernum != ::ResourceLayer::NORMAL);
+        moveToLayer(m_state.layernum, m_state.layernum != LAYERNORMAL);
 
     fbdbg<<"FluxboxWindow::init("<<title().logical()<<") transientFor: "<<
        m_client->transientFor()<<endl;
@@ -1447,9 +1447,9 @@ void FluxboxWindow::setFullscreenLayer() {
         getOnHead() != foc->getOnHead() ||
         (foc->winClient().isTransient() &&
          foc->winClient().transientFor()->fbwindow() == this)) {
-        moveToLayer(::ResourceLayer::ABOVE_DOCK);
+        moveToLayer(LAYERABOVE_DOCK);
     } else {
-        moveToLayer(::ResourceLayer::DESKTOP);
+        moveToLayer(LAYERDESKTOP);
     }
     stateSig().emit(*this);
 
@@ -1686,10 +1686,10 @@ void FluxboxWindow::moveToLayer(int layernum, bool force) {
     fbdbg<<"FluxboxWindow("<<title().logical()<<")::moveToLayer("<<layernum<<")"<<endl;
 
     // don't let it set its layer into menu area
-    if (layernum <= ::ResourceLayer::MENU)
-        layernum = ::ResourceLayer::MENU + 1;
-    else if (layernum >= ::ResourceLayer::NUM_LAYERS)
-        layernum = ::ResourceLayer::NUM_LAYERS - 1;
+    if (layernum <= LAYERMENU)
+        layernum = LAYERMENU + 1;
+    else if (layernum >= NUM_LAYERS)
+        layernum = NUM_LAYERS - 1;
 
     if (!m_initialized)
         m_state.layernum = layernum;
@@ -1761,7 +1761,7 @@ void FluxboxWindow::setFocusFlag(bool focus) {
     }
 
     if (m_state.fullscreen && focus) {
-        moveToLayer(::ResourceLayer::ABOVE_DOCK);
+        moveToLayer(LAYERABOVE_DOCK);
         leave(screen().focusedWindowSig());
     }
 
@@ -3208,10 +3208,10 @@ void FluxboxWindow::attachTo(int x, int y, bool interrupted) {
             inside_titlebar = client->fbwindow()->hasTitlebar() &&
                 client->fbwindow()->y() + static_cast<signed>(client->fbwindow()->titlebarHeight()) > dest_y;
 
-            Fluxbox::TabsAttachArea area= Fluxbox::instance()->getTabsAttachArea();
-            if (area == Fluxbox::ATTACH_AREA_WINDOW)
+            TabsAttachArea area= Fluxbox::instance()->getTabsAttachArea();
+            if (area == ATTACH_AREA_WINDOW)
                 attach_to_win = client->fbwindow();
-            else if (area == Fluxbox::ATTACH_AREA_TITLEBAR && inside_titlebar) {
+            else if (area == ATTACH_AREA_TITLEBAR && inside_titlebar) {
                 attach_to_win = client->fbwindow();
             }
         }
@@ -3460,18 +3460,18 @@ void FluxboxWindow::setupWindow() {
         if (titlebar_side[i] != 0)
             continue; // find next resource too
 
-        WinButton::Type titlebar_left[] =  {
-            WinButton::STICK
+        WinButtonType titlebar_left[] =  {
+            STICKBUTTON
         };
 
-        WinButton::Type titlebar_right[] =  {
-            WinButton::MINIMIZE,
-            WinButton::MAXIMIZE,
-            WinButton::CLOSE
+        WinButtonType titlebar_right[] =  {
+            MINIMIZEBUTTON,
+            MAXIMIZEBUTTON,
+            CLOSEBUTTON
         };
 
-        WinButton::Type *begin = 0;
-        WinButton::Type *end = 0;
+        WinButtonType *begin = 0;
+        WinButtonType *end = 0;
 
         if (i == 0) {
             begin = titlebar_left;
@@ -3544,7 +3544,7 @@ void FluxboxWindow::updateButtons() {
 
     for (size_t c = 0; c < 2 ; c++) {
         // get titlebar configuration for current side
-        const vector<WinButton::Type> &dir = *(*titlebar_side[c]);
+        const vector<WinButtonType> &dir = *(*titlebar_side[c]);
         m_titlebar_buttons[c] = dir;
 
         for (size_t i=0; i < dir.size(); ++i) {
@@ -3552,17 +3552,17 @@ void FluxboxWindow::updateButtons() {
             WinButton *winbtn = 0;
 
             switch (dir[i]) {
-            case WinButton::MINIMIZE:
+            case MINIMIZEBUTTON:
                 if (isIconifiable() && (m_state.deco_mask & WindowState::DECORM_ICONIFY)) {
                     winbtn = new WinButton(*this, m_button_theme,
                                            screen().pressedWinButtonTheme(),
-                                           WinButton::MINIMIZE,
+                                           MINIMIZEBUTTON,
                                            frame().titlebar(),
                                            0, 0, 10, 10);
                     winbtn->setOnClick(iconify_cmd);
                 }
                 break;
-            case WinButton::MAXIMIZE:
+            case MAXIMIZEBUTTON:
                 if (isMaximizable() && (m_state.deco_mask & WindowState::DECORM_MAXIMIZE) ) {
                     winbtn = new WinButton(*this, m_button_theme,
                                            screen().pressedWinButtonTheme(),
@@ -3575,7 +3575,7 @@ void FluxboxWindow::updateButtons() {
 
                 }
                 break;
-            case WinButton::CLOSE:
+            case CLOSEBUTTON:
                 if (m_client->isClosable() && (m_state.deco_mask & WindowState::DECORM_CLOSE)) {
                     winbtn = new WinButton(*this, m_button_theme,
                                            screen().pressedWinButtonTheme(),
@@ -3588,7 +3588,7 @@ void FluxboxWindow::updateButtons() {
                             FbTk::MemFunIgnoreArgs(*winbtn, &WinButton::updateAll));
                 }
                 break;
-            case WinButton::STICK:
+            case STICKBUTTON:
                 if (m_state.deco_mask & WindowState::DECORM_STICKY) {
                     winbtn =  new WinButton(*this, m_button_theme,
                             screen().pressedWinButtonTheme(),
@@ -3601,7 +3601,7 @@ void FluxboxWindow::updateButtons() {
                     winbtn->setOnClick(stick_cmd);
                 }
                 break;
-            case WinButton::SHADE:
+            case SHADEBUTTON:
                 if (m_state.deco_mask & WindowState::DECORM_SHADE) {
                     winbtn = new WinButton(*this, m_button_theme,
                             screen().pressedWinButtonTheme(),
@@ -3613,7 +3613,7 @@ void FluxboxWindow::updateButtons() {
                     winbtn->setOnClick(shade_cmd);
                 }
                 break;
-            case WinButton::MENUICON:
+            case MENUICONBUTTON:
                 winbtn = new WinButton(*this, m_button_theme,
                                        screen().pressedWinButtonTheme(),
                                        dir[i],
@@ -3800,7 +3800,7 @@ void FluxboxWindow::setWindowType(WindowState::WindowType type) {
         setMouseFocus(false);
         setClickFocus(false);
         setDecorationMask(WindowState::DECOR_NONE);
-        moveToLayer(::ResourceLayer::DOCK);
+        moveToLayer(LAYERDOCK);
         break;
     case WindowState::TYPE_DESKTOP:
         /*
@@ -3813,7 +3813,7 @@ void FluxboxWindow::setWindowType(WindowState::WindowType type) {
         setIconHidden(true);
         setFocusNew(false);
         setMouseFocus(false);
-        moveToLayer(::ResourceLayer::DESKTOP);
+        moveToLayer(LAYERDESKTOP);
         setDecorationMask(WindowState::DECOR_NONE);
         setTabable(false);
         setMovable(false);
@@ -3848,7 +3848,7 @@ void FluxboxWindow::setWindowType(WindowState::WindowType type) {
          */
         setDecorationMask(WindowState::DECOR_TOOL);
         setIconHidden(true);
-        moveToLayer(::ResourceLayer::ABOVE_DOCK);
+        moveToLayer(LAYERABOVE_DOCK);
         break;
     case WindowState::TYPE_NORMAL:
     default:

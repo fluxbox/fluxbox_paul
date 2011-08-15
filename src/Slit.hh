@@ -25,6 +25,7 @@
 #ifndef SLIT_HH
 #define SLIT_HH
 
+#include "Resources.hh"
 #include "SlitTheme.hh"
 #include "LayerMenu.hh"
 #include "Layer.hh"
@@ -56,17 +57,6 @@ class Slit: public FbTk::EventHandler, public LayerObject, private FbTk::SignalT
 {
 public:
     typedef std::list<SlitClient *> SlitClients;
-    /**
-       Placement on screen
-    */
-    enum Placement {
-        // top and bottom placement
-        TOPLEFT = 1, TOPCENTER, TOPRIGHT,
-        BOTTOMLEFT, BOTTOMCENTER, BOTTOMRIGHT,
-        // left and right placement
-        LEFTBOTTOM, LEFTCENTER, LEFTTOP,
-        RIGHTBOTTOM, RIGHTCENTER, RIGHTTOP
-    };
 
     Slit(BScreen &screen, FbTk::Layer &layer);
     virtual ~Slit();
@@ -206,9 +196,9 @@ private:
 
     SlitClientsRes m_client_list;
     FbTk::BoolResource m_rc_kde_dockapp, m_rc_auto_hide, m_rc_maximize_over;
-    FbTk::Resource<Slit::Placement, FbTk::EnumTraits<Slit::Placement> > m_rc_placement;
+    PlacementResource m_rc_placement;
     FbTk::IntResource m_rc_alpha, m_rc_on_head;
-    FbTk::Resource<ResourceLayer::Type, FbTk::EnumTraits<ResourceLayer::Type> > m_rc_layernum;
+    FbTk::Resource<LayerType, FbTk::EnumTraits<LayerType> > m_rc_layernum;
 };
 
 

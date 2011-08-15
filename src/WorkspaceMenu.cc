@@ -68,7 +68,7 @@ void add_workspaces(WorkspaceMenu& menu, BScreen& screen) {
 WorkspaceMenu::WorkspaceMenu(BScreen &screen):
    FbMenu(screen.menuTheme(), 
            screen.imageControl(), 
-           *screen.layerManager().getLayer(ResourceLayer::MENU)) {
+           *screen.layerManager().getLayer(LAYERMENU)) {
 
     init(screen);
 }

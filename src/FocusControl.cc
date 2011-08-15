@@ -494,12 +494,12 @@ void FocusControl::revertFocus(BScreen &screen) {
             FbTk::Menu::shownMenu()->grabInputFocus();
         else {
             switch (screen.focusControl().focusModel()) {
-            case FocusControl::MOUSEFOCUS:
-            case FocusControl::STRICTMOUSEFOCUS:
+            case MOUSEFOCUS:
+            case STRICTMOUSEFOCUS:
                 XSetInputFocus(screen.rootWindow().display(),
                                PointerRoot, None, CurrentTime);
                 break;
-            case FocusControl::CLICKFOCUS:
+            case CLICKFOCUS:
                 screen.rootWindow().setInputFocus(RevertToPointerRoot,
                                                   CurrentTime);
                 break;
@@ -591,24 +591,3 @@ void FocusControl::setFocusedWindow(WinClient *client) {
     if (old_screen && screen != old_screen)
         old_screen->focusedWindowSig().emit(*old_screen, s_focused_fbwindow, s_focused_window);
 }
-
-////////////////////// FocusControl RESOURCES
-namespace FbTk {
-
-template<>
-const EnumTraits<FocusControl::FocusModel>::Pair EnumTraits<FocusControl::FocusModel>::s_map[] = {
-    { "MouseFocus",       FocusControl::MOUSEFOCUS },
-    { "StrictMouseFocus", FocusControl::STRICTMOUSEFOCUS },
-    { "ClickFocus",       FocusControl::CLICKFOCUS },
-    { NULL,               FocusControl::CLICKFOCUS }
-};
-
-template<>
-const EnumTraits<FocusControl::TabFocusModel>::Pair EnumTraits<FocusControl::TabFocusModel>::s_map[] = {
-    { "SloppyTabFocus",   FocusControl::MOUSETABFOCUS },
-    { "ClickToTabFocus",  FocusControl::CLICKTABFOCUS },
-    { NULL,               FocusControl::CLICKTABFOCUS }
-};
-
-} // end namespace FbTk
-

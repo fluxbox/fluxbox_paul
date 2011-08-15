@@ -993,9 +993,9 @@ void Ewmh::updateState(FluxboxWindow &win) {
         state.push_back(m_net->wm_state_sticky);
     if (win.isShaded())
         state.push_back(m_net->wm_state_shaded);
-    if (win.layerNum() == ResourceLayer::BOTTOM)
+    if (win.layerNum() == LAYERBOTTOM)
         state.push_back(m_net->wm_state_below);
-    if (win.layerNum() == ResourceLayer::ABOVE_DOCK)
+    if (win.layerNum() == LAYERABOVE_DOCK)
         state.push_back(m_net->wm_state_above);
     if (win.isIconic())
         state.push_back(m_net->wm_state_hidden);
@@ -1347,14 +1347,14 @@ void Ewmh::setState(FluxboxWindow &win, Atom state, bool value,
         win.setIconHidden(value);
     } else if (state == m_net->wm_state_below) {  // bottom layer
         if (value)
-            win.moveToLayer(ResourceLayer::BOTTOM);
-        else if (win.layerNum() > ResourceLayer::NORMAL)
-            win.moveToLayer(ResourceLayer::NORMAL);
+            win.moveToLayer(LAYERBOTTOM);
+        else if (win.layerNum() > LAYERNORMAL)
+            win.moveToLayer(LAYERNORMAL);
     } else if (state == m_net->wm_state_above) { // above layer
         if (value)
-            win.moveToLayer(ResourceLayer::ABOVE_DOCK);
-        else if (win.layerNum() < ResourceLayer::NORMAL)
-            win.moveToLayer(ResourceLayer::NORMAL);
+            win.moveToLayer(LAYERABOVE_DOCK);
+        else if (win.layerNum() < LAYERNORMAL)
+            win.moveToLayer(LAYERNORMAL);
     } else if (state == m_net->wm_state_demands_attention) {
         if (value) { // if add attention
             Fluxbox::instance()->attentionHandler().addAttention(client);
@@ -1387,16 +1387,16 @@ void Ewmh::toggleState(FluxboxWindow &win, Atom state, WinClient &client) {
     } else if (state == m_net->wm_state_skip_taskbar) { // taskbar
         win.setIconHidden(!win.isIconHidden());
     } else if (state == m_net->wm_state_below) { // bottom layer
-        if (win.layerNum() == ResourceLayer::BOTTOM)
-            win.moveToLayer(ResourceLayer::NORMAL);
+        if (win.layerNum() == LAYERBOTTOM)
+            win.moveToLayer(LAYERNORMAL);
         else
-            win.moveToLayer(ResourceLayer::BOTTOM);
+            win.moveToLayer(LAYERBOTTOM);
 
     } else if (state == m_net->wm_state_above) { // top layer
-        if (win.layerNum() == ResourceLayer::ABOVE_DOCK)
-            win.moveToLayer(ResourceLayer::NORMAL);
+        if (win.layerNum() == LAYERABOVE_DOCK)
+            win.moveToLayer(LAYERNORMAL);
         else
-            win.moveToLayer(ResourceLayer::ABOVE_DOCK);
+            win.moveToLayer(LAYERABOVE_DOCK);
     } else if (state == m_net->wm_state_modal) { // modal
         client.setStateModal(!client.isStateModal());
     }
