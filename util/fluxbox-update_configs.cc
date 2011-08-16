@@ -521,6 +521,9 @@ void update_limit_nextwindow_to_current_workspace(std::auto_ptr<FbTk::ResourceMa
     write_file(keyfilename, new_keyfile);
 }
 
+typedef FbTk::VectorTraits<FbTk::StringTraits> StringVectorTraits;
+typedef FbTk::Resource<std::vector<std::string>, StringVectorTraits> StringVectorResource;
+
 struct ScreenResource {
     typedef FbTk::VectorTraits<FbTk::EnumTraits<WinButtonType> > WinButtonsTraits;
     static WinButtonType titlebar_left_[];
@@ -529,9 +532,7 @@ struct ScreenResource {
     ScreenResource(FbTk::ResourceManager_base &rm,
             const std::string &name, const std::string &altname);
 
-    FbTk::Resource<
-        std::vector<std::string>, FbTk::VectorTraits<FbTk::StringTraits>
-    > workspace_names;
+    StringVectorResource workspace_names;
 
     FbTk::BoolResource opaque_move, full_max,
         max_ignore_inc, max_disable_move, max_disable_resize,
@@ -590,7 +591,7 @@ WinButtonType ScreenResource::titlebar_right_[] = {
 ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
                     const std::string &name, const std::string &altname) :
     workspace_names(rm, std::vector<std::string>(), name + ".workspaceNames",
-            altname + ".WorkspaceNames", FbTk::VectorTraits<FbTk::StringTraits>(",") ),
+            altname + ".WorkspaceNames", StringVectorTraits(",") ),
     opaque_move(rm, true, name + ".opaqueMove", altname + ".OpaqueMove"),
     full_max(rm, false, name + ".fullMaximization", altname + ".FullMaximization"),
     max_ignore_inc(rm, true, name + ".maxIgnoreIncrement", altname + ".MaxIgnoreIncrement"),
@@ -714,6 +715,19 @@ void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm, 
     rm.reset(new FbTk::LResourceManager(dynamic_cast<FbTk::ResourceManager &>(*rm), l));
 }
 
+void
+update_move_slitlist_to_init_file(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
+    FbTk::StringResource rc_slitlistfile(*rm, "~/.fluxbox/slitlist",
+            "slitlistFile");
+    StringVectorResource rc_slitlist(*rm, std::vector<std::string>(), "screen0.slit.clientList",
+            StringVectorTraits(","));
+
+    std::istringstream f(read_file(FbTk::StringUtil::expandFilename(*rc_slitlistfile)));
+    std::string line;
+    while(getline(f, line))
+        rc_slitlist->push_back(line);
+}
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -736,7 +750,8 @@ const Update UPDATES[] = {
     { 11, update_keys_for_ongrip_onwindowborder },
     { 12, update_keys_for_activetab },
     { 13, update_limit_nextwindow_to_current_workspace },
-    { 14, update_lua_resource_manager }
+    { 14, update_lua_resource_manager },
+    { 15, update_move_slitlist_to_init_file }
 };
 
 /*------------------------------------------------------------------*\
