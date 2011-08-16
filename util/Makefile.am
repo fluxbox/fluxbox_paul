@@ -6,7 +6,7 @@ bin_PROGRAMS=		fbsetroot fluxbox-update_configs fluxbox-remote
 fbsetroot_SOURCES=	fbsetroot.cc fbsetroot.hh
 fbsetroot_LDADD=../src/FbRootWindow.o ../src/FbAtoms.o \
 			../src/FbTk/libFbTk.a
-fluxbox_update_configs_SOURCES=	fluxbox-update_configs.cc
+fluxbox_update_configs_SOURCES=	fluxbox-update_configs.cc update_keys-lua.cc
 fluxbox_update_configs_LDADD=	../src/defaults.o ../src/Resources.o \
 			../src/FbTk/libFbTk.a ../libs/lua/src/liblua.a
 fluxbox_remote_SOURCES=	fluxbox-remote.cc
@@ -49,11 +49,14 @@ fluxbox-generate_menu: fluxbox-generate_menu.in
 				> fluxbox-generate_menu
 		-chmod 755 fluxbox-generate_menu
 
-../src/FbRootWindow.o:
-	cd ../src && ${MAKE} FbRootWindow.o
-../src/FbAtoms.o:
-	cd ../src && ${MAKE} FbAtoms.o
 ../src/defaults.o:
 	cd ../src && ${MAKE} defaults.o
 ../src/Resources.o:
 	cd ../src && ${MAKE} Resources.o
+
+%.luac: %.lua Makefile
+	$(top_builddir)/libs/lua/src/luac -o $@ $<
+
+
+%-lua.cc: %.luac $(top_srcdir)/luatoc.sh Makefile
+	$(top_srcdir)/luatoc.sh $< $@ $(<:.luac=)
