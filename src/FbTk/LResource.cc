@@ -104,6 +104,8 @@ LResourceManager::LResourceManager(const std::string &root, Lua &l, unsigned int
 LResourceManager::LResourceManager(ResourceManager &old, Lua &l)
     : ResourceManager_base(old.root()), m_l(&l) {
 
+    setLua(l);
+
     // We create a copy of the list so we can safely traverse it while the resources disassociate
     // themselves from the old resource manager
     ResourceList list;

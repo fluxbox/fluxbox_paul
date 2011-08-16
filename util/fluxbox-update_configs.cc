@@ -19,6 +19,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#include "../src/FbTk/Container.hh"
 #include "../src/FbTk/I18n.hh"
 #include "../src/FbTk/LResource.hh"
 #include "../src/FbTk/LuaUtil.hh"
@@ -26,6 +27,7 @@
 #include "../src/FbTk/FileUtil.hh"
 
 #include "../src/defaults.hh"
+#include "../src/Resources.hh"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -54,6 +56,7 @@
 #include <map>
 #include <cstdlib>
 #include <list>
+#include <vector>
 
 using std::cout;
 using std::cerr;
@@ -75,7 +78,7 @@ void save_all_files();
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
-void update_add_mouse_evens_to_keys(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_add_mouse_evens_to_keys(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
 
     string whole_keyfile = read_file(keyfilename);
@@ -112,7 +115,7 @@ void update_add_mouse_evens_to_keys(std::auto_ptr<FbTk::ResourceManager_base>& r
 }
 
 
-void update_move_groups_entries_to_apps_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_move_groups_entries_to_apps_file(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string appsfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("appsFile"));
     FbTk::StringResource rc_groupfile(*rm, "~/.fluxbox/groups",
@@ -149,7 +152,7 @@ void update_move_groups_entries_to_apps_file(std::auto_ptr<FbTk::ResourceManager
 }
 
 
-void update_move_toolbar_wheeling_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_move_toolbar_wheeling_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
@@ -188,7 +191,7 @@ void update_move_toolbar_wheeling_to_keys_file(std::auto_ptr<FbTk::ResourceManag
 
 
 
-void update_move_modkey_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_move_modkey_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -223,35 +226,32 @@ void update_move_modkey_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& 
 
 
 
-void update_window_patterns_for_iconbar(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void
+update_window_patterns_for_iconbar(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
-    // this needs to survive after going out of scope
-    // it won't get freed, but that's ok
-    FbTk::StringResource *rc_mode =
-        new FbTk::StringResource(*rm, "Workspace",
-                                   "screen0.iconbar.mode",
-                                   "Screen0.Iconbar.Mode");
+    FbTk::StringResource &rc_mode =
+            rm->getResource<string, FbTk::StringTraits>("screen0.iconbar.mode");
 
-    std::string mode = FbTk::StringUtil::toLower(**rc_mode);
+    std::string mode = FbTk::StringUtil::toLower(*rc_mode);
     if (mode == "none")
-        *rc_mode = "none";
+        rc_mode = "none";
     else if (mode == "icons")
-        *rc_mode = "{static groups} (minimized=yes)";
+        rc_mode = "{static groups} (minimized=yes)";
     else if (mode == "noicons")
-        *rc_mode = "{static groups} (minimized=no)";
+        rc_mode = "{static groups} (minimized=no)";
     else if (mode == "workspaceicons")
-        *rc_mode = "{static groups} (minimized=yes) (workspace)";
+        rc_mode = "{static groups} (minimized=yes) (workspace)";
     else if (mode == "workspacenoicons")
-        *rc_mode = "{static groups} (minimized=no) (workspace)";
+        rc_mode = "{static groups} (minimized=no) (workspace)";
     else if (mode == "allwindows")
-        *rc_mode = "{static groups}";
+        rc_mode = "{static groups}";
     else
-        *rc_mode = "{static groups} (workspace)";
+        rc_mode = "{static groups} (workspace)";
 
 }
 
 
-void update_move_titlebar_actions_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_move_titlebar_actions_to_keys_file(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -288,7 +288,7 @@ void update_move_titlebar_actions_to_keys_file(std::auto_ptr<FbTk::ResourceManag
 }
 
 
-void update_added_starttabbing_command(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_added_starttabbing_command(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
     string new_keyfile = "";
@@ -302,47 +302,43 @@ void update_added_starttabbing_command(std::auto_ptr<FbTk::ResourceManager_base>
 
 
 
-void update_disable_icons_in_tabs_for_backwards_compatibility(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void
+update_disable_icons_in_tabs_for_backwards_compatibility(
+        std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
-    FbTk::BoolResource *show =
-        new FbTk::BoolResource(*rm, false,
-                "screen0.tabs.usePixmap",
-                "Screen0.Tabs.UsePixmap");
-    if (!*show) // only change if the setting didn't already exist
-        *show = false;
+    FbTk::BoolResource &show =
+            rm->getResource<bool, FbTk::BoolTraits>("screen0.tabs.usePixmap");
+    if (!show) // only change if the setting didn't already exist
+        show = false;
 }
 
 
 
 
-void update_change_format_of_split_placement_menu(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_change_format_of_split_placement_menu(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
-    FbTk::StringResource *placement =
-        new FbTk::StringResource(*rm, "BottomRight",
-                "screen0.slit.placement",
-                "Screen0.Slit.Placement");
+    PlacementResource &placement =
+            rm->getResource<Placement, FbTk::EnumTraits<Placement> >("screen0.slit.placement");
 
-    FbTk::StringResource *direction =
-        new FbTk::StringResource(*rm, "Vertical",
-                "screen0.slit.direction",
-                "Screen0.Slit.Direction");
+    FbTk::StringResource &direction =
+            rm->getResource<string, FbTk::StringTraits>("screen0.slit.direction");
 
-    if (strcasecmp((*direction)->c_str(), "vertical") == 0) {
-        if (strcasecmp((*placement)->c_str(), "BottomRight") == 0)
-            *placement = "RightBottom";
-        else if (strcasecmp((*placement)->c_str(), "BottomLeft") == 0)
-            *placement = "LeftBottom";
-        else if (strcasecmp((*placement)->c_str(), "TopRight") == 0)
-            *placement = "RightTop";
-        else if (strcasecmp((*placement)->c_str(), "TopLeft") == 0)
-            *placement = "LeftTop";
+    if (strcasecmp(direction->c_str(), "vertical") == 0) {
+        if (*placement == BOTTOMRIGHT)
+            placement = RIGHTBOTTOM;
+        else if (*placement == BOTTOMLEFT)
+            placement = LEFTBOTTOM;
+        else if (*placement == TOPRIGHT)
+            placement = RIGHTTOP;
+        else if (*placement == TOPLEFT)
+            placement = LEFTTOP;
     }
 }
 
 
 
 
-void update_update_keys_file_for_nextwindow_syntax_changes(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_update_keys_file_for_nextwindow_syntax_changes(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
@@ -399,7 +395,7 @@ void update_update_keys_file_for_nextwindow_syntax_changes(std::auto_ptr<FbTk::R
 
 
 
-void update_keys_for_ongrip_onwindowborder(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_keys_for_ongrip_onwindowborder(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_keyfile = read_file(keyfilename);
@@ -419,7 +415,7 @@ void update_keys_for_ongrip_onwindowborder(std::auto_ptr<FbTk::ResourceManager_b
 
 
 
-void update_keys_for_activetab(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_keys_for_activetab(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_file = read_file(keyfilename);
@@ -437,7 +433,7 @@ void update_keys_for_activetab(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
 
 
 // NextWindow {static groups} => NextWindow {static groups} (workspace=[current])
-void update_limit_nextwindow_to_current_workspace(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+void update_limit_nextwindow_to_current_workspace(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
 
     string keyfilename = FbTk::StringUtil::expandFilename(rm->resourceValue("keyFile"));
     string whole_file = read_file(keyfilename);
@@ -523,14 +519,197 @@ void update_limit_nextwindow_to_current_workspace(std::auto_ptr<FbTk::ResourceMa
     write_file(keyfilename, new_keyfile);
 }
 
-void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm) {
+struct ScreenResource {
+    typedef FbTk::VectorTraits<FbTk::EnumTraits<WinButtonType> > WinButtonsTraits;
+    static WinButtonType titlebar_left_[];
+    static WinButtonType titlebar_right_[];
+
+    ScreenResource(FbTk::ResourceManager_base &rm,
+            const std::string &name, const std::string &altname);
+
+    FbTk::Resource<
+        std::vector<std::string>, FbTk::VectorTraits<FbTk::StringTraits>
+    > workspace_names;
+
+    FbTk::BoolResource opaque_move, full_max,
+        max_ignore_inc, max_disable_move, max_disable_resize,
+        workspace_warping, show_window_pos, auto_raise, click_raises;
+    FbTk::StringResource default_deco;
+    PlacementResource tab_placement;
+    FbTk::StringResource windowmenufile;
+    FbTk::UIntResource typing_delay;
+    FbTk::IntResource workspaces, edge_snap_threshold, focused_alpha,
+        unfocused_alpha, menu_alpha;
+    FbTk::RangedIntResource menu_delay;
+    FbTk::IntResource  tab_width, tooltip_delay;
+    FbTk::BoolResource allow_remote_actions;
+    FbTk::BoolResource clientmenu_use_pixmap;
+//    FbTk::BoolResource tabs_use_pixmap;
+    FbTk::BoolResource max_over_tabs;
+    FbTk::BoolResource default_internal_tabs;
+
+    FbTk::IntResource demands_attention_timeout;
+    FbTk::StringResource timeformat;
+    FbTk::Resource<FocusModel, FbTk::EnumTraits<FocusModel> > focus_model;
+    FbTk::Resource<TabFocusModel, FbTk::EnumTraits<TabFocusModel> > tab_focus_model;
+    FbTk::BoolResource focus_new;
+//    FbTk::StringResource mode;
+    FbTk::Resource<
+        FbTk::Container::Alignment, FbTk::EnumTraits<FbTk::Container::Alignment>
+    > alignment;
+    FbTk::IntResource client_width;
+    FbTk::UIntResource client_padding;
+    FbTk::BoolResource use_pixmap;
+    FbTk::Resource<RowDirection, FbTk::EnumTraits<RowDirection> > row_direction;
+    FbTk::Resource<ColumnDirection, FbTk::EnumTraits<ColumnDirection> > col_direction;
+    FbTk::Resource<PlacementPolicy, FbTk::EnumTraits<PlacementPolicy> > placement_policy;
+    FbTk::BoolResource kde_dockapp, slit_auto_hide, slit_maximize_over;
+//    PlacementResource slit_placement;
+    FbTk::IntResource slit_alpha, slit_on_head;
+    FbTk::Resource<LayerType, FbTk::EnumTraits<LayerType> > slit_layernum;
+    FbTk::BoolResource toolbar_auto_hide, toolbar_maximize_over, visible;
+    FbTk::IntResource width_percent;
+    FbTk::IntResource toolbar_alpha;
+    FbTk::Resource<LayerType, FbTk::EnumTraits<LayerType> > toolbar_layernum;
+    FbTk::IntResource toolbar_on_head;
+    PlacementResource toolbar_placement;
+    FbTk::IntResource height;
+    FbTk::StringResource tools;
+    FbTk::Resource<std::vector<WinButtonType>, WinButtonsTraits> titlebar_left, titlebar_right;
+};
+
+WinButtonType ScreenResource::titlebar_left_[] = { STICKBUTTON };
+WinButtonType ScreenResource::titlebar_right_[] = {
+    MINIMIZEBUTTON,
+    MAXIMIZEBUTTON,
+    CLOSEBUTTON
+};
+
+ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
+                    const std::string &name, const std::string &altname) :
+    workspace_names(rm, std::vector<std::string>(), name + ".workspaceNames",
+            altname + ".WorkspaceNames", FbTk::VectorTraits<FbTk::StringTraits>(",") ),
+    opaque_move(rm, true, name + ".opaqueMove", altname + ".OpaqueMove"),
+    full_max(rm, false, name + ".fullMaximization", altname + ".FullMaximization"),
+    max_ignore_inc(rm, true, name + ".maxIgnoreIncrement", altname + ".MaxIgnoreIncrement"),
+    max_disable_move(rm, false, name + ".maxDisableMove", altname + ".MaxDisableMove"),
+    max_disable_resize(rm, false, name + ".maxDisableResize", altname + ".MaxDisableResize"),
+    workspace_warping(rm, true, name + ".workspacewarping", altname + ".WorkspaceWarping"),
+    show_window_pos(rm, false, name + ".showwindowposition", altname + ".ShowWindowPosition"),
+    auto_raise(rm, true, name + ".autoRaise", altname + ".AutoRaise"),
+    click_raises(rm, true, name + ".clickRaises", altname + ".ClickRaises"),
+    default_deco(rm, "NORMAL", name + ".defaultDeco", altname + ".DefaultDeco"),
+    tab_placement(rm, TOPLEFT, name + ".tab.placement", altname + ".Tab.Placement"),
+    windowmenufile(rm, getenv("HOME") + string("~/.fluxbox/windowmenu"),
+            name + ".windowMenu", altname + ".WindowMenu"),
+    typing_delay(rm, 0, name + ".noFocusWhileTypingDelay", altname + ".NoFocusWhileTypingDelay"),
+    workspaces(rm, 4, name + ".workspaces", altname + ".Workspaces"),
+    edge_snap_threshold(rm, 10, name + ".edgeSnapThreshold", altname + ".EdgeSnapThreshold"),
+    focused_alpha(rm, 255, name + ".window.focus.alpha", altname + ".Window.Focus.Alpha"),
+    unfocused_alpha(rm, 255, name + ".window.unfocus.alpha", altname + ".Window.Unfocus.Alpha"),
+    menu_alpha(rm, 255, name + ".menu.alpha", altname + ".Menu.Alpha"),
+    menu_delay(rm, 200, name + ".menuDelay", altname + ".MenuDelay",
+            FbTk::RangedIntTraits(0, 5000)),
+    tab_width(rm, 64, name + ".tab.width", altname + ".Tab.Width"),
+    tooltip_delay(rm, 500, name + ".tooltipDelay", altname + ".TooltipDelay"),
+    allow_remote_actions(rm, false,
+            name + ".allowRemoteActions", altname + ".AllowRemoteActions"),
+    clientmenu_use_pixmap(rm, true,
+            name + ".clientMenu.usePixmap", altname + ".ClientMenu.UsePixmap"),
+//  declared in main()
+//  tabs_use_pixmap(rm, true, name + ".tabs.usePixmap", altname + ".Tabs.UsePixmap"),
+    max_over_tabs(rm, false, name + ".tabs.maxOver", altname + ".Tabs.MaxOver"),
+    default_internal_tabs(rm, true, name + ".tabs.intitlebar", altname + ".Tabs.InTitlebar"),
+
+    demands_attention_timeout(rm, 500, name + ".demandsAttentionTimeout",
+            altname + ".DemandsAttentionTimeout"),
+    timeformat(rm, std::string("%k:%M"), name + ".strftimeFormat", altname + ".StrftimeFormat"),
+    focus_model(rm, CLICKFOCUS, name + ".focusModel", altname + ".FocusModel"),
+    tab_focus_model(rm, CLICKTABFOCUS,
+            name + ".tabFocusModel", altname + ".TabFocusModel"),
+    focus_new(rm, true, name + ".focusNewWindows", altname + ".FocusNewWindows"),
+//  declared in main()
+//  mode(rm, "{static groups} (workspace)", name + ".iconbar.mode", altname + ".Iconbar.Mode"),
+    alignment(rm, FbTk::Container::RELATIVE,
+            name + ".iconbar.alignment", altname + ".Iconbar.Alignment"),
+    client_width(rm, 128, name + ".iconbar.iconWidth", altname + ".Iconbar.IconWidth"),
+    client_padding(rm, 10,
+            name + ".iconbar.iconTextPadding", altname + ".Iconbar.IconTextPadding"),
+    use_pixmap(rm, true, name + ".iconbar.usePixmap", altname + ".Iconbar.UsePixmap"),
+    row_direction(rm, LEFTRIGHTDIRECTION,
+            name + ".rowPlacementDirection", altname + ".RowPlacementDirection"),
+    col_direction(rm, TOPBOTTOMDIRECTION,
+            name + ".colPlacementDirection", altname + ".ColPlacementDirection"),
+    placement_policy(rm, ROWMINOVERLAPPLACEMENT,
+            name + ".windowPlacement", altname + ".WindowPlacement"),
+    kde_dockapp(rm, true, name + ".slit.acceptKdeDockapps", altname + ".Slit.AcceptKdeDockapps"),
+    slit_auto_hide(rm, false, name + ".slit.autoHide", altname + ".Slit.AutoHide"),
+    slit_maximize_over(rm, false, name + ".slit.maxOver", altname + ".Slit.MaxOver"),
+//  declared in main()
+//  slit_placement(rm, RIGHTBOTTOM, name + ".slit.placement", altname + ".Slit.Placement"),
+    slit_alpha(rm, 255, name + ".slit.alpha", altname + ".Slit.Alpha"),
+    slit_on_head(rm, 0, name + ".slit.onhead", altname + ".Slit.onHead"),
+    slit_layernum(rm, LAYERDOCK, name + ".slit.layer", altname + ".Slit.Layer"),
+    toolbar_auto_hide(rm, false, name + ".toolbar.autoHide", altname + ".Toolbar.AutoHide"),
+    toolbar_maximize_over(rm, false, name + ".toolbar.maxOver", altname + ".Toolbar.MaxOver"),
+    visible(rm, true, name + ".toolbar.visible", altname + ".Toolbar.Visible"),
+    width_percent(rm, 100,
+            name + ".toolbar.widthPercent", altname + ".Toolbar.WidthPercent"),
+    toolbar_alpha(rm, 255,
+            name + ".toolbar.alpha", altname + ".Toolbar.Alpha"),
+    toolbar_layernum(rm, LAYERDOCK, name + ".toolbar.layer", altname + ".Toolbar.Layer"),
+    toolbar_on_head(rm, 1,
+            name + ".toolbar.onhead", altname + ".Toolbar.onHead"),
+    toolbar_placement(rm, BOTTOMCENTER,
+            name + ".toolbar.placement", altname + ".Toolbar.Placement"),
+    height(rm, 0, name + ".toolbar.height", altname + ".Toolbar.Height"),
+    tools(rm, "prevworkspace, workspacename, nextworkspace, iconbar, systemtray, clock",
+            name + ".toolbar.tools", altname + ".Toolbar.Tools"),
+    titlebar_left(rm, std::vector<WinButtonType>(titlebar_left_, titlebar_left_+1),
+            name + ".titlebar.left", altname + ".Titlebar.Left", WinButtonsTraits(" \t\n")),
+    titlebar_right(rm, std::vector<WinButtonType>(titlebar_right_, titlebar_right_+3),
+            name + ".titlebar.right", altname + ".Titlebar.Right", WinButtonsTraits(" \t\n"))
+{}
+
+
+void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
     if( dynamic_cast<FbTk::LResourceManager *>(rm.get()) ) {
         // there's nothing to do, we already have a lua resource manager
         // this shouldn't happen, since all lua init files should have versions >= 14
         return;
     }
 
+    FbTk::BoolResource rc_ignoreborder(*rm, false, "ignoreBorder", "IgnoreBorder");
+    FbTk::BoolResource rc_pseudotrans(*rm, false,
+            "forcePseudoTransparency", "forcePseudoTransparency");
+    FbTk::IntResource rc_colors_per_channel(*rm, 4, "colorsPerChannel", "ColorsPerChannel");
+    FbTk::IntResource rc_double_click_interval(*rm, 250,
+            "doubleClickInterval", "DoubleClickInterval");
+    FbTk::IntResource rc_tabs_padding(*rm, 0, "tabPadding", "TabPadding");
+    FbTk::StringResource rc_stylefile(*rm, DEFAULTSTYLE, "styleFile", "StyleFile");
+    FbTk::StringResource rc_styleoverlayfile(*rm, getenv("HOME") + string("/.fluxbox/overlay"),
+            "styleOverlay", "StyleOverlay");
+    FbTk::StringResource rc_menufile(*rm, getenv("HOME") + string("/.fluxbox/menu"),
+            "menuFile", "MenuFile");
+    FbTk::StringResource rc_slitlistfile(*rm, getenv("HOME") + string("/.fluxbox/slitlist"),
+            "slitlistFile", "SlitlistFile");
 
+/*  Key and apps file resources are declared in run_updates
+    FbTk::StringResource rc_keyfile(*rm, getenv("HOME") + string("/.fluxbox/keys"),
+            "keyFile", "KeyFile");
+    FbTk::StringResource rc_appsfile(*rm, getenv("HOME") + string("/.fluxbox/apps"),
+            "appsFile", "AppsFile");*/
+
+    FbTk::Resource<
+        TabsAttachArea, FbTk::EnumTraits<TabsAttachArea>
+    > rc_tabs_attach_area(*rm, ATTACH_AREA_WINDOW, "tabsAttachArea", "TabsAttachArea");
+    FbTk::UIntResource rc_cache_life(*rm, 5, "cacheLife", "CacheLife");
+    FbTk::UIntResource rc_cache_max(*rm, 200, "cacheMax", "CacheMax");
+    FbTk::Resource<time_t, FbTk::IntTraits<time_t> > rc_auto_raise_delay(*rm, 250, "autoRaiseDelay", "AutoRaiseDelay");
+
+    ScreenResource screen_resource(*rm, "screen0", "Screen0");
+
+    rm.reset(new FbTk::LResourceManager(dynamic_cast<FbTk::ResourceManager &>(*rm), l));
 }
 
 /*------------------------------------------------------------------*\
@@ -538,7 +717,7 @@ void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm) 
 
 struct Update {
     int version;
-    void (*update)(std::auto_ptr<FbTk::ResourceManager_base>& rm);
+    void (*update)(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l);
 };
 
 const Update UPDATES[] = {
@@ -571,7 +750,7 @@ int run_updates(int old_version, std::auto_ptr<FbTk::ResourceManager_base> &rm, 
 
     for (size_t i = 0; i < sizeof(UPDATES) / sizeof(Update); ++i) {
         if (old_version < UPDATES[i].version) {
-            UPDATES[i].update(rm);
+            UPDATES[i].update(rm, l);
             new_version = UPDATES[i].version;
         }
     }
@@ -644,7 +823,7 @@ int main(int argc, char **argv) {
         } else if (arg == "-help" || arg == "-h") {
             // no NLS translations yet -- we'll just have to use English for now
             cout << "  -rc <string>\t\t\twhere to save the new resource file.\n"
-                 << "  -oldrc <string>\t\t\tfile from which to load old resources (default = same as -rc).\n"
+                 << "  -oldrc <string>\t\tfile from which to load old resources (default = same as -rc).\n"
                  << "  -pid <int>\t\t\ttell fluxbox to reload configuration.\n"
                  << "  -check\t\t\tcheck version of this tool and the fluxbox config.\n"
                  << "  -help\t\t\t\tdisplay this help text and exit.\n\n"
@@ -697,6 +876,14 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    FbTk::StringResource rc_iconbar_mode(*resource_manager, "{static groups} (workspace)",
+            "screen0.iconbar.mode", "Screen0.Iconbar.Mode");
+    FbTk::BoolResource rc_tabs_usepixmap(*resource_manager, true,
+            "screen0.tabs.usePixmap", "Screen0.Tabs.UsePixmap");
+    PlacementResource rc_slit_placement(*resource_manager, RIGHTBOTTOM,
+            "screen0.slit.placement", "Screen0.Slit.Placement");
+    FbTk::StringResource rc_slit_direction(*resource_manager, "Vertical",
+            "screen0.slit.direction", "Screen0.Slit.Direction");
 
     int old_version = *config_version;
     int new_version = run_updates(old_version, resource_manager, l);
