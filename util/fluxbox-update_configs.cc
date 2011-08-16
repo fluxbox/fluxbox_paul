@@ -603,8 +603,7 @@ ScreenResource::ScreenResource(FbTk::ResourceManager_base &rm,
     click_raises(rm, true, name + ".clickRaises", altname + ".ClickRaises"),
     default_deco(rm, "NORMAL", name + ".defaultDeco", altname + ".DefaultDeco"),
     tab_placement(rm, TOPLEFT, name + ".tab.placement", altname + ".Tab.Placement"),
-    windowmenufile(rm, getenv("HOME") + string("~/.fluxbox/windowmenu"),
-            name + ".windowMenu", altname + ".WindowMenu"),
+    windowmenufile(rm, "~/.fluxbox/windowmenu", name + ".windowMenu", altname + ".WindowMenu"),
     typing_delay(rm, 0, name + ".noFocusWhileTypingDelay", altname + ".NoFocusWhileTypingDelay"),
     workspaces(rm, 4, name + ".workspaces", altname + ".Workspaces"),
     edge_snap_threshold(rm, 10, name + ".edgeSnapThreshold", altname + ".EdgeSnapThreshold"),
@@ -690,18 +689,15 @@ void update_lua_resource_manager(std::auto_ptr<FbTk::ResourceManager_base>& rm, 
             "doubleClickInterval", "DoubleClickInterval");
     FbTk::IntResource rc_tabs_padding(*rm, 0, "tabPadding", "TabPadding");
     FbTk::StringResource rc_stylefile(*rm, DEFAULTSTYLE, "styleFile", "StyleFile");
-    FbTk::StringResource rc_styleoverlayfile(*rm, getenv("HOME") + string("/.fluxbox/overlay"),
+    FbTk::StringResource rc_styleoverlayfile(*rm, "~/.fluxbox/overlay",
             "styleOverlay", "StyleOverlay");
-    FbTk::StringResource rc_menufile(*rm, getenv("HOME") + string("/.fluxbox/menu"),
-            "menuFile", "MenuFile");
-    FbTk::StringResource rc_slitlistfile(*rm, getenv("HOME") + string("/.fluxbox/slitlist"),
+    FbTk::StringResource rc_menufile(*rm, "~/.fluxbox/menu", "menuFile", "MenuFile");
+    FbTk::StringResource rc_slitlistfile(*rm, "~/.fluxbox/slitlist",
             "slitlistFile", "SlitlistFile");
 
 /*  Key and apps file resources are declared in run_updates
-    FbTk::StringResource rc_keyfile(*rm, getenv("HOME") + string("/.fluxbox/keys"),
-            "keyFile", "KeyFile");
-    FbTk::StringResource rc_appsfile(*rm, getenv("HOME") + string("/.fluxbox/apps"),
-            "appsFile", "AppsFile");*/
+    FbTk::StringResource rc_keyfile(*rm, "~/.fluxbox/keys", "keyFile", "KeyFile");
+    FbTk::StringResource rc_appsfile(*rm, "~/.fluxbox/apps", "appsFile", "AppsFile");*/
 
     FbTk::Resource<
         TabsAttachArea, FbTk::EnumTraits<TabsAttachArea>
