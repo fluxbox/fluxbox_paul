@@ -406,9 +406,10 @@ void update_keys_for_ongrip_onwindowborder(std::auto_ptr<FbTk::ResourceManager_b
     new_keyfile += "OnLeftGrip Move1 :StartResizing bottomleft\n";
     new_keyfile += "OnRightGrip Move1 :StartResizing bottomright\n";
     new_keyfile += "OnWindowBorder Move1 :StartMoving\n\n";
-    new_keyfile += whole_keyfile; // don't forget user's old keybindings
 
     new_keyfile += "\n"; // just for good looks
+    new_keyfile += whole_keyfile; // don't forget user's old keybindings
+
     write_file(keyfilename, new_keyfile);
 }
 
@@ -423,9 +424,10 @@ void update_keys_for_activetab(std::auto_ptr<FbTk::ResourceManager_base>& rm, Fb
 
     new_keyfile += "!mouse actions added by fluxbox-update_configs\n";
     new_keyfile += "OnTitlebar Mouse1 :MacroCmd {Focus} {Raise} {ActivateTab}\n";
-    new_keyfile += whole_file;
 
     new_keyfile += "\n"; // just for good looks
+    new_keyfile += whole_file;
+
     write_file(keyfilename, new_keyfile);
 
 }
