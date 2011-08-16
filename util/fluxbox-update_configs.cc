@@ -724,6 +724,22 @@ update_move_slitlist_to_init_file(std::auto_ptr<FbTk::ResourceManager_base>& rm,
         rc_slitlist->push_back(line);
 }
 
+void update_keys_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
+    extern const char update_keys[];
+    extern const unsigned int update_keys_size;
+
+    l.checkstack(2);
+    lua::stack_sentry s(l);
+
+    FbTk::StringResource &rc_keyfile = rm->getResource<string, FbTk::StringTraits>("keyFile");
+
+    l.loadstring(update_keys, update_keys_size);
+    l.pushstring(read_file(FbTk::StringUtil::expandFilename(*rc_keyfile)));
+    l.call(1, 1);
+    *rc_keyfile = string(*rc_keyfile) + ".lua";
+    write_file(FbTk::StringUtil::expandFilename(*rc_keyfile), l.tostring(-1));
+}
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -747,7 +763,8 @@ const Update UPDATES[] = {
     { 12, update_keys_for_activetab },
     { 13, update_limit_nextwindow_to_current_workspace },
     { 14, update_lua_resource_manager },
-    { 15, update_move_slitlist_to_init_file }
+    { 15, update_move_slitlist_to_init_file },
+    { 16, update_keys_for_lua }
 };
 
 /*------------------------------------------------------------------*\
