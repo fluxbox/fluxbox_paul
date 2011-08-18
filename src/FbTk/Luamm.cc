@@ -219,6 +219,30 @@ namespace lua {
         l->replace(-2);
     }
 
+    std::string quote(const std::string &str)
+    {
+        std::string bad = "\n\\";
+        bad += '\0';
+
+        // first try to quote using normal quotes without escaping
+        if(str.find_first_of(bad + '"') == std::string::npos)
+            return '"' + str + '"';
+        else if(str.find_first_of(bad + '\'') == std::string::npos)
+            return '\'' + str + '\'';
+
+        // use long quotes
+        bad.clear();
+
+        // find the first long quote that works
+        while(str.find(']' + bad + ']') != std::string::npos)
+            bad += '=';
+
+        std::string out = '[' + bad + '[';
+        if(str.find('\n') != std::string::npos)
+            out += '\n';
+        return out + str + ']' + bad + ']';
+    }
+
     state::state()
         : cobj(luaL_newstate()), valid(new bool(true))
     {

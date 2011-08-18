@@ -139,6 +139,10 @@ namespace lua {
         {}
     };
 
+    // format the string in a form that can be safely read back by the lua interpreter
+    // tries to make the string a bit nicer than the lua's %q format specifier
+    std::string quote(const std::string &str);
+
     // a fancy wrapper around lua_State
     class state {
         lua_State *cobj;
