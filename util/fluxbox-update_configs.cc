@@ -19,12 +19,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-#include "../src/FbTk/Container.hh"
-#include "../src/FbTk/I18n.hh"
-#include "../src/FbTk/LResource.hh"
-#include "../src/FbTk/LuaUtil.hh"
-#include "../src/FbTk/StringUtil.hh"
-#include "../src/FbTk/FileUtil.hh"
+#include "FbTk/Container.hh"
+#include "FbTk/I18n.hh"
+#include "FbTk/LResource.hh"
+#include "FbTk/LuaUtil.hh"
+#include "FbTk/StringUtil.hh"
+#include "FbTk/FileUtil.hh"
 
 #include "../src/defaults.hh"
 #include "../src/Resources.hh"
@@ -57,6 +57,8 @@
 #include <cstdlib>
 #include <list>
 #include <vector>
+
+#include "MenuConvertor.hh"
 
 using std::cout;
 using std::cerr;
@@ -740,6 +742,17 @@ void update_keys_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lu
     write_file(FbTk::StringUtil::expandFilename(*rc_keyfile), l.tostring(-1));
 }
 
+void update_menu_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
+    FbTk::StringResource rc_menufile(*rm, "~/.fluxbox/menu", "menuFile", "MenuFile");
+    Menu menu;
+    std::ostringstream stream;
+
+    MenuConvertor::createFromFile(*rc_menufile, menu);
+    menu.write(stream);
+    *rc_menufile = string(*rc_menufile) + ".lua";
+    write_file(FbTk::StringUtil::expandFilename(*rc_menufile), stream.str());
+}
+
 /*------------------------------------------------------------------*\
 \*------------------------------------------------------------------*/
 
@@ -764,7 +777,8 @@ const Update UPDATES[] = {
     { 13, update_limit_nextwindow_to_current_workspace },
     { 14, update_lua_resource_manager },
     { 15, update_move_slitlist_to_init_file },
-    { 16, update_keys_for_lua }
+    { 16, update_keys_for_lua },
+    { 17, update_menu_for_lua }
 };
 
 /*------------------------------------------------------------------*\
