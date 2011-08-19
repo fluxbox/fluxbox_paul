@@ -70,16 +70,13 @@ namespace {
 typedef FbTk::RefCount<FbTk::Menu> RefMenu;
 typedef FbTk::RefCount<FbTk::Command<void> > RefCmd;
 
-RefMenu createStyleMenu(int screen_number, const string &label,
-                     AutoReloadHelper *reloader, const string &directory) {
-
-    FbTk::RefCount<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
+void createStyleMenu(FbTk::Menu &menu, AutoReloadHelper *reloader, const string &directory) {
 
     // perform shell style ~ home directory expansion
     string stylesdir(FbTk::StringUtil::expandFilename(directory));
 
     if (!FbTk::FileUtil::isDirectory(stylesdir.c_str()))
-        return menu;
+        return;
 
     if (reloader)
         reloader->addFile(stylesdir);
@@ -87,7 +84,7 @@ RefMenu createStyleMenu(int screen_number, const string &label,
     FbTk::Directory dir(stylesdir.c_str());
 
     // create a vector of all the filenames in the directory
-    // add sort it
+    // and sort it
     vector<string> filelist(dir.entries());
     for (size_t file_index = 0; file_index < dir.entries(); ++file_index)
         filelist[file_index] = dir.readFilename();
@@ -104,24 +101,20 @@ RefMenu createStyleMenu(int screen_number, const string &label,
              (style[style.length() - 1] != '~')) ||
             FbTk::FileUtil::isRegularFile((style + "/theme.cfg").c_str()) ||
             FbTk::FileUtil::isRegularFile((style + "/style.cfg").c_str()))
-            menu->insert(new StyleMenuItem(filelist[file_index], style));
+            menu.insert(new StyleMenuItem(filelist[file_index], style));
     }
     // update menu graphics
-    menu->updateMenu();
-    return menu;
+    menu.updateMenu();
 }
 
-RefMenu createRootCmdMenu(int screen_number, const string &label,
-                       const string &directory, AutoReloadHelper *reloader,
+void createRootCmdMenu(FbTk::Menu &menu, const string &directory, AutoReloadHelper *reloader,
                        const string &cmd) {
-
-    FbTk::RefCount<FbMenu> menu(MenuCreator::createMenu(label, screen_number));
 
     // perform shell style ~ home directory expansion
     string rootcmddir(FbTk::StringUtil::expandFilename(directory));
 
     if (!FbTk::FileUtil::isDirectory(rootcmddir.c_str()))
-        return menu;
+        return;
 
     if (reloader)
         reloader->addFile(rootcmddir);
@@ -145,11 +138,10 @@ RefMenu createRootCmdMenu(int screen_number, const string &label,
         if ((FbTk::FileUtil::isRegularFile(rootcmd.c_str()) &&
              (filelist[file_index][0] != '.') &&
              (rootcmd[rootcmd.length() - 1] != '~')))
-            menu->insert(new RootCmdMenuItem(filelist[file_index], rootcmd, cmd));
+            menu.insert(new RootCmdMenuItem(filelist[file_index], rootcmd, cmd));
     }
     // update menu graphics
-    menu->updateMenu();
-    return menu;
+    menu.updateMenu();
 }
 
 
@@ -260,14 +252,12 @@ insertMenuItem(lua::state &l, FbTk::Menu &menu, FbTk::StringConvertor &parent_co
         } else if(str_key == "style")
             menu.insert(new StyleMenuItem(str_label, str_cmd));
         else if (str_key == "stylesdir")
-            menu.insert(str_label,
-                    createStyleMenu(screen_number, str_label, reloader, str_cmd));
+            createStyleMenu(menu, reloader, str_cmd);
         else if (str_key == "wallpapers") {
             string program = getField(l, -1, "program");
             if(program.empty())
                 program = realProgramName("fbsetbg");
-            menu.insert(str_label, createRootCmdMenu(screen_number, str_label, str_cmd,
-                                                        reloader, program) );
+            createRootCmdMenu(menu, str_cmd, reloader, program);
         } else if (str_key == "workspaces") {
             menu.insert(str_label, RefMenu(screen->workspaceMenu()) );
         // finally, try window-related commands
