@@ -742,15 +742,25 @@ void update_keys_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lu
     write_file(FbTk::StringUtil::expandFilename(*rc_keyfile), l.tostring(-1));
 }
 
-void update_menu_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
-    FbTk::StringResource rc_menufile(*rm, "~/.fluxbox/menu", "menuFile", "MenuFile");
+void do_update_menu_for_lua(FbTk::StringResource &resource) {
     Menu menu;
     std::ostringstream stream;
 
-    MenuConvertor::createFromFile(*rc_menufile, menu);
+    MenuConvertor::createFromFile(*resource, menu);
     menu.write(stream);
-    *rc_menufile = string(*rc_menufile) + ".lua";
-    write_file(FbTk::StringUtil::expandFilename(*rc_menufile), stream.str());
+    *resource = string(*resource) + ".lua";
+    write_file(FbTk::StringUtil::expandFilename(*resource), stream.str());
+}
+
+void update_menu_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
+    FbTk::StringResource rc_menufile(*rm, "~/.fluxbox/menu", "menuFile", "MenuFile");
+    do_update_menu_for_lua(rc_menufile);
+}
+
+void update_windowmenu_for_lua(std::auto_ptr<FbTk::ResourceManager_base>& rm, FbTk::Lua &l) {
+    FbTk::StringResource rc_windowmenufile(*rm, "~/.fluxbox/windowmenu",
+            "screen0.windowMenu", "Screen0.WindowMenu");
+    do_update_menu_for_lua(rc_windowmenufile);
 }
 
 /*------------------------------------------------------------------*\
@@ -778,7 +788,8 @@ const Update UPDATES[] = {
     { 14, update_lua_resource_manager },
     { 15, update_move_slitlist_to_init_file },
     { 16, update_keys_for_lua },
-    { 17, update_menu_for_lua }
+    { 17, update_menu_for_lua },
+    { 18, update_windowmenu_for_lua }
 };
 
 /*------------------------------------------------------------------*\
