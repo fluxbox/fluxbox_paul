@@ -806,28 +806,6 @@ All changes take effect immediately. Here are the settings:
 	 to you slitlist located in *~/.fluxbox/slitlist*.  See the next section for
 	 details.
 
-Slitlist File
-~~~~~~~~~~~~~
-fluxbox's slitlist file is available for those that use dockapps in the slit.
-This file helps fluxbox keep track of the *order* of the dockapps when in the
-slit. The file is generally located at *~/.fluxbox/slitlist*.
-
-A simple procedure for getting the slit sequences the way you like it is:
-1.   Run fluxbox with no pre-loaded dockapps
-2.   Run dockapps individually in the order you want them
-3.   Add dockapps to your *startfluxbox(1)* script
-
-
-This sequence will be saved by default to *~/.fluxbox/slitlist* and will be
-remembered for future instances of fluxbox.
-
-Users are free to manually edit the slitlist file. It is a simple list of window
-names, as given by *xprop(1)*, one per dockapp. Similar to the init file it should
-not be edited while fluxbox is running. Otherwise changes may get overwritten.
-
-The user also has the option of choosing a different path for the slitlist file,
-by setting the *session.session0.slitlistFile* resource.
-
 LAYERS
 ------
 Layers affect the way that windows will overlap each other on the screen.
@@ -902,6 +880,21 @@ tabs to hold their territory and will always be visible when an
 application is maximized.
 +
 Default: *False*
+
+*session.screen0.slit.clientList* = { 'string', 'string', ... }::
+This resource is available for those that use dockapps in the slit. It helps
+fluxbox keep track of the *order* of the dockapps when in the slit.
++
+A simple procedure for getting the slit sequences the way you like it is:
+1.   Run fluxbox with no pre-loaded dockapps
+2.   Run dockapps individually in the order you want them
+3.   Add dockapps to your *startfluxbox(1)* script
++
+This sequence will be saved to this resource and will be remembered for future
+instances of fluxbox. It is a simple list of window names, as given by
+*xprop(1)*, one per dockapp.
++
+Default: *{}*
 
 *session.screen0.toolbar.height*: 'integer'::
 Set the height of the toolbar. If the value is set to 0, the style file
