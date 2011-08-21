@@ -475,7 +475,7 @@ int main(int argc, char **argv) {
     updateConfigFilesIfNeeded(opts.rc_file);
 
     auto_ptr<Fluxbox> fluxbox;
-//    try {
+    try {
 
         fluxbox.reset(new Fluxbox(argc, argv,
                     opts.session_display,
@@ -486,7 +486,7 @@ int main(int argc, char **argv) {
 
         exitcode = EXIT_SUCCESS;
 
-  /*  } catch (out_of_range &oor) {
+    } catch (out_of_range &oor) {
         cerr <<"Fluxbox: "
             << _FB_CONSOLETEXT(main, ErrorOutOfRange, "Out of range", "Error message")
             << ": "
@@ -520,7 +520,7 @@ int main(int argc, char **argv) {
             << _FB_CONSOLETEXT(main, ErrorUnknown, "Unknown error", "Error message")
             << "." << endl;
         abort();
-    }*/
+    }
 
     bool restarting = false;
     string restart_argument;
