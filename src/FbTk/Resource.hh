@@ -257,9 +257,13 @@ public:
 
     virtual void setFromLua(lua::state &l) {
         try {
-            m_value = Traits::fromLua(l);
-            m_rm->resourceChanged(*this);
-            m_modified_sig.emit(m_value);
+            if(l.isnil(-1))
+                setDefaultValue();
+            else {
+                m_value = Traits::fromLua(l);
+                m_rm->resourceChanged(*this);
+                m_modified_sig.emit(m_value);
+            }
         }
         catch(ConversionError &e) {
             std::cerr << name() << ": " << e.what() << std::endl;

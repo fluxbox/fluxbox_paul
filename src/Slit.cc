@@ -153,8 +153,10 @@ void Slit::SlitClientsRes::setFromLua(lua::state &l) {
     SlitClients t;
 
     if(l.type(-1) != lua::TTABLE) {
-        std::cerr << "Cannot convert to a client list from lua type "
-                  << l.type_name(l.type(-1)) << std::endl;
+        if(! l.isnil(-1)) {
+            std::cerr << "Cannot convert to a client list from lua type "
+                      << l.type_name(l.type(-1)) << std::endl;
+        }
         return;
     }
     for(size_t i = 1; l.rawgeti(-1, i), !l.isnil(-1); l.pop(), ++i) {
