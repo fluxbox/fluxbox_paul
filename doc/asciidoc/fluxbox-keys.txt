@@ -20,29 +20,41 @@ Variable parameters are shown in emphasis: 'argument'
 
 Optional parameters are shown in square brackets: ['argument']
 
-All other characters shown are required verbatim. Whitespace is required
-where shown, but it is fine to add more whitespace.
+Other characters shown are required verbatim. Exceptions to these rules are
+mentioned when appropriate.
 
 DESCRIPTION
 -----------
 The keys file defines the keyboard shortcuts for 'fluxbox(1)'.
 
 You can customize fluxbox's key handling through the ~/.fluxbox/keys file. The
-file consists of lines of the basic format:
+file consists of entries of the basic format (the outer set of square brackets
+is verbatim):
 
-*['modifiers'] 'key' :'command' ['arguments' '...']*
+'keymode'*["*['modifiers'] 'key'*"]* = 'action'
 
-The space between the 'key' and the *:* before the 'command' is mandatory.
+For description of 'keymode' see the KEYMODES section.
 
-All modifiers and commands are case-insensitive. Some command arguments
-(especially those that will be passed to the shell) are case-sensitive. Some
+The string in square brackets specifies the key combination to which an action
+is bound. It consists of key names optionally preceded by modifiers. Keys and
+modifiers are separated by spaces. Modifiers are case-insensitive, while some
 key names are case-sensitive.
 
-Lines beginning with a '#' or '!' are considered comments and are unread by
-fluxbox.
+'action' can either be a lua funcion or a string representing a fluxbox command.
+Lua functions can for example be used to change values of fluxbox resources (see
+*fluxbox(1)* for a description of resources) or to add further keybindings.
+Fluxbox commands are described in the COMMANDS section.
 
-You will need to ``reload'' fluxbox after editing the keys file so it picks up
-your change.
+To remove a binding for a specific key combination use *nil* as 'action'. To
+remove all keybindings from a keymode, use the syntax:
+
+'keymode'*:clear()*
+
+Standard lua comments are used: everything from *--* to the end of the line is
+ignored. Block comments are enclosed in *--[[* and *]]*.
+
+Changes to this file are automatically picked up by fluxbox so there is no need
+to restart or reconfigure. Fluxbox will never overwrite this file.
 
 MODIFIERS
 ---------
@@ -125,28 +137,37 @@ CHAINING
 Key bindings can be chained in a fashion similar to Emacs key bindings using the
 syntax:
 
-'modifiers-1' 'key-1' 'modifiers-2' 'key-2' :'command' ['arguments ...']*
+'keymode'*["*['modifiers-1'] 'key-1' ['modifiers-2'] 'key-2'... *"]* = 'action'
 
 To abort a chained command part-way through typing it, press the <ESC> key.
 
 .To Bind CTRL+C CTRL+X (Which means, press CTRL+C then CTRL+X) to quit fluxbox
 ........
-Control c Control x :Quit
+default_keymode["Control c Control x"] = "Quit"
 ........
 
 KEYMODES
 --------
 A specific set of key mappings can be activated and de-activated on-the-fly
-using what are called keymodes. The syntax to define a mapping in a keymode
-is:
+using what are called keymodes. Fluxbox provides a default keymode called
+*default_keymode*. To create a new keymode use the syntax:
 
-*'keymode': 'modifiers' 'key' :'command' ['arguments' '...']*
+'keymode' *= newKeymode()*
 
-Where 'keymode' is any alpha-numeric string name.
+Where 'keymode' is any legal lua variable name. If you want to activate this
+keymode when a certain key combination is pressed, use the syntax:
 
-When this keymode is activated (see the *KeyMode* command below), all bindings
+'other_keymode'*["*'key combination'*"] = function()* 'keymode'*:activate() end*
+
+When this keymode is activated, all bindings
 prefaced by that keymode name become active (and all other keybindings will be
-deactivated) until the keymode changes again.
+deactivated) until the keymode changes again. Do not forget to add a binding
+which will reactivate the old keymode if you want to be able to return to it.
+
+If you do not want to type *default_keymode* for every binding, you can create
+an alias for it using the syntax:
+
+'x' *= default_keymode*
 
 COMMANDS
 --------
@@ -543,16 +564,6 @@ These commands have special meanings or behaviors.
 	Alternates between the commands. On the first press of the bound
 	key, runs 'command1'. On the next press, runs 'command2'.
 
-*BindKey* 'keybinding'::
-	Adds the given 'keybinding' (which must be a valid key binding as
-	defined in the DESCRIPTION section above) to your keys file.
-
-*KeyMode* 'keymode' ['return-keybinding']::
-	Activates the named 'keymode' (or, all key binding lines prefaced
-	with the same 'keymode':) and deactivates all others until the
-	'return-keybinding' (by default *Escape*) is pressed. The default
-	keymode is named 'default'.
-
 *ForEach* {'command'} [{'condition'}] | *Map* {'command'} [{'condition'}]::
 	Runs the given 'command' (normally one from the *Window Commands*
 	section above) on each window. If you specify a 'condition' (See
@@ -610,7 +621,7 @@ include::client-patterns.txt[]
 
 FILES
 -----
-*~/.fluxbox/keys*::
+*~/.fluxbox/keys.lua*::
 	This is the default location for the keybinding definitions.
 */usr/X11R6/include/X11/keysymdef.h*::
 	X key names are in this file.
@@ -640,18 +651,18 @@ Here are some interesting and/or useful examples you can do with your keys
 file.
 
 ..................
-# Mod4+drag moves a window
-OnWindow Mod4 Mouse1 :StartMoving
+-- Mod4+drag moves a window
+default_keymode["OnWindow Mod4 Mouse1"] = "StartMoving"
 
-# If any xterm windows are open, cycle through them. If none are open, open
-# one:
-Mod4 t :If {Some Matches (xterm)} {NextWindow (xterm)} {Exec xterm}
+-- If any xterm windows are open, cycle through them. If none are open, open
+-- one:
+default_keymode["Mod4 t"] = "If {Some Matches (xterm)} {NextWindow (xterm)} {Exec xterm}"
 
-# Set a different wallpaper on every workspace:
-ChangeWorkspace :Exec fbsetbg ~/.fluxbox/bg$(xprop -root _NET_CURRENT_DESKTOP | awk '{print $3}').png
+-- Set a different wallpaper on every workspace:
+default_keymode["ChangeWorkspace"] = "Exec fbsetbg ~/.fluxbox/bg$(xprop -root _NET_CURRENT_DESKTOP | awk '{print $3}').png"
 
-# Focusses the next window with it's xproperty 'PROP' set to 'foo'
-Mod4 p Mod4 Tab :NextWindow (@PROP=foo)
+-- Focusses the next window with it's xproperty 'PROP' set to 'foo'
+default_keymode["Mod4 p Mod4 Tab"] = "NextWindow (@PROP=foo)"
 ..................
 
 
