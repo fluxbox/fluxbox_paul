@@ -14,4 +14,4 @@ return {
     { type = "extramenus" };
     { type = "separator" };
     { type = "close" };
-}
+};
