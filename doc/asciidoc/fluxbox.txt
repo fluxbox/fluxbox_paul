@@ -74,7 +74,7 @@ OPTIONS
     Starting fluxbox with this option will designate a file in which you
     want to log events to.
 *-rc* 'rcfile'::
-    Use a different config file other than the default *~/.fluxbox/init*.
+    Use a different config file other than the default *~/.fluxbox/init.lua*.
 *-v*, *-version*::
     The version of fluxbox installed.
 *-screen* all|'scr','scr'...::
@@ -105,7 +105,7 @@ file location, this is where you can provide a system-wide menu file for your
 users.
 
 On exit or restart, fluxbox will save user defaults in the file
-*~/.fluxbox/init*. Resources in this file can also be edited by hand, see the
+*~/.fluxbox/init.lua*. Resources in this file can also be edited by hand, see the
 *RESOURCES* section for more details. *fluxbox(1)* also has many tools to edit
 these; look through the main menu once fluxbox has started to find different
 ways of managing your session.
@@ -799,12 +799,11 @@ All changes take effect immediately. Here are the settings:
     255 is not transparent at all.
 
 *Clients*:::
-    This submenu lets you reorder the the applications running in the
-	 slit. You are able to hide apps from the slit by unselecting them in the
-	 list showing. This will not kill the app. You can make them re-appear by
-	 selecting them in the list. The "Save SlitList" option saves the new order
-	 to you slitlist located in *~/.fluxbox/slitlist*.  See the next section for
-	 details.
+    This submenu lets you reorder the the applications running in the slit. You
+    are able to hide apps from the slit by unselecting them in the list showing.
+    This will not kill the app. You can make them re-appear by selecting them in
+    the list. The "Save SlitList" option saves the new order to the
+    *session.screen0.slit.clientList* resource.
 
 LAYERS
 ------
@@ -830,7 +829,7 @@ method is described in *fluxbox-apps(5)*.
 
 RESOURCES
 ---------
-Usually the *~/.fluxbox/init* resource file is created and maintained by
+Usually the *~/.fluxbox/init.lua* resource file is created and maintained by
 fluxbox itself. You can use the *Configure Menu*, mentioned above, to set most
 of these options.  However, we'll cover all of the resource options that are
 available to the user.  If you edit this file while fluxbox is running, you must
@@ -1207,14 +1206,14 @@ be located in the user's *~/.fluxbox* directory.
 
 *session.screen0.windowMenu* = "'location'"::
 This optionally specifies the location of a user-defined window menu. If left
-blank, it will use *~/.fluxbox/windowmenu*.
+blank, it will use *~/.fluxbox/windowmenu.lua*.
 +
 Default: *blank*
 
 ENVIRONMENT
 -----------
 *HOME*::
-    fluxbox uses *$HOME* to find the .fluxbox/init file and to resolve style file
+    fluxbox uses *$HOME* to find the .fluxbox/init.lua file and to resolve style file
     and -directory names.
 
 *DISPLAY*::
