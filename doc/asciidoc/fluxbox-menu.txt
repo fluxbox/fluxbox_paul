@@ -12,11 +12,11 @@ fluxbox-menu - fluxbox(1) menu syntax
 
 SYNOPSIS
 --------
-@pkgdatadir@/menu
+@pkgdatadir@/menu.lua
 
-~/.fluxbox/menu
+~/.fluxbox/menu.lua
 
-~/.fluxbox/windowmenu
+~/.fluxbox/windowmenu.lua
 
 SYNTAX
 ------
@@ -29,180 +29,166 @@ DESCRIPTION
 -----------
 There are two types of menus in fluxbox which can be configured.
 
-The first is the root menu, which normally appears when you right-click on the
-desktop.
-
 The first is the *ROOT MENU* (Or right-click menu), is usually bound to a
 right-click on the desktop, though this binding can be changed in the `keys'
 file (*fluxbox-keys(5)*). This same syntax is used for the *CustomMenu* command,
 also mentioned in *fluxbox-keys(5)*.
 
-Fluxbox installs a default root menu file in *@pkgdatadir@/menu*. You can also
+Fluxbox installs a default root menu file in *@pkgdatadir@/menu.lua*. You can also
 use fluxbox -i to confirm this location. Of course this system-wide menu can be
 customized for all users at once, but it is also possible to create an
 individual menu file for each user. By convention, users create a menu file in
-*~/.fluxbox/menu*. Once you've created your own menu file, you'll want to make
+*~/.fluxbox/menu.lua*. Once you've created your own menu file, you'll want to make
 sure that you properly declare this location in your `init' file so that fluxbox
 knows where to look. See *RESOURCES*, below for details.
 
 The second type is the *WINDOW MENU*, which defines the contents of the menu
 which appears when you right-click on a window's titlebar or iconbar. This opens
-a menu file as defined by *~/.fluxbox/windowmenu*. If this file does not exist,
-fluxbox will copy in the default from *@pkgdatadir@/windowmenu*.
+a menu file as defined by *~/.fluxbox/windowmenu.lua*. If this file does not exist,
+fluxbox will copy in the default from *@pkgdatadir@/windowmenu.lua*.
 
-You do not need to ``reload'' fluxbox after editing the apps file, the changes
+You do not need to ``reload'' fluxbox after editing the menu file, the changes
 should be taken into account the next time you open the menu.
 
 ROOT MENU
 ---------
-The root menu must begin with a *[begin]* tag and end with an *[end]* tag, and
-every tag must be on its own line.
+The root menu is a lua script. You can use all lua features to construct your
+menu. Fluxbox is only interested in the return value of your script and will
+never overwrite this file. Here, we will describe the simplest case of the menu
+file, where you list the menu entries verbatim.
 
-There are up to four fields in a menu line. They are of the form:::
-    ['tag'] ('label') {'command'} <'icon'>
+Menu is a lua table containing entries specifying the menu title and menu items.
+The simplest menu.lua file looks like this:
+....
+return {
+    type = "menu";
+    title = "Fluxbox";
+}
+....
+It contains two entries: *type*, which signals that this is indeed a menu and
+*title*, which set's the title of the menu. It contains no menu items.
 
-The <'icon'> field is always optional when shown below. If specified, the 'icon'
+Menu entries are also tables, but with different value of the *type* field. To
+add menu items to a menu, just list them (semicolon delimited) after all the
+'key' *=* 'value' pairs.
+
+To see all possible menu types, read the following sections. Besides the type,
+all menu entries should contain the *label* field, which sets the text which is
+displayed on the menu item. They may also contain the *encoding* field, which
+specifies the encoding of the *label* field. You may enter the label in any
+*iconv(1)* locale by specifying the appropriate encoding. If the *encoding*
+field is empty, the value set in the parent menu is used.
+
+Each menu entry may also contain an *icon* field. If specified, the icon
 will be scaled down and displayed in the menu alongside the text label of the
 item. It must be in .xpm or .png format.
 
-Any line that starts with a '#' or '!' is considered a comment and ignored by
-fluxbox. Also, in the label/command/filename fields you can escape any
-character. Using '\\' inserts a literal back-slash into the
-label/command/filename field.
+Most entry types also expect a *param* field, which specifies additional
+properties of the menu item. Some entry types may support additional fields.
+These fields will be mentioned in the description of the particular menu type.
 
-You may enter labels, commands, and icons using characters from any *iconv(1)*
-language/locale by specifying the encoding used via the *[encoding]* tag,
-detailed below.
+Standard lua comments are used: everything from *--* to the end of the line is
+ignored. Block comments are enclosed in *--[[* and *]]*.
 
-Structural Tags
-~~~~~~~~~~~~~~~
-*[begin]* ('title');;
-	This tells fluxbox to start parsing the menu file. This tag is required for
-	fluxbox to read your menu file. If it cannot find it, the system default menu
-	is used in its place. The 'title' appears at the top of the menu. And *[end]*
-	tag is required to end the menu.
+MENU ITEM TYPES
+---------------
 
-*[submenu]* ('label') {'title'} <'icon'>;;
-	This tells fluxbox to create and parse a new menu, which is inserted as a
-	submenu into the parent menu. These menus are parsed recursively, so there is
-	no limit to the number of levels or nested submenus you can have. The 'label'
-	is the text that will appear in the parent menu, and the 'title' is shown at
-	the top of the submenu.  If omitted, the 'title' will be the same as the
-	'label'.  An *[end]* tag is required to end the submenu.
+Special item types
+~~~~~~~~~~~~~~~~~~
 
-*[end]*;;
-	This tells fluxbox that it is at the end of a menu. This can either be a
-	*[submenu]* or the *[begin]* tag of the main root menu. There must be at
-	least one of these tags in your menu to correspond to the required *[begin]*
-	tag, and one for each *[submenu]*.
-
-*[encoding]* {'encoding'};;
-	This begins an *[encoding]* section and specifies the string encoding of
-	all strings until the matching *[endencoding]* tag. For a list of available
-	encodings on your system, run *iconv -l*.
-
-*[endencoding]*;;
-	This ends an *[encoding]* section.
-
-*[include]* ('path');;
-	Parses the file specified by filename inline with the current menu. The
-	'path' can be the full path to a file or it can begin with *~/*, which will
-	be expanded into your home directory. If 'path' is a directory, then all
-	files in that directory are included.
-
-*[separator]*;;
+*separator*;;
 	This will create a nice separation line. Useful for splitting up sections in
-	a ``pretty'' way. The optional 'comment' is not displayed, but can be useful
-	for internal documentation or script parsing of menu files.
+	a ``pretty'' way. The *label* field is ignored.
 
-*[nop]* ('label') <'icon'>;;
+*nop*;;
 	Insert a non-operational item into the current menu. This is much like
-	*[separator]*, but instead of a line, it inserts a 'label'. This can be used
-	to help format the menu into blocks or sections if so desired. The 'label' is
+	*separator*, but instead of a line, it inserts a label. This can be used
+	to help format the menu into blocks or sections if so desired. The label is
 	optional, and if omitted a blank item will be inserted.
 
-Applications
-~~~~~~~~~~~~
-*[exec]* ('label') {'command...'} <'icon'>;;
+*menu*;;
+        Inserts a submenu. The syntax is identical to that of the main menu. The
+        *label* field sets the text in the parent menu, while *title* sets the
+        title displayed at the top of the menu.
+
+Actions
+~~~~~~~
+*exec*;;
 	Inserts a command item into the menu. When you select the menu item from the
-	menu, fluxbox runs 'command...' in your *$SHELL* (or /bin/sh if $SHELL is not
+        menu, fluxbox runs the command set by the field *param* in your *$SHELL*
+        (or /bin/sh if $SHELL is not
 	set). You can use this to launch applications, run shell scripts, etc. Since
 	all arguments are passed verbatim to the shell, you can use environment
-	variables, pipes, or anything else the shell can do. Note that processes only
+	variables, pipes, or anything else the shell can do. Be sure to escape
+        the special characters properly as the string will be parsed by lua
+        'and' your shell. If you do not wan't lua to parse the string, quote the
+        string using lua long brackets (*[[*'string'*]]*). Note that processes only
 	see environment variables that were set before fluxbox started (such as in
 	~/.fluxbox/startup).
 
+*lua*;;
+        Executes a lua code contained in *param* when the menu item is
+        selected. The code can be given as a lua function, or a string, which
+        will be compiled into a lua chunk. This function can then change fluxbox
+        resources, modify keybindings, etc.
+
+*command*;;
+	Any legal keys file command may be used as a *param* and will be
+        executed when this menu item is selected. See *fluxbox-keys(5)* for
+        more information.
+
 Fluxbox Functions
 ~~~~~~~~~~~~~~~~~
-*[config]* ('label') <'icon'>;;
+A number of special menu items may be used. These generally insert special menus
+or menu items and have their own default labels which are used if you do not
+specify one explicitly.
+
+*config*;;
 	Inserts a fluxbox native submenu item, containing numerous configuration
 	options concerning window placement, focus style, window moving style, etc.
 	See *Configuration Menu* in *fluxbox(1)* for details.
 
-*[reconfig]* ('label') <'icon'>;;
-	When selected this item re-reads the current style and menu files and applies
-	any changes. This is useful for creating a new style or theme, as you don't
-	have to constantly restart fluxbox every time you save your style.  However,
-	fluxbox automatically rereads the menu whenever it changes.
-
-*[restart]* ('label') {'command'} <'icon'>;;
-	This tells fluxbox to restart. If 'command' is supplied, it shuts down and
-	runs the command (which is commonly the name of another window manager). If
-	'command' is omitted, fluxbox restarts itself.
-
-*[exit]* ('label') <'icon'>;;
+*exit*;;
 	Inserts an item that shuts down and exits fluxbox. Any open windows are
 	reparented to the root window before fluxbox exits.
 
-*[style]* ('label') {'filename'} <'icon'>;;
+*style*;;
 	This tells fluxbox to insert an item that, when selected, reads style file
-	named filename and apply the new textures, colors and fonts to the current
+	specified by *param* and apply the new textures, colors and fonts to the current
 	running session.
 
-*[stylesmenu]* ('directory') <'icon'>;;
-	Reads all filenames from the specified directory, assuming that they are all
+*stylesmenu*;;
+        Reads all filenames from the specified directory specified by *param*,
+        assuming that they are all
 	valid style files, and creates inline menu items in the current menu for
 	every filename, that, when selected by the user will apply the selected style
 	file to the current session. The labels that are created in the menu are the
-	filenames of the style files.
+	filenames of the style files. *stylesmenu* makes it possible to install
+        style files without editing your init file.
 
-*[stylesdir]* ('label') {'directory'} <'icon'>;;
-	Creates a submenu entry with 'label' (that is also the title of the new
-	submenu), and inserts in that submenu all filenames in the specified
-	'directory', assuming that they are all valid style files (directories are
-	ignored) in the same way as the *[stylesdir]* command does. Both
-	*[stylesdir]* and *[stylesmenu]* commands make it possible to install style
-	files without editing your init file.
+*wallpapers*;;
+        This inserts a menu item to set the wallpaper for each file in the
+        directory given by *param*. The command for setting the wallpaper is
+        specified by the *program* field, and defaults to *fbsetbg*.
 
-*[wallpapers]* ('directory') {'command'} <'icon'>;;
-	This inserts a menu item to set the wallpaper for each file in the given
-	directory. The 'command' is optional, and defaults to *fbsetbg*.
-
-*[workspaces]* ('label') <'icon'>;;
+*workspaces*;;
 	This tells fluxbox to insert a link to the workspaces menu directly into your
 	menu. See *Workspace Menu* in *fluxbox(1)* for details.
 
-*[*'command'*]* ('label') <'icon'>;;
-	In addition to the commands above, any legal keys file 'command' may be used
-	as a menu item. See *fluxbox-keys(5)* for more information.
+Window operations
+~~~~~~~~~~~~~~~~~
+These items alter properties of the active window. They also provide a default
+label if you don't put one.
 
-WINDOW MENU
------------
-Like the *ROOT MENU*, this menu file must start with *[begin]* and end with
-*[end]*. However, this file consists of only one *[*'tag'*]* per line with no
-labels, commands, or icons.
-
-The available tags in this menu are:
-
-*[shade]*;;
+*shade*;;
 	Provides a menu item to shade or unshade (or, roll-up) the window. This is
 	equivalent to the shade titlebar button.
 
-*[stick]*;;
+*stick*;;
 	Provides a menu item to stick or unstick the window. Stuck windows are
 	displayed on all workspaces. This is equivalent to the stick titlebar button.
 
-*[maximize]*;;
+*maximize*;;
 	Provides a menu item to maximize or unmaximize the window, equivalent to the
 	maximize titlebar button. The button with which you click alters the
 	behaviour of this item as follows:
@@ -211,62 +197,65 @@ The available tags in this menu are:
 	* Button 2  (Un)Maximize window vertically.
 	* Button 3  (Un)Maximize window horizontally.
 
-*[iconify]*;;
+*iconify*;;
 	Provides a menu item to iconify (or, minimize) the window, equivalent to the 
 	iconify titlebar button.
 
-*[close]*;;
+*close*;;
 	Closes the window gracefully, equivalent to the titlebar button.
 
-*[kill]*;;
+*kill*;;
 	Kills the window's process, like *xkill(1)*.
 
-*[raise]*;;
+*raise*;;
 	Raise the window to the top of the stack within its layer.
 
-*[lower]*;;
+*lower*;;
 	Lower the window to the bottom of the stack within its layer.
 
-*[settitledialog]*;;
+*settitledialog*;;
 	Opens a dialog which can be used to set the window's title. Some applications
 	may re-set their own title from time-to-time, wiping out your setting.
 
-*[sendto]*;;
+*sendto*;;
 	Sends the window to a different workspace. When you select the workspace with
 	a middle-click, fluxbox will also change to the new workspace. A regular
 	click only sends the window.
 
-*[layer]*;;
+*layer*;;
 	Adds a ``Layer...'' submenu which lets you change the layer of this window.
 
-*[alpha]*;;
+*alpha*;;
 	Adds a ``Transparency...'' submenu which lets you change the focused and
 	unfocused transparency of this window.
 
-*[extramenus]*;;
+*extramenus*;;
 	Adds the ``Remember...'' menu item, which allows you to specify which
 	settings should be stored in the `apps' file (See *fluxbox-apps(5)* for more
 	details).
 
-*[separator]*;;
-	Adds a horizontal line to the menu
+WINDOW MENU
+-----------
+The syntax the same as *ROOT MENU*, but the window menu usually contains only
+the window operation menu items. However, there is nothing stopping you from
+putting any other item there as well.
 
 FILES
 -----
-*~/.fluxbox/menu*::
+*~/.fluxbox/menu.lua*::
 	This is the default location for the user's root menu.
-*@pkgdatadir@/menu*::
+*@pkgdatadir@/menu.lua*::
 	This is the system-wide root menu file. It will be used if the user's root
 	menu is missing or unparseable.
-*~/.fluxbox/windowmenu*::
+*~/.fluxbox/windowmenu.lua*::
 	This is the user's window menu definition file
-*@pkgdatadir@/menu*::
+*@pkgdatadir@/windowmenu.lua*::
 	This is the default window menu. If the user does not have this file, it will
 	be copied to *~/.fluxbox/windowmenu* on fluxbox startup.
 
 RESOURCES
 ---------
-*session.menuFile:* 'location'::
+*session.menuFile =* 'location'::
 	This may be set to override the location of the user's root menu.
 
 ENVIRONMENT
@@ -278,52 +267,63 @@ EXAMPLES
 --------
 .Root Menu
 ....
-# fluxbox menu file
-[begin] (fluxbox)
-    [exec] (rxvt) {rxvt -ls} </usr/X11R6/share/icons/terminal.xpm>
-    [exec] (netscape) {netscape -install}
-    [exec] (The GIMP) {gimp}
-    [exec] (XV) {xv}
-    [exec] (Vim) {rxvt -geometry 132x60 -name VIM -e screen vim}
-    [exec] (Mutt) {rxvt -name mutt -e mutt}
-    [submenu] (mozilla)
-        [exec] (browser) {mozilla -browser}
-        [exec] (news) {mozilla -news}
-        [exec] (mail) {mozilla -mail}
-        [exec] (edit) {mozilla -edit}
-        [exec] (compose) {mozilla -compose}
-    [end]
-    [submenu] (Window Manager)
-        [exec] (Edit Menus) {nedit ~/.fluxbox/menu}
-        [submenu] (Style) {Which Style?}
-            [stylesdir] (~/.fluxbox/styles)
-            [stylesmenu] (fluxbox Styles) {@pkgdatadir@/styles}
-        [end]
-        [config] (Config Options)
-        [reconfig] (Reconfigure)
-        [restart] (Restart)
-    [end]
-    [exit] (Log Out)
-[end]
+return {
+    type = "menu";
+    label = "fluxbox";
+    { type = "exec"; label = "rxvt"; param = "rxvt -ls";
+      icon = "/usr/X11R6/share/icons/terminal.xpm"; };
+    { type = "exec"; label = "netscape"; param = "netscape -install"; };
+    { type = "exec"; label = "The GIMP"; param = "gimp"; };
+    { type = "exec"; label = "XV"; param = "xv"; };
+    { type = "exec"; label = "Vim"; param = "rxvt -geometry 132x60 -name VIM -e screen vim"; };
+    { type = "exec"; label = "Mutt"; param = "rxvt -name mutt -e mutt"; };
+    {
+        type = "menu";
+        label = "mozilla";
+        { type = "exec"; label = "browser"; param = "mozilla -browser"; };
+        { type = "exec"; label = "news"; param = "mozilla -news"; };
+        { type = "exec"; label = "mail"; param = "mozilla -mail"; };
+        { type = "exec"; label = "edit"; param = "mozilla -edit"; };
+        { type = "exec"; label = "compose"; param = "mozilla -compose"; };
+    };
+    {
+        type = "menu";
+        label = "Window Manager";
+        { type = "exec"; label = "Edit Menus"; param = "nedit ~/.fluxbox/menu"; };
+        {
+            type = "menu";
+            label = "Style";
+            title = "Which Style?";
+            { type = "stylesdir"; param = "~/.fluxbox/styles"; };
+            { type = "stylesdir"; param = "@pkgdatadir@/styles"; };
+        };
+        { type = "config"; label = "Config Options"; };
+        { type = "command"; label = "Reconfigure"; param = "reconfig"; };
+        { type = "command"; label = "Restart"; param = "restart"; };
+    };
+    { type = "exit"; label = "Log Out"; };
+};
 ....
 
 .Default Window Menu
 ....
-[begin]
-  [shade]
-  [stick]
-  [maximize]
-  [iconify]
-  [raise]
-  [lower]
-  [settitledialog]
-  [sendto]
-  [layer]
-  [alpha]
-  [extramenus]
-  [separator]
-  [close]
-[end]
+return {
+    type = "menu";
+
+    { type = "shade" };
+    { type = "stick" };
+    { type = "maximize" };
+    { type = "iconify" };
+    { type = "raise" };
+    { type = "lower" };
+    { type = "settitledialog" };
+    { type = "sendto" };
+    { type = "layer" };
+    { type = "alpha" };
+    { type = "extramenus" };
+    { type = "separator" };
+    { type = "close" };
+};
 ....
 
 AUTHORS
