@@ -36,7 +36,12 @@
 #if defined(LUA_USE_LINUX)
 #define LUA_USE_POSIX
 #define LUA_USE_DLOPEN		/* needs an extra library: -ldl */
-#define LUA_USE_READLINE	/* needs some extra libraries */
+/*
+ * we don't define LUA_USE_READLINE, because readline is only used in the standalone lua
+ * interpreter, and we don't really need that. It would be silly to pull readline as a dependency
+ * for this reason.
+ */
+//#define LUA_USE_READLINE	/* needs some extra libraries */
 #endif
 
 #if defined(LUA_USE_MACOSX)
