@@ -260,6 +260,9 @@ enum {
         FbCommandsSet = 21,
         FbCommandsCantLoadMenu = 1,
 
+        UpdateSet = 22,
+        UpdateLoading = 1,
+
 	dummy_not_used = 0 // just for the end
 
 }; // end enum
