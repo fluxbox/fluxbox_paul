@@ -291,3 +291,7 @@ $set 20 #layers
 $set 21 #FbCommands
 
 1 Failed to load menu file '%s': %s
+
+$set 22 #Update
+
+1 Loading resources from: 
