@@ -1,3 +1,11 @@
+2011-09-04  Paul Tagliamonte  <paultag@ubuntu.com>
+
+* Complete rewrite from scratch using a homebrewed stateful parsing model.
+ak|ra was sure to note that `ragel' is the prefered solution, but I found out
+that I actually hate `ragel' more then most things.
+* The code has a few known bugs, but nothing fatal yet. This code is more stable
+then the old fbautostart per-line parsing model.
+
 2011-04-09  Paul Tagliamonte  <paultag@ubuntu.com>
 
 * Fixed the license issue in the version and lecture
