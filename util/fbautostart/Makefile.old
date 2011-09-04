@@ -1,0 +1,5 @@
+
+all:
+	rm -rf bin/
+	mkdir bin
+	cd src && make
