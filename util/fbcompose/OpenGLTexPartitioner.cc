@@ -73,7 +73,7 @@ void OpenGL2DTexturePartition::setPixmap(Pixmap pixmap, bool manage_pixmap, int 
     while ((size_t)(total_units) > m_partitions.size()) {
         TexturePart partition;
         partition.borders = 0;
-        partition.texture = new OpenGL2DTexture(m_screen, m_swizzle_alpha_to_one);
+        partition.texture.reset( new OpenGL2DTexture(m_screen, m_swizzle_alpha_to_one) );
         m_partitions.push_back(partition);
     }
     while ((size_t)(total_units) < m_partitions.size()) {

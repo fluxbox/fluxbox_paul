@@ -96,7 +96,8 @@ void PreviewPlugin::windowCreated(const BaseCompWindow &window) {
     const OpenGLWindow &gl_window = dynamic_cast<const OpenGLWindow&>(window);
 
     OpenGLRenderingJob job;
-    job.prim_pos_buffer = new OpenGLBuffer(openGLScreen(), GL_ARRAY_BUFFER);
+    job.prim_pos_buffer.reset(
+        new OpenGLBuffer(openGLScreen(), GL_ARRAY_BUFFER));
     job.main_tex_coord_buffer = openGLScreen().defaultTexCoordBuffer();
     job.shape_tex_coord_buffer = openGLScreen().defaultTexCoordBuffer();
     job.alpha = PREVIEW_ALPHA / 255.0f;

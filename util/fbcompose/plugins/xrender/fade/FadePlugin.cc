@@ -74,7 +74,10 @@ void FadePlugin::windowMapped(const BaseCompWindow &window) {
     while (true) {
         if (it == m_negative_fades.end()) {
             fade.fade_alpha = 0;
-            fade.fade_picture = new XRenderPicture(xrenderScreen(), m_fade_pict_format, xrenderScreen().pictFilter());
+            fade.fade_picture.reset(
+                new XRenderPicture(
+                    xrenderScreen(), m_fade_pict_format,
+                    xrenderScreen().pictFilter()));
             break;
         } else if (it->window_id == window.window()) {
             fade.fade_alpha = it->fade_alpha;
@@ -105,7 +108,8 @@ void FadePlugin::windowUnmapped(const BaseCompWindow &window) {
         m_positive_fades.erase(it);
     } else {
         fade.fade_alpha = 255;
-        fade.fade_picture = new XRenderPicture(xrenderScreen(), m_fade_pict_format, xrenderScreen().pictFilter());
+        fade.fade_picture.reset( new XRenderPicture(xrenderScreen(),
+            m_fade_pict_format, xrenderScreen().pictFilter()));
     }
 
     if (xr_window.contentPicture()->pictureHandle() != None) {

@@ -38,10 +38,10 @@ XRenderWindow::XRenderWindow(const XRenderScreen &screen, Window window_xid, con
     m_pict_filter(pict_filter) {
 
     XRenderPictFormat *content_pict_format = XRenderFindVisualFormat(display(), visual());
-    m_content_picture = new XRenderPicture(screen, content_pict_format, m_pict_filter);
+    m_content_picture.reset( new XRenderPicture(screen, content_pict_format, m_pict_filter) );
 
     XRenderPictFormat *mask_pict_format = XRenderFindStandardFormat(display(), PictStandardARGB32);
-    m_mask_picture = new XRenderPicture(screen, mask_pict_format, m_pict_filter);
+    m_mask_picture.reset( new XRenderPicture(screen, mask_pict_format, m_pict_filter) );
 }
 
 // Destructor.

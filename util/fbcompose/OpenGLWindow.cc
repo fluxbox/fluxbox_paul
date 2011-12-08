@@ -43,8 +43,8 @@ using namespace FbCompositor;
 OpenGLWindow::OpenGLWindow(const OpenGLScreen &screen, Window window_xid) :
     BaseCompWindow(static_cast<const BaseScreen&>(screen), window_xid, false) {
 
-    m_content_tex_partition = new OpenGL2DTexturePartition(screen, true);
-    m_shape_tex_partition = new OpenGL2DTexturePartition(screen, false);
+    m_content_tex_partition.reset( new OpenGL2DTexturePartition(screen, true) );
+    m_shape_tex_partition.reset( new OpenGL2DTexturePartition(screen, false) );
 
     updateWindowPos();
 }
