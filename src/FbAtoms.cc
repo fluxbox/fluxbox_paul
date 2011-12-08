@@ -40,6 +40,8 @@ FbAtoms::FbAtoms() {
     motif_wm_hints = XInternAtom(dpy, "_MOTIF_WM_HINTS", False);
 
     blackbox_attributes = XInternAtom(dpy, "_BLACKBOX_ATTRIBUTES", False);
+    current_iconbar_item = XInternAtom(dpy, "_FLUXBOX_CURRENT_ICONBAR_ITEM", False);
+    resize_rect = XInternAtom(dpy, "_FLUXBOX_RECONFIGURE_RECT", False);
 
     s_singleton = this;
 }

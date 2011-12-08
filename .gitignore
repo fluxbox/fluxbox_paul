@@ -29,8 +29,12 @@ doc/startfluxbox.1
 doc/fluxbox.1
 doc/fluxstyle.1
 doc/ru/fluxbox.1
+.fuse_hidden*
+*.la
+.libs
 libtool
 libtool.m4
+*.lo
 ltmain.sh
 lt*.m4
 Makefile
@@ -42,6 +46,7 @@ src/FbTk/libFbTk.a
 src/fluxbox
 stamp-h
 stamp-h1
+util/fbcompose/fbcompose
 util/fbrun/fbrun
 util/fbsetroot
 util/fluxbox-generate_menu
@@ -52,4 +57,5 @@ version.h
 install-sh
 missing
 *~
-.*.swp
+.*.sw[a-p]
+tags

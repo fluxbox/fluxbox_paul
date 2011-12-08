@@ -77,6 +77,8 @@ private:
     /// Called when client title changed.
     void clientTitleChanged();
 
+    void setCurrentIconbarItem(Window xid);
+
     Focusable &m_win;
     FbTk::FbWindow m_icon_window;
     FbTk::FbPixmap m_icon_pixmap;

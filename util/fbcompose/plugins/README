@@ -1,0 +1,204 @@
+                       FBCOMPOSE PLUGIN DEVELOPMENT GUIDE
+
+            Author: Gediminas Liktaras <gliktaras at gmail dot com>
+
+
+What Is a Plugin
+
+  An fbcompose plugin is an .so file, which the compositor loads and uses to
+  alter the way it renders the desktop.
+
+
+Getting Started
+
+  The easiest way to start is to use one of the existing fbcompose plugins:
+  1) Decide which renderer the plugin will be for.
+  2) Make a copy of the directory of one of the plugins for that renderer.
+  3) Rename .hh and .cc files inside to match your plugin.
+  4) Update Makefile.am inside your plugin directory to match your new plugin.
+     Do not forget to change the name of the shared library (i.e. the *.la
+     name).
+  5) Update SUBDIRS variable in Makefile.am file one directory up so it
+     includes your plugin directory and add your makefile to configure.in file
+     the root directory of the repository.
+
+  Then when you want to build your plugin, simply build fluxbox as usual. The
+  .so file will be located in .libs subdirectory. To test it, cd into
+  util/fbcompose, start the compositor from there and use --plugin flags to
+  load the plugin as usual.
+
+  If you do not want to build fluxbox every time you want compile your plugin,
+  just change the Makefile.am file to point to wherever fluxbox source code and
+  libFbTk.a are located. In this case you will have to specify the full path to
+  the .so file with the --plugin parameter.
+
+  The sections below will explain what the compositor expects from the plugin
+  in detail.
+
+
+Plugin Shared Object Requirements
+
+  All plugins must provide two functions with very specific prototypes, as
+  detailed below:
+
+  * Plugin object creation function.
+    
+    This function must return an instance of a plugin class, which will perform
+    all the work of altering the screen's contents. When writing your own
+    plugin, you should create a class that derives either OpenGLPlugin or
+    XRenderPlugin (depending on the plugin's type), override its functions as
+    necessary and finally instantiate and return it in this function. Detailed
+    information about these two classes can be found below in the "Plugin
+    Classes" section.
+
+    The first parameter is a reference to the screen object that the plugin
+    object will manipulate and the second parameter is a vector of strings,
+    which contains the user's plugin configuration. They should be passed to
+    the plugin object's constructor.
+    
+    Prototype:
+        extern "C" FbCompositor::BasePlugin
+        *createPlugin(const FbCompositor::BaseScreen &screen,
+                      const std::vector<FbTk::FbString> &args);
+
+  * Plugin type function.
+
+    This function must return one of the values of the PluginType enumeration,
+    which should match the type of the plugin. This function ensures that the
+    appropriate plugins are loaded for each renderer.
+
+    For an OpenGL plugin it should return Plugin_OpenGL.
+
+    For an XRender plugin it should return Plugin_XRender.
+
+    Prototype:
+        extern "C" FbCompositor::PluginType pluginType();
+
+
+Plugin Classes
+
+  As mentioned above, all plugin objects must inherit some plugin classes.
+  There are three such classes, whose relationship is the following:
+
+                                   BasePlugin
+                                       ^
+                              +--------+--------+
+                              |                 |
+                         OpenGLPlugin     XRenderPlugin
+
+  BasePlugin
+
+    All plugin objects will inherit this class.
+
+    This class requires the programmer to define the pluginName function, which
+    should return the name of the plugin. I highly recommend making sure that
+    this function returns the name of the plugin's library object. So, if your
+    plugin will be compiled into foobar.so, pluginName should return "foobar".
+
+    All the window* functions are called as soon as the appropriate events are
+    processed and should be used to keep track of the current window status.
+    setRoot* functions are called when changes occur to the root window. These
+    functions should be overriden as necessary.
+
+    The screen object and the string vector required by the constructor are
+    provided with the call to createPlugin function, detailed above. 
+
+    This class also provides some accessors that may prove useful.
+
+    Relevant fbcompose classes: BaseCompWindow, BaseScreen.
+
+  OpenGLPlugin
+
+    If a plugin wants to work with OpenGL renderer, its objects must come from
+    a class that inherits OpenGLPlugin.
+
+    First, the plugin must return some vertex and fragment shader code. That
+    code must contain a function, whose name matches the return value of
+    pluginName function. So, if your plugin is named foobar, the corresponding
+    vertex shader code that would be
+
+      "void foobar() { /* SHADER CODE. */ }"
+
+    Even if you do not want to do anything with a particular shader, you must
+    still declare this shader function.
+
+    Attributes, uniforms and samplers can be declared as needed, but it is a
+    good idea to declare them only as necessary, since it is possible that GPUs
+    will hit their attribute/uniform/sampler limit with a large number of
+    plugins loaded. To avoid name clashes, name your
+    attributes/uniforms/whatever pluginName_VarName (eg. foobar_ShadowTexture,
+    to continue the previous example).
+
+    Rendering action functions fall into four groups:
+
+    * Initialization functions that should prepare the plugin shader code
+      before some part of the screen is rendered.
+    * Cleanup functions that should do whatever cleanup actions needed after
+      some part of the screen is rendered.
+    * Hooks for extra rendering jobs/actions. 
+    * Null rendering job initialization. This function should make sure the
+      plugin will not interfere with the next rendering job.  
+
+    The screen is rendered in this order: desktop background, windows,
+    reconfigure rectangle, extra jobs. The order of the functions within these
+    groups should be self-evident. 
+    
+    Extra rendering jobs are described with the OpenGLRenderingJob struct,
+    located in OpenGLPlugin.hh file. All extra jobs are in GL_TRIANGLE mode and
+    expect to be given four elements, as well as main and shape textures. The
+    OpenGLScreen object that can be accessed with the appropriate function in
+    OpenGLPlugin class provides some default buffers and textures, so you don't
+    have to explicitly create "null" OpenGL objects.
+
+    To obtain shader variable locations, extract them from a shader program
+    wrapper, that is passed to the plugin via initOpenGL function.
+
+    Relevant fbcompose classes: OpenGL*.
+
+  XRenderPlugin
+
+    For a plugin to work with the XRender backend, its objects must inherit the
+    XRenderPlugin class.
+
+    Rendering action functions fall into three groups:
+
+    * Plugin damaged area function.
+    * Initialization functions that can modify the how some particular part of
+      screen is rendered.
+    * Hooks for extra rendering jobs/actions.
+
+    The screen is rendered in this order: desktop background, windows,
+    reconfigure rectangle, extra jobs. The order of the functions within these
+    groups should be self-evident. 
+
+    Damaged area function should return a vector of all the rectangles that
+    should be updated in the next frame, since the XRender backend only updates
+    the damaged areas for performance purposes. It is called before any
+    rendering is done.
+    
+    Rendering jobs are described with the XRenderRenderingJob struct, located
+    in XRenderPlugin.hh file. It essentially contains all the parameters of the
+    XRenderComposite function. If operation equals PictOpClear, the rendering
+    job is ignored.
+
+
+Plugin Distribution
+
+  In addition to sharing the source code of a plugin, you could also distribute
+  precompiled .so files, which the users simply have to place into an
+  appropriate directory to use them.
+
+  If you choose this option, do pay attention to your machine architecture. If
+  you can, try to provide both 32 bit and 64 bit binaries. If you are on a 64
+  bit machine, you can create a 32 bit binary with -m32 g++ flag, for example.
+
+
+Miscellaneous Notes
+
+  * Make sure your plugin names begin with a letter and consist only of
+    alphanumeric characters and underscores. Also make sure that this name does
+    not match any of the keywords in GLSL and matches both the name of the .so
+    file and the string returned by the BaseScreen::pluginName function.
+
+  * It is not necessary to keep plugin rendering action function stateless, as
+    long as you keep in mind when and in what order the functions are called.
