@@ -1882,6 +1882,16 @@ bool FluxboxWindow::getState() {
     return ret;
 }
 
+void FluxboxWindow::setReconfigureRectProperty(int x, int y, int width, int height) {
+    long data[4] = { x, y, width, height };
+    winClient().screen().rootWindow().changeProperty(FbAtoms::instance()->getFluxboxResizeRectAtom(),
+            XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<unsigned char*>(data), 4);
+}
+
+void FluxboxWindow::clearReconfigureRectProperty() {
+    setReconfigureRectProperty(0, 0, 0, 0);
+}
+
 /**
    Show the window menu at pos x, y
 */
@@ -2579,6 +2589,10 @@ void FluxboxWindow::motionNotifyEvent(XMotionEvent &me) {
                     m_last_resize_w - 1 + 2 * frame().window().borderWidth(),
                     m_last_resize_h - 1 + 2 * frame().window().borderWidth());
 
+            setReconfigureRectProperty(m_last_resize_x, m_last_resize_y,
+                    m_last_resize_w + 2 * frame().window().borderWidth() - 1,
+                    m_last_resize_h + 2 * frame().window().borderWidth() - 1);
+
         }
     } else if (m_attaching_tab != 0) {
         //
@@ -2595,6 +2609,8 @@ void FluxboxWindow::motionNotifyEvent(XMotionEvent &me) {
         parent().drawRectangle(screen().rootTheme()->opGC(),
                                dx, dy,
                                m_last_resize_w, m_last_resize_h);
+
+        setReconfigureRectProperty(dx, dy, m_last_resize_w, m_last_resize_h);
 
         // change remembered position of rectangle
         m_last_move_x = dx;
@@ -3096,6 +3112,10 @@ void FluxboxWindow::startResizing(int x, int y, ReferenceCorner dir) {
                        m_last_resize_x, m_last_resize_y,
                        m_last_resize_w - 1 + 2 * frame().window().borderWidth(),
                        m_last_resize_h - 1 + 2 * frame().window().borderWidth());
+
+    setReconfigureRectProperty(m_last_resize_x, m_last_resize_y,
+            m_last_resize_w + 2 * frame().window().borderWidth() - 1,
+            m_last_resize_h + 2 * frame().window().borderWidth() - 1);
 }
 
 void FluxboxWindow::stopResizing(bool interrupted) {
@@ -3116,6 +3136,7 @@ void FluxboxWindow::stopResizing(bool interrupted) {
     }
 
     ungrabPointer(CurrentTime);
+    clearReconfigureRectProperty();
 }
 
 WinClient* FluxboxWindow::winClientOfLabelButtonWindow(Window window) {
@@ -3172,6 +3193,8 @@ void FluxboxWindow::startTabbing(const XButtonEvent &be) {
                            m_last_resize_w, m_last_resize_h);
 
     menu().hide();
+
+    setReconfigureRectProperty(m_last_move_x, m_last_move_y, m_last_resize_w, m_last_resize_h);
 }
 
 void FluxboxWindow::attachTo(int x, int y, bool interrupted) {
@@ -3181,6 +3204,8 @@ void FluxboxWindow::attachTo(int x, int y, bool interrupted) {
     parent().drawRectangle(screen().rootTheme()->opGC(),
                            m_last_move_x, m_last_move_y,
                            m_last_resize_w, m_last_resize_h);
+
+    clearReconfigureRectProperty();
 
     ungrabPointer(CurrentTime);
 

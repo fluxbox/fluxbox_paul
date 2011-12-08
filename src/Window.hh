@@ -499,6 +499,9 @@ private:
     void setFullscreenLayer();
     void attachWorkAreaSig();
 
+    void setReconfigureRectProperty(int x, int y, int width, int height);
+    void clearReconfigureRectProperty();
+
     // modifies left and top if snap is necessary
     void doSnapping(int &left, int &top);
     // user_w/h return the values that should be shown to the user

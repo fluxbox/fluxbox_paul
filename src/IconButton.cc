@@ -24,7 +24,9 @@
 #include "IconbarTool.hh"
 #include "IconbarTheme.hh"
 
+#include "FbAtoms.hh"
 #include "Screen.hh"
+#include "Window.hh"
 
 #include "FbTk/App.hh"
 #include "FbTk/Command.hh"
@@ -36,6 +38,7 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
+#include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #ifdef SHAPE
 #include <X11/extensions/shape.h>
@@ -86,11 +89,13 @@ void IconButton::exposeEvent(XExposeEvent &event) {
 
 void IconButton::enterNotifyEvent(XCrossingEvent &ev) {
     m_has_tooltip = true;
+    setCurrentIconbarItem(m_win.fbwindow()->clientWindow());
     showTooltip();
 }
 
 void IconButton::leaveNotifyEvent(XCrossingEvent &ev) {
     m_has_tooltip = false;
+    setCurrentIconbarItem(None);
     m_win.screen().hideTooltip();
 }
 
@@ -282,3 +287,7 @@ bool IconButton::setOrientation(FbTk::Orientation orient) {
     }
 }
 
+void IconButton::setCurrentIconbarItem(Window xid) {
+    m_win.screen().rootWindow().changeProperty(FbAtoms::instance()->getFluxboxCurrentIconbarItemAtom(),
+            XA_WINDOW, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&xid), 1);
+}

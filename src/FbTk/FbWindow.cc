@@ -64,7 +64,7 @@ FbWindow::FbWindow(const FbWindow& the_copy):
     m_width(the_copy.width()), m_height(the_copy.height()),
     m_border_width(the_copy.borderWidth()),
     m_border_color(the_copy.borderColor()),
-    m_depth(the_copy.depth()), m_destroy(true),
+    m_depth(the_copy.depth()), m_destroy(the_copy.m_destroy),
     m_lastbg_color_set(false), m_lastbg_color(0), m_lastbg_pm(0),
     m_renderer(the_copy.m_renderer) {
     the_copy.m_window = 0;
@@ -413,7 +413,6 @@ void FbWindow::setNew(Window win) {
     m_window = win;
 
     if (m_window != 0) {
-        updateGeometry();
         XWindowAttributes attr;
         attr.screen = 0;
         //get screen number
@@ -622,16 +621,16 @@ bool FbWindow::updateGeometry() {
         return false;
 
     int old_x = m_x, old_y = m_y;
-    unsigned int old_width = m_width, old_height = m_height;
+    unsigned int old_border_width = m_border_width, old_width = m_width, old_height = m_height;
 
     Window root;
-    unsigned int border_width, depth;
+    unsigned int depth;
     if (XGetGeometry(display(), m_window, &root, &m_x, &m_y,
-                     &m_width, &m_height, &border_width, &depth))
+                     &m_width, &m_height, &m_border_width, &depth))
         m_depth = depth;
 
     return (old_x != m_x || old_y != m_y || old_width != m_width ||
-            old_height != m_height);
+            old_height != m_height || old_border_width != m_border_width);
 }
 
 void FbWindow::create(Window parent, int x, int y,

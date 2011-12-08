@@ -1,0 +1,48 @@
+#! /bin/sh
+
+# Find all OpenGL plugins.
+declare -a OPENGL_PLUGIN_DIRS
+OPENGL_PLUGIN_DIRS[0]="$FBCOMPOSE_PATH/plugins/opengl"
+OPENGL_PLUGIN_DIRS[1]="~/.fluxbox/fbcompose/plugins/opengl"
+
+OPENGL_PLUGINS=""
+for dir in ${OPENGL_PLUGIN_DIRS[@]}; do
+    if [ -d $dir ]; then
+        OPENGL_PLUGINS="${OPENGL_PLUGINS} `find $dir -type f -name \*.so -print0 | xargs -n 1 -0 basename`"
+    fi
+done
+OPENGL_PLUGINS=`echo $OPENGL_PLUGINS | sed -e "s/\.so\b//g" -e "s/  */\n/g" | sort | uniq`
+
+# Find all XRender plugins.
+declare -a XRENDER_PLUGIN_DIRS
+XRENDER_PLUGIN_DIRS[0]="$FBCOMPOSE_PATH/plugins/xrender"
+XRENDER_PLUGIN_DIRS[1]="~/.fluxbox/fbcompose/plugins/xrender"
+
+XRENDER_PLUGINS=""
+for dir in ${XRENDER_PLUGIN_DIRS[@]}; do
+    if [ -d $dir ]; then
+        XRENDER_PLUGINS="${XRENDER_PLUGINS} `find $dir -type f -name \*.so -print0 | xargs -n 1 -0 basename`"
+    fi
+done
+XRENDER_PLUGINS=`echo $XRENDER_PLUGINS | sed -e "s/\.so\b//g" -e "s/  */\n/g" | sort | uniq`
+
+# Print findings.
+echo "Available fbcompose plugins:"
+
+echo "OpenGL:"
+if [ "x$OPENGL_PLUGINS" == "x" ]; then
+    echo "  No plugins found."
+else
+    for name in $OPENGL_PLUGINS; do
+        echo "  $name"
+    done
+fi
+
+echo "XRender:"
+if [ "x$XRENDER_PLUGINS" == "x" ]; then
+    echo "  No plugins found."
+else
+    for name in $XRENDER_PLUGINS; do
+        echo "  $name"
+    done
+fi
