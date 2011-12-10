@@ -352,11 +352,6 @@ AC_ARG_ENABLE(nls,
 )
 AC_SUBST(NLS)
 
-
-
-
-
-
 dnl Check for new timed pixmap cache
 AC_MSG_CHECKING([whether to use the new timed pixmap cache])
 AC_ARG_ENABLE(
@@ -371,7 +366,6 @@ AC_ARG_ENABLE(
   AC_MSG_RESULT([yes])
   AC_DEFINE(TIMEDCACHE, 1, "timed cache")
 )
-
 
 AC_MSG_CHECKING([whether to have Xft support])
 AM_PATH_XFT(yes,
@@ -640,7 +634,7 @@ enableval="yes"
 AC_MSG_CHECKING([whether fbcompose should be built])
 AC_ARG_ENABLE(fbcompose,
   AC_HELP_STRING([--enable-fbcompose],
-                 [build the fluxbox compositor [default=yes]]), ,
+                 [build the fluxbox compositor (ALPHA QUALITY) [default=no]]), ,
               [enableval=yes])
 if test "x$enableval" = "xyes"; then
   AC_MSG_RESULT([yes])
@@ -665,8 +659,8 @@ enableval="yes"
 AC_MSG_CHECKING([whether to have XRender compositing support])
 AC_ARG_ENABLE(xrender-compositing,
   AC_HELP_STRING([--enable-xrender-compositing],
-                 [XRender support for fbcompose [default=yes]]), ,
-              [enableval=yes])
+                 [XRender support for fbcompose [default=no]]), ,
+              [enableval=no])
 if test "x$enableval" = "xyes" -a "x$BUILD_FBCOMPOSE" = "xtrue"; then
   AC_MSG_RESULT([yes])
   AC_CHECK_LIB([dl], [dlopen],
@@ -698,8 +692,8 @@ enableval="yes"
 AC_MSG_CHECKING([whether to have OpenGL compositing support])
 AC_ARG_ENABLE(opengl-compositing,
   AC_HELP_STRING([--enable-opengl-compositing],
-                 [OpenGL support for fbcompose [default=yes]]), ,
-              [enableval=yes])
+                 [OpenGL support for fbcompose [default=no]]), ,
+              [enableval=no])
 if test "x$enableval" = "xyes" -a "x$BUILD_FBCOMPOSE" = "xtrue"; then
   AC_MSG_RESULT([yes])
   AC_CHECK_LIB([dl], [dlopen],
