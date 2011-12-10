@@ -116,14 +116,15 @@ void XRenderScreen::initRenderingSurface() {
         throw InitException("Cannot find the required picture format.");
     }
 
-    m_rendering_picture = new XRenderPicture(*this, rendering_pict_format, m_pict_filter);
+    m_rendering_picture.reset( new XRenderPicture(*this, rendering_pict_format, m_pict_filter) );
     m_rendering_picture->setWindow(m_rendering_window, pa, pa_mask);
 
     // Create the back buffer.
     XRenderPictFormat *back_buffer_pict_format = XRenderFindStandardFormat(display(), PictStandardARGB32);
     Pixmap back_buffer_pixmap = XCreatePixmap(display(), rootWindow().window(), rootWindow().width(), rootWindow().height(), 32);
 
-    m_back_buffer_picture = new XRenderPicture(*this, back_buffer_pict_format, m_pict_filter);
+    m_back_buffer_picture.reset(
+        new XRenderPicture(*this, back_buffer_pict_format, m_pict_filter));
     m_back_buffer_picture->setPixmap(back_buffer_pixmap, true, pa, pa_mask);
 }
 
@@ -171,7 +172,7 @@ void XRenderScreen::updateBackgroundPicture() {
     long pa_mask = CPSubwindowMode;
 
     if (!m_root_picture) {
-        m_root_picture = new XRenderPicture(*this, pict_format, m_pict_filter);
+        m_root_picture.reset( new XRenderPicture(*this, pict_format, m_pict_filter) );
     } else {
         m_root_picture->setPictFormat(pict_format);
     }

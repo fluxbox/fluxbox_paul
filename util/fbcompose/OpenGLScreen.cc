@@ -299,29 +299,29 @@ void OpenGLScreen::createResources() {
     Pixmap pixmap;
 
     // Default element buffer.
-    m_default_element_buffer = new OpenGLBuffer(*this, GL_ELEMENT_ARRAY_BUFFER);
+    m_default_element_buffer.reset(new OpenGLBuffer(*this, GL_ELEMENT_ARRAY_BUFFER));
     m_default_element_buffer->bufferData(sizeof(DEFAULT_ELEMENT_ARRAY), (const GLvoid*)(DEFAULT_ELEMENT_ARRAY), GL_STATIC_DRAW);
 
     // Default primitive position buffer.
-    m_default_prim_pos_buffer = new OpenGLBuffer(*this, GL_ARRAY_BUFFER);
+    m_default_prim_pos_buffer.reset(new OpenGLBuffer(*this, GL_ARRAY_BUFFER));
     m_default_prim_pos_buffer->bufferData(sizeof(DEFAULT_PRIM_POS_ARRAY), (const GLvoid*)(DEFAULT_PRIM_POS_ARRAY), GL_STATIC_DRAW);
 
     // Default texture position buffer.
-    m_default_tex_coord_buffer = new OpenGLBuffer(*this, GL_ARRAY_BUFFER);
+    m_default_tex_coord_buffer.reset(new OpenGLBuffer(*this, GL_ARRAY_BUFFER));
     m_default_tex_coord_buffer->bufferData(sizeof(DEFAULT_TEX_POS_ARRAY), (const GLvoid*)(DEFAULT_TEX_POS_ARRAY), GL_STATIC_DRAW);
 
 
     // Reconfigure rectangle position buffer.
-    m_rec_rect_line_pos_buffer = new OpenGLBuffer(*this, GL_ARRAY_BUFFER);
+    m_rec_rect_line_pos_buffer.reset( new OpenGLBuffer(*this, GL_ARRAY_BUFFER) );
 
     // Reconfigure rectangle element buffer.
-    m_rec_rect_element_buffer = new OpenGLBuffer(*this, GL_ELEMENT_ARRAY_BUFFER);
+    m_rec_rect_element_buffer.reset(new OpenGLBuffer(*this, GL_ELEMENT_ARRAY_BUFFER));
     m_rec_rect_element_buffer->bufferData(sizeof(RECONFIGURE_RECT_ELEMENT_ARRAY),
                                           (const GLvoid*)(RECONFIGURE_RECT_ELEMENT_ARRAY), GL_STATIC_DRAW);
 
 
     // Background texture.
-    m_bg_texture = new OpenGL2DTexturePartition(*this, true);
+    m_bg_texture.reset( new OpenGL2DTexturePartition(*this, true) );
 
     // Background texture partition buffers.
     m_bg_pos_buffers = partitionSpaceToBuffers(*this, 0, 0, rootWindow().width(), rootWindow().height());
@@ -329,13 +329,13 @@ void OpenGLScreen::createResources() {
 
     // Plain black texture.
     pixmap = createSolidPixmap(*this, 1, 1, 0x00000000);
-    m_black_texture = new OpenGL2DTexture(*this, false);
+    m_black_texture.reset( new OpenGL2DTexture(*this, false) );
     m_black_texture->setPixmap(pixmap, false, 1, 1, true);
     XFreePixmap(display(), pixmap);
 
     // Plain white texture.
     pixmap = createSolidPixmap(*this, 1, 1, 0xffffffff);
-    m_white_texture = new OpenGL2DTexture(*this, false);
+    m_white_texture.reset( new OpenGL2DTexture(*this, false) );
     m_white_texture->setPixmap(pixmap, false, 1, 1, true);
     XFreePixmap(display(), pixmap);
 }
@@ -354,7 +354,7 @@ void OpenGLScreen::initPlugins() {
 // Initializes the screen's plugins.
 void OpenGLScreen::initPlugins(const CompositorConfig &config) {
     BaseScreen::initPlugins(config);
-    m_shader_program = new OpenGLShaderProgram(pluginManager().plugins());
+    m_shader_program.reset( new OpenGLShaderProgram(pluginManager().plugins()) );
 }
 
 

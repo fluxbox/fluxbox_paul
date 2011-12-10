@@ -59,7 +59,7 @@ PreviewPlugin::PreviewPlugin(const BaseScreen &screen, const std::vector<FbTk::F
     unsigned long mask_color = 0x01010101 * PREVIEW_ALPHA;
     Pixmap mask_pixmap = createSolidPixmap(screen, MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT, mask_color);
     XRenderPictFormat *pict_format = XRenderFindStandardFormat(display(), PictStandardARGB32);
-    m_mask_picture = new XRenderPicture(xrenderScreen(), pict_format, FilterFast);
+    m_mask_picture.reset( new XRenderPicture(xrenderScreen(), pict_format, FilterFast));
     m_mask_picture->setPixmap(mask_pixmap, true);
 
     m_previous_damage.width = 0;
